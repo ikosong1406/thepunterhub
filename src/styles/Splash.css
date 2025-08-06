@@ -1,0 +1,40 @@
+/* src/components/SplashScreen.css */
+
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spin-medium {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes dash-glow {
+  0% {
+    stroke-dasharray: 20, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 80, 150;
+    stroke-dashoffset: -20;
+  }
+  100% {
+    stroke-dasharray: 20, 150;
+    stroke-dashoffset: -100;
+  }
+}
+
+.spin-slow {
+  animation: spin-slow 6s linear infinite;
+  transform-origin: center;
+}
+
+.spin-medium {
+  animation: spin-medium 4s linear infinite;
+  transform-origin: center;
+}
+
+.glow-stroke {
+  animation: dash-glow 2s ease-in-out infinite;
+}
