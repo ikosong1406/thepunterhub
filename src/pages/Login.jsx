@@ -82,7 +82,7 @@ const LoginScreen = ({ platformName = "PH" }) => {
       </div>
 
       {/* Login Type Switch */}
-      <div className="flex justify-center gap-6 mb-6 text-base mt-20">
+      <div className="flex justify-center gap-6 mb-6 text-base mt-15">
         <button
           onClick={() => setLoginType("email")}
           className={`pb-1 transition ${

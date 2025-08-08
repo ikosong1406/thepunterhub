@@ -100,40 +100,7 @@ const PunterSearchPage = () => {
                 <span className="text-white">{punter.rating}</span>
               </div>
             </div>
-
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <div className="bg-[#0a120e] p-2 rounded">
-                <div className="text-green-400 font-bold">{punter.wins}W</div>
-                <div className="text-xs text-gray-400">Wins</div>
-              </div>
-              <div className="bg-[#0a120e] p-2 rounded">
-                <div className="text-red-400 font-bold">{punter.losses}L</div>
-                <div className="text-xs text-gray-400">Losses</div>
-              </div>
-              <div className="bg-[#0a120e] p-2 rounded">
-                <div className="text-[#18ffc8] font-bold">
-                  {winRate.toFixed(1)}%
-                </div>
-                <div className="text-xs text-gray-400">Win Rate</div>
-              </div>
-            </div>
           </div>
-        </div>
-
-        <div className="border-t border-[#2a3a34] p-3 flex justify-between items-center">
-          <div className="text-sm">
-            <span className="text-gray-400">Last signal: </span>
-            <span className="font-medium text-white">{punter.lastSignal}</span>
-          </div>
-          <button
-            className="bg-[#f57cff] text-black font-bold px-4 py-2 rounded-full text-sm hover:bg-[#e56cef] transition"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle subscribe logic here
-            }}
-          >
-            Subscribe {punter.subscription}
-          </button>
         </div>
       </div>
     );
@@ -165,15 +132,10 @@ const PunterSearchPage = () => {
           )}
         </div>
       </div>
-      {/* Search Results */}
-      // In your PunterSearchPage component, modify the results section:
       <div>
         {searchTerm ? (
           filteredPunters.length > 0 ? (
             <>
-              <h2 className="text-xl font-bold text-white mb-4">
-                Search Results
-              </h2>
               {filteredPunters.map((punter) => (
                 <PunterCard key={punter.id} punter={punter} />
               ))}
