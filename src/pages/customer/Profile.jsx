@@ -37,7 +37,6 @@ const ProfilePage = () => {
         <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "#09100d" }}>
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm" style={{ color: "#f57cff" }}>Main Balance</span>
-            <span className="text-sm font-medium" style={{ color: "#18ffc8" }}>Bonus: ${user.bonus.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-2xl font-bold" style={{ color: "#efefef" }}>${user.balance.toFixed(2)}</span>

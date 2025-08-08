@@ -71,7 +71,7 @@ const WelcomeScreen = ({ platformName = "PH" }) => {
             Welcome to {platformName}
           </h1>
           <p className="text-base">
-            Unlock the power of expert betting predictions, live updates, and more.
+            Unlock the power of expert predictions and tips, live updates, and more.
           </p>
         </div>
 
