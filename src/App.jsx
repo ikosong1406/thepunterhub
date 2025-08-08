@@ -12,7 +12,11 @@ import RegisterScreen from "./pages/Register";
 import LoginScreen from "./pages/Login";
 import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerHome from "./pages/customer/Home";
-import CustomerDiscover from "./pages/customer/Discover"
+import CustomerFeed from "./pages/customer/Feed"
+import CustomerLive from "./pages/customer/Live"
+import CustomerProfile from "./pages/customer/Profile";
+import CustomerPunters from "./pages/customer/Punters"
+import CustomerSearch from "./pages/customer/Search";
 import PunterLayout from "./pages/punter/PunterLayout";
 import PunterHome from "./pages/punter/Home";
 
@@ -35,10 +39,11 @@ const App = () => {
         >
           <Route index element={<CustomerHome />} />
           <Route path="home" element={<CustomerHome />} />
-          <Route path="discover" element={<CustomerDiscover />} />
-          {/* <Route path="history" element={<History />} />
-            <Route path="wallet" element={<WalletScreen />} />
-            <Route path="profile" element={<Profile />} /> */}
+          <Route path="feed" element={<CustomerFeed />} />
+          <Route path="live" element={<CustomerLive />} />
+          <Route path="profile" element={<CustomerProfile />} />
+          <Route path="punters" element={<CustomerPunters />} />
+          <Route path="search" element={<CustomerSearch />} />
         </Route>
         <Route
           path="/punter/*"

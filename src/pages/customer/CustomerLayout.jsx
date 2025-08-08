@@ -1,6 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { FiHome } from "react-icons/fi";
-import { FaHistory, FaUser, FaWallet, FaFire, FaGamepad } from "react-icons/fa";
+import { FaUser, FaSearch, FaFire, FaNewspaper} from "react-icons/fa";
 import { PiBroadcastFill } from "react-icons/pi";
 import { useState, useEffect } from "react";
 
@@ -19,23 +18,23 @@ export default function CustomerLayout() {
 
   const tabs = [
     { path: "/customer/home", name: "Top", icon: <FaFire size={20} /> },
-    {
-      path: "/customer/discover",
-      name: "Discover",
-      icon: <FaGamepad size={20} />,
+        {
+      path: "/customer/search",
+      name: "Explore",
+      icon: <FaSearch size={20} />,
     },
     {
-      path: "/merchant/history",
-      name: "Livescore",
+      path: "/customer/feed",
+      name: "Feed",
+      icon: <FaNewspaper size={20} />,
+    },
+    {
+      path: "/customer/live",
+      name: "Live",
       icon: <PiBroadcastFill size={20} />,
     },
     {
-      path: "/merchant/wallet",
-      name: "Wallet",
-      icon: <FaWallet size={20} />, // Using react-icons FaWallet
-    },
-    {
-      path: "/merchant/profile",
+      path: "/customer/profile",
       name: "Profile",
       icon: <FaUser size={20} />,
     },
