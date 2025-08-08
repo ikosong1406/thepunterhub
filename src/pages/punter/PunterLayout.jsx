@@ -20,22 +20,17 @@ export default function PunterLayout() {
   const tabs = [
     { path: "/punter/home", name: "Top", icon: <FaFire size={20} /> },
     {
-      path: "/merchant/history",
+      path: "/punter/history",
       name: "History",
       icon: <FaHistory size={20} />,
     },
     {
-      path: "/merchant/history",
-      name: "Livescore",
+      path: "/punter/live",
+      name: "Live",
       icon: <PiBroadcastFill size={20} />,
     },
     {
-      path: "/merchant/wallet",
-      name: "Wallet",
-      icon: <FaWallet size={20} />, // Using react-icons FaWallet
-    },
-    {
-      path: "/merchant/profile",
+      path: "/punter/profile",
       name: "Profile",
       icon: <FaUser size={20} />,
     },

@@ -5,7 +5,7 @@ const Header = ({ platformName = "Punter Hub", switchTo = "/Customer/home" }) =>
   const navigate = useNavigate();
 
   return (
-    <header className="w-full bg-[#09100d] px-5 py-4 flex items-center justify-between shadow-md">
+    <header className="w-full bg-[#09100d] py-3 flex items-center justify-between shadow-md">
       {/* Logo / Platform Name */}
       <h1 className="text-[#fea92a] text-xl font-bold tracking-widest uppercase">
         {platformName}

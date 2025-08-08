@@ -19,6 +19,10 @@ import CustomerPunters from "./pages/customer/Punters"
 import CustomerSearch from "./pages/customer/Search";
 import PunterLayout from "./pages/punter/PunterLayout";
 import PunterHome from "./pages/punter/Home";
+import PunterHistory from "./pages/punter/History";
+import PunterLive from "./pages/punter/Live";
+import PunterProfile from "./pages/punter/Profile";
+import PunterCreate from "./pages/punter/Create";
 
 const App = () => {
   return (
@@ -55,9 +59,10 @@ const App = () => {
         >
           <Route index element={<PunterHome />} />
           <Route path="home" element={<PunterHome />} />
-          {/* <Route path="history" element={<History />} />
-          <Route path="wallet" element={<WalletScreen />} />
-          <Route path="profile" element={<Profile />} /> */}
+          <Route path="history" element={<PunterHistory />} />
+          <Route path="profile" element={<PunterProfile />} />
+          <Route path="live" element={<PunterLive />} />
+          <Route path="create" element={<PunterCreate />} />
         </Route>
       </Routes>
     </Router>
