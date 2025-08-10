@@ -26,49 +26,46 @@ import PunterCreate from "./pages/punter/Create";
 
 const App = () => {
   return (
-    <div>
-      <h1>The Punter Hub</h1>
-    </div>
-    // <Router>
-    //   <Routes>
-    //     <Route path="/" element={<SplashScreen />} />
-    //     <Route path="/welcome" element={<WelcomeScreen />} />
-    //     <Route path="/register" element={<RegisterScreen />} />
-    //     <Route path="/login" element={<LoginScreen />} />
+    <Router>
+      <Routes>
+        <Route path="/" element={<SplashScreen />} />
+        <Route path="/welcome" element={<WelcomeScreen />} />
+        <Route path="/register" element={<RegisterScreen />} />
+        <Route path="/login" element={<LoginScreen />} />
 
-    //     <Route
-    //       path="/customer/*"
-    //       element={
-    //         // <ProtectedRoute>
-    //         <CustomerLayout />
-    //         // {/* </ProtectedRoute> */}
-    //       }
-    //     >
-    //       <Route index element={<CustomerHome />} />
-    //       <Route path="home" element={<CustomerHome />} />
-    //       <Route path="feed" element={<CustomerFeed />} />
-    //       <Route path="live" element={<CustomerLive />} />
-    //       <Route path="profile" element={<CustomerProfile />} />
-    //       <Route path="punters" element={<CustomerPunters />} />
-    //       <Route path="search" element={<CustomerSearch />} />
-    //     </Route>
-    //     <Route
-    //       path="/punter/*"
-    //       element={
-    //         // <ProtectedRoute>
-    //         <PunterLayout />
-    //         // {/* </ProtectedRoute> */}
-    //       }
-    //     >
-    //       <Route index element={<PunterHome />} />
-    //       <Route path="home" element={<PunterHome />} />
-    //       <Route path="history" element={<PunterHistory />} />
-    //       <Route path="profile" element={<PunterProfile />} />
-    //       <Route path="live" element={<PunterLive />} />
-    //       <Route path="create" element={<PunterCreate />} />
-    //     </Route>
-    //   </Routes>
-    // </Router>
+        <Route
+          path="/customer/*"
+          element={
+            // <ProtectedRoute>
+            <CustomerLayout />
+            // {/* </ProtectedRoute> */}
+          }
+        >
+          <Route index element={<CustomerHome />} />
+          <Route path="home" element={<CustomerHome />} />
+          <Route path="feed" element={<CustomerFeed />} />
+          <Route path="live" element={<CustomerLive />} />
+          <Route path="profile" element={<CustomerProfile />} />
+          <Route path="punters" element={<CustomerPunters />} />
+          <Route path="search" element={<CustomerSearch />} />
+        </Route>
+        <Route
+          path="/punter/*"
+          element={
+            // <ProtectedRoute>
+            <PunterLayout />
+            // {/* </ProtectedRoute> */}
+          }
+        >
+          <Route index element={<PunterHome />} />
+          <Route path="home" element={<PunterHome />} />
+          <Route path="history" element={<PunterHistory />} />
+          <Route path="profile" element={<PunterProfile />} />
+          <Route path="live" element={<PunterLive />} />
+          <Route path="create" element={<PunterCreate />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 };
 
