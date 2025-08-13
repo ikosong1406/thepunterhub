@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import axios from "axios";
+import localforage from "localforage";
+import toast, { Toaster } from "react-hot-toast";
+import Api from "../components/Api";
 import "../styles/Splash.css";
 
 const LoginScreen = ({ platformName = "PH" }) => {
@@ -12,19 +16,90 @@ const LoginScreen = ({ platformName = "PH" }) => {
     phoneNumber: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    if (loginType === "email" && !formData.email) {
+      toast.error("Email is required.");
+      return false;
+    }
+    if (loginType === "phone" && !formData.phoneNumber) {
+      toast.error("Phone number is required.");
+      return false;
+    }
+    if (!formData.password) {
+      toast.error("Password is required.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/customer/home");
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    let loginData = {};
+    if (loginType === "email") {
+      loginData = {
+        email: formData.email,
+        password: formData.password,
+      };
+    } else {
+      loginData = {
+        countryCode: formData.phoneCode,
+        phonenumber: formData.phoneNumber,
+        password: formData.password,
+      };
+    }
+
+    try {
+      const response = await axios.post(`${Api}/client/login`, loginData);
+
+      if (response.status === 200) {
+        const { token, role } = response.data;
+
+        // Store token and role in localforage
+        await localforage.setItem("token", token);
+        await localforage.setItem("role", role);
+
+        toast.success("Login successful! Redirecting...", { duration: 2000 });
+
+        setTimeout(() => {
+          if (role === "user") {
+            navigate("/customer/home");
+          } else if (role === "punter") {
+            navigate("/punter/home");
+          } else {
+            // Fallback for unknown role
+            navigate("/welcome");
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      if (error.response) {
+        const errorMessage = error.response.data.error || "Login failed. Please check your credentials.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("An unexpected error occurred. Please check your network.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#09100d] text-white px-6 py-8 flex flex-col justify-start">
+      <Toaster position="top-center" reverseOrder={false} />
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -59,7 +134,6 @@ const LoginScreen = ({ platformName = "PH" }) => {
               className="glow-stroke"
             />
           </svg>
-
           {/* Inner Arc */}
           <svg className="absolute w-50 h-50 spin-medium" viewBox="0 0 100 100">
             <path
@@ -71,7 +145,6 @@ const LoginScreen = ({ platformName = "PH" }) => {
               className="glow-stroke"
             />
           </svg>
-
           {/* Center Circle */}
           <div className="relative flex items-center justify-center w-40 h-40 p-4 border-6 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
             <span className="text-white text-3xl font-bold tracking-widest uppercase">
@@ -152,9 +225,12 @@ const LoginScreen = ({ platformName = "PH" }) => {
 
         <button
           type="submit"
-          className="w-full py-3 mt-2 bg-[#18ffc8] text-black font-semibold rounded-xl hover:opacity-90 transition"
+          className={`w-full py-3 mt-2 font-semibold rounded-xl transition ${
+            loading ? "bg-[#98ffec] cursor-not-allowed" : "bg-[#18ffc8] text-black"
+          }`}
+          disabled={loading}
         >
-          Login
+          {loading ? "Logging In..." : "Login"}
         </button>
       </form>
     </div>

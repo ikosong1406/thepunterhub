@@ -2,9 +2,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import Api from "../components/Api";
 
 const SignupScreen = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -25,18 +29,84 @@ const SignupScreen = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const { firstname, lastname, email, phoneNumber, password, confirmPassword, acceptTerms } = formData;
+    if (!firstname || !lastname || !email || !phoneNumber || !password || !confirmPassword) {
+      toast.error("Please fill in all required fields.");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return false;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return false;
+    }
+    if (!acceptTerms) {
+      toast.error("You must accept the terms to continue.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.acceptTerms) {
-      alert("You must accept the terms to continue.");
+    if (!validateForm()) {
       return;
     }
-    // Handle form submit logic
-    console.log(formData);
+    setLoading(true);
+
+    const data = {
+      firstname: formData.firstname,
+      lastname: formData.lastname,
+      email: formData.email,
+      phoneCode: formData.phoneCode, // Keep the phone code separate
+      phoneNumber: formData.phoneNumber, // Correctly combine phone code and number
+      password: formData.password,
+      promoCode: formData.promoCode,
+    };
+
+    try {
+      const response = await axios.post(`${Api}/client/register`, data);
+      
+      if (response.status === 201) {
+        toast.success("Account created successfully! Redirecting to login...", { duration: 3000 });
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Signup failed:", error);
+      if (error.response) {
+        // This handles errors from the backend with a response body.
+        const { status, data } = error.response;
+        
+        if (status === 409) {
+          // 409 Conflict: user already exists
+          toast.error(data.message || "An account with this email or phone number already exists.");
+        } else if (status === 400) {
+          // 400 Bad Request: validation errors from the backend
+          toast.error(data.message || "Invalid data provided. Please check your form.");
+        } else {
+          // Generic error for other 4xx or 5xx status codes
+          toast.error(data.message || `Server error: ${status}`);
+        }
+      } else if (error.request) {
+        // The request was made but no response was received.
+        toast.error("No response from the server. Please check your internet connection.");
+      } else {
+        // Something happened in setting up the request that triggered an Error.
+        toast.error("An unexpected error occurred. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#09100d] text-white px-8 py-10">
+      <Toaster position="top-center" reverseOrder={false} />
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-2">
@@ -74,7 +144,6 @@ const SignupScreen = () => {
           className="w-full p-5 bg-[#162821] rounded-md mt-2"
           required
         />
-
         <input
           type="email"
           name="email"
@@ -84,7 +153,6 @@ const SignupScreen = () => {
           className="w-full p-5 bg-[#162821] rounded-md mt-2"
           required
         />
-
         {/* Phone number with country code */}
         <div className="flex gap-4 mt-2">
           <select
@@ -106,7 +174,6 @@ const SignupScreen = () => {
             required
           />
         </div>
-
         <input
           type="password"
           name="password"
@@ -116,7 +183,6 @@ const SignupScreen = () => {
           className="w-full p-5 bg-[#162821] rounded-md mt-2"
           required
         />
-
         <input
           type="password"
           name="confirmPassword"
@@ -126,7 +192,6 @@ const SignupScreen = () => {
           className="w-full p-5 bg-[#162821] rounded-md mt-2"
           required
         />
-
         <input
           type="text"
           name="promoCode"
@@ -135,7 +200,6 @@ const SignupScreen = () => {
           onChange={handleChange}
           className="w-full p-3 bg-[#162821] rounded-md mt-2"
         />
-
         {/* Terms Checkbox */}
         <label className="flex items-start gap-2 text-sm mt-2">
           <input
@@ -156,13 +220,13 @@ const SignupScreen = () => {
             </button>
           </span>
         </label>
-
-        {/* Submit */}
+        {/* Submit button with loading state */}
         <button
           type="submit"
-          className="w-full py-3 mt-4 bg-[#18ffc8] text-black font-semibold rounded-xl hover:opacity-90 transition mt-10"
+          className={`w-full py-3 mt-4 text-black font-semibold rounded-xl hover:opacity-90 transition mt-10 ${loading ? 'bg-[#98ffec] cursor-not-allowed' : 'bg-[#18ffc8]'}`}
+          disabled={loading}
         >
-          Sign Up
+          {loading ? "Signing Up..." : "Sign Up"}
         </button>
       </form>
     </div>
