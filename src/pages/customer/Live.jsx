@@ -23,8 +23,7 @@ const LiveSportsWidget = memo(({ activeSport }) => {
 
     const script = document.createElement("script");
     script.src =
-      // "https://ls.soccersapi.com/widget/res/wo_w9751_689c608d09691/widget.js";
-    script.src = "https://ls.soccersapi.com/widget/res/w_default/widget.js";
+      "https://ls.soccersapi.com/widget/res/wo_w9751_689c608d09691/widget.js";
     script.type = "text/javascript";
     script.async = true;
     script.id = "soccersapi-widget-script";
@@ -60,7 +59,7 @@ const LiveSportsWidget = memo(({ activeSport }) => {
     widgetDiv.id = "ls-widget";
     widgetDiv.className = "livescore-widget";
     widgetDiv.setAttribute("data-w", "wo_w9751_689c608d09691");
-    // widgetDiv.setAttribute("data-w", "w_default");
+    widgetDiv.setAttribute("data-height", "1200");
 
     container.current.appendChild(widgetDiv);
   }, [activeSport]);
