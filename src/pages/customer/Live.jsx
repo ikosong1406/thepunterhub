@@ -255,16 +255,10 @@ const LivePage = () => {
       <div className="space-y-4">
         {activePrimary === "sports" ? (
           <>
-            <h2 className="text-lg font-bold flex items-center">
-              Live {activeSport} Scores
-            </h2>
             <LiveSportsWidget key={activeSport} activeSport={activeSport} />
           </>
         ) : (
           <>
-            <h2 className="text-lg font-bold flex items-center">
-              Live {activeTrading} Prices
-            </h2>
             <TradingViewMarketWidget
               key={activeTrading}
               activeCategory={activeTrading}
