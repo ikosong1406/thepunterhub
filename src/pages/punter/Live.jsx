@@ -10,7 +10,7 @@ import {
 import { IoMdFootball } from "react-icons/io";
 import { GiTennisBall } from "react-icons/gi";
 import { GiHandOfGod } from "react-icons/gi";
-import Header from "../customer/Header";
+import Header from "./Header";
 
 // The new LiveSportsWidget component using the soccersapi.com widget
 const LiveSportsWidget = memo(({ activeSport }) => {
