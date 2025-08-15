@@ -1,81 +1,103 @@
-import { FiTrash2, FiEdit, FiCheck, FiX, FiChevronRight } from 'react-icons/fi'
-import { useState } from 'react'
-import Header from "./Header"
+import { FiTrash2, FiEdit, FiCheck, FiX, FiChevronRight } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import Api from "../../components/Api";
+import localforage from "localforage";
+import Header from "./Header";
 
 const TipsHistoryMobile = () => {
-  const [tips, setTips] = useState([
-    {
-      id: 1,
-      type: 'forex',
-      pair: "EUR/USD",
-      direction: "BUY",
-      entryPrice: "1.0850",
-      takeProfit: "1.0920",
-      stopLoss: "1.0800",
-      timeFrame: "H4",
-      confidence: 75,
-      status: "active",
-      postedAt: "30 mins ago",
-      result: null
-    },
-    {
-      id: 2,
-      type: 'crypto',
-      pair: "BTC/USDT",
-      direction: "SELL",
-      entryPrice: "42500",
-      takeProfit: "41000",
-      stopLoss: "43500",
-      timeFrame: "D1",
-      confidence: 68,
-      status: "closed",
-      postedAt: "2 days ago",
-      result: "win"
-    },
-  ])
+  const [tips, setTips] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState("all");
 
-  const [activeFilter, setActiveFilter] = useState('all')
-  const [swipeAction, setSwipeAction] = useState(null)
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const token = await localforage.getItem("token");
+        if (!token) {
+          throw new Error("No authentication token found.");
+        }
+        const userResponse = await axios.post(`${Api}/client/getUser`, { token });
+        const userData = userResponse.data.data;
+        setUser(userData);
+
+        const userId = userData._id;
+        const signalsResponse = await axios.post(`${Api}/client/getSignal`,{userId});
+        const sortedSignals = signalsResponse.data.signals.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setTips(sortedSignals);
+
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const deleteTip = (id) => {
-    setTips(tips.filter(tip => tip.id !== id))
-  }
+    // Implement delete logic with API call if needed
+    setTips(tips.filter((tip) => tip._id !== id));
+  };
 
-  const filteredTips = tips.filter(tip => {
-    if (activeFilter === 'all') return true
-    if (activeFilter === 'active') return tip.status === 'active'
-    if (activeFilter === 'closed') return tip.status === 'closed'
-    if (activeFilter === 'settled') return tip.status === 'settled'
-    return true
-  })
+  const filteredTips = tips.filter((tip) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "active") return tip.status === "active";
+    if (activeFilter === "win") return tip.result === "win";
+    if (activeFilter === "loss") return tip.result === "loss";
+    return true;
+  });
 
   const getStatusColor = (status, result) => {
-    if (result === 'win') return 'bg-[#18ffc8]/20 text-[#18ffc8]'
-    if (result === 'loss') return 'bg-[#f57cff]/20 text-[#f57cff]'
-    if (status === 'active') return 'bg-[#fea92a]/20 text-[#fea92a]'
-    return 'bg-[#376553]/20 text-[#efefef]'
-  }
+    if (result === "win") return "bg-[#18ffc8]/20 text-[#18ffc8]";
+    if (result === "loss") return "bg-[#f57cff]/20 text-[#f57cff]";
+    if (status === "active") return "bg-[#fea92a]/20 text-[#fea92a]";
+    return "bg-[#376553]/20 text-[#efefef]";
+  };
 
   const getDirectionColor = (direction) => {
-    return direction === 'BUY' 
-      ? 'bg-green-900/20 text-green-400' 
-      : 'bg-red-900/20 text-red-400'
-  }
+    return direction.toLowerCase() === "buy"
+      ? "bg-green-900/20 text-green-400"
+      : "bg-red-900/20 text-red-400";
+  };
+
+  const formatPostedAt = (dateString) => {
+    const now = new Date();
+    const postedDate = new Date(dateString);
+    const diffInMinutes = Math.floor((now - postedDate) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} mins ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hours ago`;
+    } else {
+      return `${diffInDays} days ago`;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#09100d] text-[#efefef] p-4 pb-20">
       <Header />
-      {/* Header */}
       <div className="sticky top-0 z-10 bg-[#09100d] border-b border-[#162821]">
         <div className="flex space-x-2 mt-3 overflow-x-auto pb-2">
-          {['all', 'active', 'closed', 'settled'].map(filter => (
+          {["all", "active", "win", "loss"].map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
               className={`px-3 py-1 rounded-full text-xs capitalize whitespace-nowrap ${
-                activeFilter === filter 
-                  ? 'bg-[#fea92a] text-[#09100d]' 
-                  : 'bg-[#162821] text-[#efefef]'
+                activeFilter === filter
+                  ? "bg-[#fea92a] text-[#09100d]"
+                  : "bg-[#162821] text-[#efefef]"
               }`}
             >
               {filter}
@@ -83,130 +105,138 @@ const TipsHistoryMobile = () => {
           ))}
         </div>
       </div>
-
-      {/* Tips List */}
+      <hr className="my-4" />
       <div className="pt-4 space-y-3">
-        {filteredTips.length === 0 ? (
+        {loading ? (
           <div className="text-center py-10 text-[#efefef]/50">
-            No tips found for this filter
+            Loading tips...
+          </div>
+        ) : error ? (
+          <div className="text-center py-10 text-red-500/50">
+            Error: {error}
+          </div>
+        ) : filteredTips.length === 0 ? (
+          <div className="text-center py-10 text-[#efefef]/50">
+            No tips found for this filter.
           </div>
         ) : (
-          filteredTips.map(tip => (
-            <div 
-              key={tip.id}
-              className="relative overflow-hidden rounded-xl bg-[#162821] border border-[#376553]/30"
+          filteredTips.map((tip) => (
+            <div
+              key={tip._id}
+              className="relative rounded-xl bg-[#162821] border border-[#376553]/30 p-4"
             >
-              {/* Swipe actions background */}
-              <div className="absolute inset-0 flex">
-                <div 
-                  className="w-1/2 bg-[#fea92a] flex items-center justify-start pl-4"
-                  onClick={() => console.log('Edit', tip.id)}
-                >
-                  <FiEdit className="text-[#09100d]" size={20} />
+              {/* Tip Card Content */}
+              <div className="flex justify-between items-start">
+                <div>
+                  {tip.primaryCategory === "sports" ? (
+                    <h3 className="font-medium">{tip.bettingSite}</h3>
+                  ) : (
+                    <div className="flex items-center">
+                      <h3 className="font-medium mr-2">{tip.pair}</h3>
+                      {tip.direction && (
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs ${getDirectionColor(
+                            tip.direction
+                          )}`}
+                        >
+                          {tip.direction.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-sm text-[#efefef]/70 mt-1">
+                    {formatPostedAt(tip.createdAt)}
+                  </p>
                 </div>
-                <div 
-                  className="w-1/2 bg-[#f57cff] flex items-center justify-end pr-4"
-                  onClick={() => deleteTip(tip.id)}
+                <span
+                  className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(
+                    tip.status,
+                    tip.result
+                  )}`}
                 >
-                  <FiTrash2 className="text-[#09100d]" size={20} />
+                  {tip.result || tip.status}
+                </span>
+              </div>
+              
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {tip.primaryCategory !== "sports" ? (
+                  <>
+                    <div className="text-sm">
+                      <p className="text-[#efefef]/70">Entry</p>
+                      <p>{tip.entryPrice}</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-[#efefef]/70">Take Profit</p>
+                      <p className="text-[#18ffc8]">{tip.takeProfit}</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-[#efefef]/70">Stop Loss</p>
+                      <p className="text-[#f57cff]">{tip.stopLoss}</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-[#efefef]/70">Time Frame</p>
+                      <p>{tip.timeFrame}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-sm">
+                      <p className="text-[#efefef]/70">Site</p>
+                      <p>{tip.bettingSite}</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-[#efefef]/70">Code</p>
+                      <p>{tip.bettingCode}</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-[#efefef]/70">Total Odd</p>
+                      <p>{tip.totalOdd}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              <div className="mt-3">
+                <div className="flex justify-between text-xs mb-1">
+                  <span>Confidence Level</span>
+                  <span>{tip.confidenceLevel}%</span>
+                </div>
+                <div className="w-full bg-[#376553]/30 h-2 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${
+                      tip.confidenceLevel >= 80
+                        ? "bg-[#18ffc8]"
+                        : tip.confidenceLevel >= 60
+                        ? "bg-[#fea92a]"
+                        : "bg-[#f57cff]"
+                    }`}
+                    style={{ width: `${tip.confidenceLevel}%` }}
+                  ></div>
                 </div>
               </div>
 
-              {/* Tip Card - swipeable */}
-              <div 
-                className="relative bg-[#162821] p-4 transition-transform duration-300"
-                style={{ transform: swipeAction === tip.id ? 'translateX(-100%)' : 'translateX(0)' }}
-                onTouchStart={(e) => setSwipeAction(tip.id)}
-                onTouchEnd={() => setSwipeAction(null)}
-              >
-                {/* Tip Header */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    {tip.type === 'sports' ? (
-                      <h3 className="font-medium">{tip.event}</h3>
-                    ) : (
-                      <div className="flex items-center">
-                        <h3 className="font-medium mr-2">{tip.pair}</h3>
-                        {tip.direction && (
-                          <span className={`px-2 py-0.5 rounded text-xs ${getDirectionColor(tip.direction)}`}>
-                            {tip.direction}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <p className="text-sm text-[#efefef]/70 mt-1">{tip.postedAt}</p>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(tip.status, tip.result)}`}>
-                    {tip.result || tip.status}
-                  </span>
-                </div>
-
-                {/* Tip Details */}
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {tip.type !== 'sports' ? (
-                    <>
-                      <div className="text-sm">
-                        <p className="text-[#efefef]/70">Entry</p>
-                        <p>{tip.entryPrice}</p>
-                      </div>
-                      <div className="text-sm">
-                        <p className="text-[#efefef]/70">Take Profit</p>
-                        <p className="text-[#18ffc8]">{tip.takeProfit}</p>
-                      </div>
-                      <div className="text-sm">
-                        <p className="text-[#efefef]/70">Stop Loss</p>
-                        <p className="text-[#f57cff]">{tip.stopLoss}</p>
-                      </div>
-                      <div className="text-sm">
-                        <p className="text-[#efefef]/70">Time Frame</p>
-                        <p>{tip.timeFrame}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-sm">
-                        <p className="text-[#efefef]/70">Market</p>
-                        <p>{tip.market}</p>
-                      </div>
-                      <div className="text-sm">
-                        <p className="text-[#efefef]/70">Odds</p>
-                        <p>{tip.odds}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Confidence Meter */}
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Confidence Level</span>
-                    <span>{tip.confidence}%</span>
-                  </div>
-                  <div className="w-full bg-[#376553]/30 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${
-                        tip.confidence >= 80 ? 'bg-[#18ffc8]' : 
-                        tip.confidence >= 60 ? 'bg-[#fea92a]' : 'bg-[#f57cff]'
-                      }`}
-                      style={{ width: `${tip.confidence}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Hidden actions hint */}
-                <div className="absolute bottom-2 right-2 text-[#efefef]/30">
-                  <FiChevronRight size={18} />
-                </div>
+              {/* Action Buttons */}
+              <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-end space-x-4">
+                <button
+                  onClick={() => console.log("Edit", tip._id)}
+                  className="p-2 rounded-full bg-[#fea92a]/20 text-[#fea92a] hover:bg-[#fea92a] hover:text-[#09100d]"
+                >
+                  <FiEdit size={18} />
+                </button>
+                <button
+                  onClick={() => deleteTip(tip._id)}
+                  className="p-2 rounded-full bg-[#f57cff]/20 text-[#f57cff] hover:bg-[#f57cff] hover:text-[#09100d]"
+                >
+                  <FiTrash2 size={18} />
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
-
-      {/* Bottom padding for mobile */}
       <div className="h-16"></div>
     </div>
-  )
-}
+  );
+};
 
-export default TipsHistoryMobile
+export default TipsHistoryMobile;

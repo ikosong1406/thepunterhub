@@ -226,7 +226,7 @@ const LoginScreen = ({ platformName = "PH" }) => {
         <button
           type="submit"
           className={`w-full py-3 mt-2 font-semibold rounded-xl transition ${
-            loading ? "bg-[#98ffec] cursor-not-allowed" : "bg-[#18ffc8] text-black"
+            loading ? "bg-[#98ffec] text-black cursor-not-allowed" : "bg-[#18ffc8] text-black"
           }`}
           disabled={loading}
         >

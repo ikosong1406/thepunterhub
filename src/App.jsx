@@ -19,6 +19,7 @@ import CustomerLive from "./pages/customer/Live";
 import CustomerProfile from "./pages/customer/Profile";
 import CustomerPunters from "./pages/customer/Punters";
 import CustomerSearch from "./pages/customer/Search";
+import CustomerBecome from "./pages/customer/Become"
 import PunterLayout from "./pages/punter/PunterLayout";
 import PunterHome from "./pages/punter/Home";
 import PunterHistory from "./pages/punter/History";
@@ -102,11 +103,11 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 
   if (!authStatus.isAuthenticated) {
-    return <Navigate to="/welcome" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (requiredRole && authStatus.role !== requiredRole) {
-    return <Navigate to="/welcome" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;
@@ -139,6 +140,7 @@ const App = () => {
           <Route path="profile" element={<CustomerProfile />} />
           <Route path="punters" element={<CustomerPunters />} />
           <Route path="search" element={<CustomerSearch />} />
+          <Route path="become" element={<CustomerBecome />} />
         </Route>
         <Route
           path="/punter/*"
