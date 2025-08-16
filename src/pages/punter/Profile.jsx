@@ -104,7 +104,7 @@ const ProfilePage = () => {
                 {user.isPunter ? user.username : "User"}
               </h1>
               <p className="text-xs" style={{ color: "#18ffc8" }}>
-                {user.isPunter ? "Punter Account" : "User Account"}
+               Punter Account
               </p>
             </div>
           </div>
