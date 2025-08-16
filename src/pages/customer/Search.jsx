@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "../customer/Header";
 import Api from "../../components/Api";
-import Basketball from "../../components/basketball"
 
 const PunterSearchPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,13 +22,11 @@ const PunterSearchPage = () => {
         // Ensure the response data is an array before setting state
         if (Array.isArray(response.data.data)) {
           setAllPunters(response.data.data);
-          setFilteredPunters(response.data.data); // Initially show all punters
+          // Do NOT set filteredPunters here. It should start empty.
         } else {
-          // If the API returns something other than an array, handle it gracefully
           console.error("API response is not an array:", response.data);
           setError("Received invalid data from the server.");
           setAllPunters([]);
-          setFilteredPunters([]);
         }
         setLoading(false);
       } catch (err) {
@@ -44,7 +41,7 @@ const PunterSearchPage = () => {
   // Filter punters based on search term
   useEffect(() => {
     if (searchTerm.trim() === "") {
-      setFilteredPunters(allPunters);
+      setFilteredPunters([]); // Clear results when search term is empty
     } else {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const results = allPunters.filter(
@@ -65,7 +62,6 @@ const PunterSearchPage = () => {
   };
 
   const PunterCard = ({ punter }) => {
-
     return (
       <div
         onClick={() => handlePunterClick(punter._id)}
@@ -116,17 +112,31 @@ const PunterSearchPage = () => {
       return <div className="text-center py-10 text-red-400">{error}</div>;
     }
 
-    // Add a robust check to ensure filteredPunters is an array before mapping
-    if (!Array.isArray(filteredPunters) || filteredPunters.length === 0) {
+    // New logic: Check if a search has been performed
+    const hasSearched = searchTerm.trim() !== "";
+    const hasResults = filteredPunters.length > 0;
+
+    if (hasSearched && !hasResults) {
       return (
         <div className="text-center py-10">
           <div className="text-gray-400 mb-4">
             <FaSearch className="mx-auto text-4xl" />
           </div>
           <h3 className="text-lg font-medium text-white">No punters found</h3>
-          {searchTerm && (
-            <p className="text-gray-400 mt-1">No results for "{searchTerm}"</p>
-          )}
+          <p className="text-gray-400 mt-1">No results for "{searchTerm}"</p>
+        </div>
+      );
+    }
+    
+    if (!hasSearched) {
+      return (
+        <div className="text-center py-10">
+          <div className="text-gray-400 mb-4">
+            <FaSearch className="mx-auto text-4xl" />
+          </div>
+          <h3 className="text-lg font-medium text-white">
+            Search for punters by name or specialty.
+          </h3>
         </div>
       );
     }
@@ -156,10 +166,9 @@ const PunterSearchPage = () => {
               onClick={() => setSearchTerm("")}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white"
             >
-              ×
+              &times;
             </button>
           )}
-          {/* <Basketball/> */}
         </div>
       </div>
       <div>{renderContent()}</div>
