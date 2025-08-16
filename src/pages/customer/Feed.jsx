@@ -3,17 +3,11 @@ import localforage from "localforage";
 import axios from "axios";
 import {
   FaFootballBall,
-  FaBasketballBall,
-  FaVolleyballBall,
-  FaBaseballBall,
-  FaStar,
-  FaRegClock,
   FaChartLine,
-  FaBitcoin,
+  FaStar,
   FaDollarSign,
+  FaBitcoin,
 } from "react-icons/fa";
-import { IoMdFootball } from "react-icons/io";
-import { GiTennisBall } from "react-icons/gi";
 import Header from "../customer/Header";
 import Api from "../../components/Api";
 
@@ -23,33 +17,8 @@ const primaryCategories = [
   { name: "Trading", key: "trading", icon: <FaChartLine /> },
 ];
 
-// Sport Subcategories
-const sportCategories = [
-  { name: "Football", icon: <IoMdFootball size={20} />, key: "football" },
-  {
-    name: "Basketball",
-    icon: <FaBasketballBall size={18} />,
-    key: "basketball",
-  },
-  {
-    name: "Volleyball",
-    icon: <FaVolleyballBall size={18} />,
-    key: "volleyball",
-  },
-  { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
-  { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
-];
-
-// Trading Subcategories
-const tradingCategories = [
-  { name: "Forex", icon: <FaDollarSign size={18} />, key: "forex" },
-  { name: "Crypto", icon: <FaBitcoin size={18} />, key: "crypto" },
-];
-
 const FeedPage = () => {
   const [activePrimary, setActivePrimary] = useState("sports");
-  const [activeSport, setActiveSport] = useState("football");
-  const [activeTrading, setActiveTrading] = useState("forex");
   const [feedData, setFeedData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -58,7 +27,7 @@ const FeedPage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = await localforage.getItem("token"); // or wherever you store your auth token
+        const token = await localforage.getItem("token");
         if (!token) {
           throw new Error("No authentication token found.");
         }
@@ -76,15 +45,15 @@ const FeedPage = () => {
     fetchUserData();
   }, []);
 
-  // Fetch feed data from the backend
+  // Fetch feed data from the backend based only on the primary category
   useEffect(() => {
-    // Only attempt to fetch the feed if the user object exists
     if (user) {
       const fetchFeed = async () => {
         setLoading(true);
         try {
           const response = await axios.post(`${Api}/client/getFeed`, {
             userId: user._id,
+            category: activePrimary, // Send only the primary category
           });
           setFeedData(response.data);
         } catch (error) {
@@ -96,7 +65,7 @@ const FeedPage = () => {
       };
       fetchFeed();
     }
-  }, [activePrimary, activeSport, activeTrading, user]);
+  }, [activePrimary, user]);
 
   // Render a single sport betting tip card
   const renderSportTip = (tip) => (
@@ -278,12 +247,10 @@ const FeedPage = () => {
       );
     }
 
-    // Add a check to ensure feedData is a non-empty array
     if (!feedData || !Array.isArray(feedData) || feedData.length === 0) {
       return (
         <div className="text-center py-8 text-gray-400">
-          No {activePrimary === "sports" ? "tips" : "signals"} available for{" "}
-          {activePrimary === "sports" ? activeSport : activeTrading} right now.
+          No {activePrimary === "sports" ? "tips" : "signals"} available right now.
         </div>
       );
     }
@@ -316,54 +283,16 @@ const FeedPage = () => {
         ))}
       </div>
 
-      {/* Secondary Category Selection */}
-      <div className="flex overflow-x-auto gap-2 mb-6 pb-2">
-        {activePrimary === "sports"
-          ? sportCategories.map((category) => (
-              <button
-                key={category.key}
-                onClick={() => setActiveSport(category.key)}
-                className={`flex flex-col items-center min-w-[70px] px-3 py-2 rounded-xl ${
-                  activeSport === category.key
-                    ? "bg-[#855391] text-white shadow-lg"
-                    : "bg-[#162821] text-white"
-                }`}
-              >
-                {category.icon}
-                <span className="text-xs mt-1">{category.name}</span>
-              </button>
-            ))
-          : tradingCategories.map((category) => (
-              <button
-                key={category.key}
-                onClick={() => setActiveTrading(category.key)}
-                className={`flex flex-col items-center min-w-[70px] px-3 py-2 rounded-xl ${
-                  activeTrading === category.key
-                    ? "bg-[#855391] text-white shadow-lg"
-                    : "bg-[#162821] text-white"
-                }`}
-              >
-                {category.icon}
-                <span className="text-xs mt-1">{category.name}</span>
-              </button>
-            ))}
-      </div>
-
-      {/* Feed Content */}
+      {/* The secondary category selection is removed */}
       <div className="space-y-6">
         <h2 className="text-xl font-bold flex items-center">
           {activePrimary === "sports" ? (
             <FaStar className="mr-2 text-[#fea92a]" />
-          ) : activeTrading === "forex" ? (
-            <FaDollarSign className="mr-2" />
           ) : (
-            <FaBitcoin className="mr-2" />
+            <FaChartLine className="mr-2" />
           )}
-          {activePrimary === "sports"
-            ? `${activeSport} Betting Tips`
-            : `${activeTrading} Trading Signals`}
+          {activePrimary === "sports" ? "Sports Betting Tips" : "Trading Signals"}
         </h2>
-
         {renderFeedContent()}
       </div>
     </div>

@@ -34,8 +34,6 @@ const Header = ({ platformName = "Punter Hub" }) => {
   }, []);
 
   const handleSwitchClick = async () => {
-    // Show loading toast immediately
-    const toastId = toast.loading("Processing your request...");
     
     try {
       // Check if user data is loaded and is a punter

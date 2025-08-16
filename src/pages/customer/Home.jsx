@@ -6,19 +6,15 @@ import Header from "./Header";
 import {
   FaFootballBall,
   FaBasketballBall,
-  FaVolleyballBall,
-  FaBaseballBall,
-  FaStar,
-  FaRegClock,
   FaChartLine,
   FaBitcoin,
   FaDollarSign,
+  FaBaseballBall,
+  FaChartBar,
+  FaStar,
 } from "react-icons/fa";
 import { IoMdFootball } from "react-icons/io";
-import { GiTennisBall } from "react-icons/gi";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import { GiTennisBall, GiMetalDisc } from "react-icons/gi";
 
 // ---------------------- TRADINGVIEW TICKER ----------------------
 const forexSymbols = [
@@ -39,6 +35,23 @@ const cryptoSymbols = [
   { proName: "BINANCE:DOGEUSDT", title: "Dogecoin" },
 ];
 
+const commoditiesSymbols = [
+  { proName: "TVC:GOLD", title: "Gold" },
+  { proName: "TVC:SILVER", title: "Silver" },
+  { proName: "COMEX:GC1!", title: "Gold Futures" },
+  { proName: "NYMEX:CL1!", title: "Crude Oil" },
+  { proName: "AMEX:UNG", title: "Nat Gas" },
+  { proName: "COMEX:HG1!", title: "Copper" },
+];
+
+const indicesSymbols = [
+  { proName: "FOREXCOM:SPXUSD", title: "S&P 500" },
+  { proName: "NASDAQ:NDAQ", title: "NASDAQ" },
+  { proName: "DOWJONES:DJI", title: "Dow Jones" },
+  { proName: "CAPITALCOM:UK100", title: "FTSE 100" },
+  { proName: "EU:DAX40", title: "DAX 40" },
+];
+
 const TradingViewTicker = memo(({ tradingType }) => {
   const container = useRef();
   useEffect(() => {
@@ -48,7 +61,23 @@ const TradingViewTicker = memo(({ tradingType }) => {
       "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
     script.type = "text/javascript";
     script.async = true;
-    const symbols = tradingType === "forex" ? forexSymbols : cryptoSymbols;
+    let symbols;
+    switch (tradingType) {
+      case "forex":
+        symbols = forexSymbols;
+        break;
+      case "crypto":
+        symbols = cryptoSymbols;
+        break;
+      case "commodities":
+        symbols = commoditiesSymbols;
+        break;
+      case "indices":
+        symbols = indicesSymbols;
+        break;
+      default:
+        symbols = [];
+    }
     script.innerHTML = JSON.stringify({
       symbols,
       colorTheme: "dark",
@@ -73,12 +102,12 @@ const TradingViewTicker = memo(({ tradingType }) => {
 const LiveScoreTicker = () => {
   useEffect(() => {
     // Create the container div with the exact ID from Broadage
-    const container = document.createElement('div');
+    const container = document.createElement("div");
     container.id = "DOM_element_id_in_your_website_1755209641568";
-    document.getElementById('broadage-ticker-container').appendChild(container);
+    document.getElementById("broadage-ticker-container").appendChild(container);
 
     // Load the Broadage script exactly as provided
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.innerHTML = `
       (function(b, s, p, o, r, t) {
         b["broadage"] = b["broadage"] || [];
@@ -106,23 +135,25 @@ const LiveScoreTicker = () => {
 
     return () => {
       // Cleanup
-      const container = document.getElementById('DOM_element_id_in_your_website_1755209641568');
+      const container = document.getElementById(
+        "DOM_element_id_in_your_website_1755209641568"
+      );
       if (container) container.remove();
       const scripts = document.querySelectorAll('script[src*="broadage.com"]');
-      scripts.forEach(script => script.remove());
+      scripts.forEach((script) => script.remove());
     };
   }, []);
 
   return (
-    <div 
+    <div
       id="broadage-ticker-container"
       style={{
-        width: '100%',
-        minHeight: '50px',
-        backgroundColor: '#0a120e',
-        border: '1px solid #2a3a34',
-        borderRadius: '8px',
-        overflow: 'hidden'
+        width: "100%",
+        minHeight: "50px",
+        backgroundColor: "#0a120e",
+        border: "1px solid #2a3a34",
+        borderRadius: "8px",
+        overflow: "hidden",
       }}
     />
   );
@@ -141,11 +172,6 @@ const sportCategories = [
     icon: <FaBasketballBall size={18} />,
     key: "basketball",
   },
-  {
-    name: "Volleyball",
-    icon: <FaVolleyballBall size={18} />,
-    key: "volleyball",
-  },
   { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
   { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
 ];
@@ -153,6 +179,8 @@ const sportCategories = [
 const tradingCategories = [
   { name: "Forex", icon: <FaDollarSign size={18} />, key: "forex" },
   { name: "Crypto", icon: <FaBitcoin size={18} />, key: "crypto" },
+  { name: "Commodities", icon: <GiMetalDisc size={18} />, key: "commodities" },
+  { name: "Indices", icon: <FaChartBar size={18} />, key: "indices" },
 ];
 
 // ---------------------- HOME COMPONENT ----------------------
@@ -189,8 +217,8 @@ const Home = () => {
 
   const renderPunterCard = (punter) => {
     const winRate =
-      punter.wins && punter.losses
-        ? (punter.wins / (punter.wins + punter.losses)) * 100
+      punter.win && punter.loss
+        ? (punter.win / (punter.win + punter.loss)) * 100
         : 0;
 
     return (
@@ -228,13 +256,13 @@ const Home = () => {
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
               <div className="bg-[#0a120e] p-2 rounded">
                 <div className="text-green-400 font-bold">
-                  {punter.wins || 0}W
+                  {punter.win || 0}
                 </div>
                 <div className="text-xs text-gray-400">Wins</div>
               </div>
               <div className="bg-[#0a120e] p-2 rounded">
                 <div className="text-red-400 font-bold">
-                  {punter.losses || 0}L
+                  {punter.loss || 0}
                 </div>
                 <div className="text-xs text-gray-400">Losses</div>
               </div>
@@ -248,28 +276,17 @@ const Home = () => {
           </div>
         </div>
         <div className="border-t border-[#2a3a34] p-3 flex justify-between items-center">
-          <div className="text-sm">
-            <span className="text-gray-400">Last signal: </span>
-            <span className="font-medium">{punter.lastSignal || "N/A"}</span>
-          </div>
           <button className="bg-[#f57cff] text-black font-bold px-4 py-2 rounded-full text-sm">
-            Subscribe {punter.subscription || "N/A"}
+            Subscribe {punter.price || "N/A"}
           </button>
         </div>
       </div>
     );
   };
 
-  const filteredPunters = punters.filter((punter) => {
-    if (activePrimary === "sports") {
-      if (punter.primaryCategory?.toLowerCase() !== "sports") return false;
-      return punter.secondaryCategory?.toLowerCase() === activeSport;
-    } else if (activePrimary === "trading") {
-      if (punter.primaryCategory?.toLowerCase() !== "trading") return false;
-      return punter.secondaryCategory?.toLowerCase() === activeTrading;
-    }
-    return false;
-  });
+  const filteredPunters = punters.filter(
+    (punter) => punter.primaryCategory?.toLowerCase() === activePrimary
+  );
 
   return (
     <div className="bg-[#0a120e] min-h-screen text-white px-4 py-6 pb-20">
@@ -351,8 +368,10 @@ const Home = () => {
       <div>
         <h2 className="text-xl font-bold mb-4 flex items-center">
           <FaStar className="mr-2 text-[#fea92a]" />
-          Top {activePrimary === "sports" ? activeSport : activeTrading}{" "}
-          {activePrimary === "sports" ? "Punters" : "Traders"}
+          Top{" "}
+          {activePrimary === "sports"
+            ? "Punters"
+            : `Traders (${activeTrading})`}
         </h2>
         {loading ? (
           <div className="text-center text-gray-400 py-8">

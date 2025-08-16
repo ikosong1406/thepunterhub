@@ -6,17 +6,13 @@ import {
   FaBitcoin,
   FaDollarSign,
   FaBaseballBall,
-  FaRegNewspaper,
   FaChartBar,
-  FaChessKnight,
 } from "react-icons/fa";
 import { IoMdFootball } from "react-icons/io";
 import {
   GiTennisBall,
-  GiCricketBat,
   GiMetalDisc,
 } from "react-icons/gi";
-// import { TbStock } from "react-icons/tb";
 import Header from "./Header";
 
 // Helper function to create a script element
@@ -258,7 +254,6 @@ const tradingCategories = [
   { name: "Crypto", icon: <FaBitcoin size={18} />, key: "crypto" },
   { name: "Commodities", icon: <GiMetalDisc size={18} />, key: "commodities" },
   { name: "Indices", icon: <FaChartBar size={18} />, key: "indices" },
-  // { name: "Stocks", icon: <TbStock size={18} />, key: "stocks" },
 ];
 
 const LivePage = () => {

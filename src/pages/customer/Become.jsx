@@ -52,6 +52,7 @@ const BecomePunter = () => {
   const [primaryCategory, setPrimaryCategory] = useState("");
   const [secondaryCategory, setSecondaryCategory] = useState("");
   const [subcategories, setSubcategories] = useState([]);
+  const [pricePerWeek, setPricePerWeek] = useState(""); // New state for price
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -126,6 +127,10 @@ const BecomePunter = () => {
       setError("Please select your secondary category.");
       return;
     }
+    if (!pricePerWeek || isNaN(pricePerWeek) || parseFloat(pricePerWeek) <= 0) {
+      setError("Please enter a valid price per week.");
+      return;
+    }
     if (!agreedToTerms) {
       setError("You must agree to the terms and conditions.");
       return;
@@ -140,15 +145,19 @@ const BecomePunter = () => {
         username,
         primaryCategory,
         secondaryCategory,
+        price: parseFloat(pricePerWeek), // Add the price
       };
-      
+
       const response = await axios.post(`${Api}/client/becomePunter`, data);
-      
+
       // Update toast to success and redirect after delay
-      toast.success("Registration successful! Redirecting, please login again with your details", {
-        duration: 3000,
-      });
-      
+      toast.success(
+        "Registration successful! Redirecting, please login again with your details",
+        {
+          duration: 3000,
+        }
+      );
+
       setTimeout(() => {
         navigate("/punter/home");
       }, 3000);
@@ -196,7 +205,7 @@ const BecomePunter = () => {
       }}
     >
       <Toaster position="top-center" />
-      
+
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column - Information */}
@@ -484,7 +493,9 @@ const BecomePunter = () => {
                     }}
                     disabled={isSubmitting || !primaryCategory}
                   >
-                    <option value="">Select your {primaryCategory === "sports" ? "sport" : "market"}</option>
+                    <option value="">
+                      Select your {primaryCategory === "sports" ? "sport" : "market"}
+                    </option>
                     {subcategories.map((subcategory) => (
                       <option key={subcategory.value} value={subcategory.value}>
                         {subcategory.label}
@@ -493,6 +504,32 @@ const BecomePunter = () => {
                   </select>
                 </div>
               )}
+
+              {/* Price per Week Input */}
+              <div className="mb-6">
+                <label
+                  htmlFor="price-per-week"
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: Colors.white }}
+                >
+                  Price per Week (in Coin)
+                </label>
+                <input
+                  type="number"
+                  id="price-per-week"
+                  value={pricePerWeek}
+                  onChange={(e) => setPricePerWeek(e.target.value)}
+                  className="block w-full px-3 py-2 rounded-md focus:outline-none sm:text-sm"
+                  style={{
+                    backgroundColor: Colors.black,
+                    border: `1px solid ${Colors.lightGray}`,
+                    color: Colors.white,
+                  }}
+                  disabled={isSubmitting}
+                  placeholder="e.g. 100"
+                  min="0"
+                />
+              </div>
 
               <div className="mb-6">
                 <div className="flex items-start">
@@ -569,6 +606,7 @@ const BecomePunter = () => {
                     usernameStatus !== "available" ||
                     !primaryCategory ||
                     !secondaryCategory ||
+                    !pricePerWeek || // Add price validation
                     isSubmitting
                       ? 0.5
                       : 1,
@@ -578,6 +616,7 @@ const BecomePunter = () => {
                   usernameStatus !== "available" ||
                   !primaryCategory ||
                   !secondaryCategory ||
+                  !pricePerWeek || // Add price validation
                   isSubmitting
                 }
               >
