@@ -12,10 +12,18 @@ import {
 } from "react-icons/fa";
 import { IoMdAdd } from "react-icons/io";
 
+import WithdrawModal from "../../components/WithdrawModal";
+import PersonalInfoModal from "../../components/PersonalInfoModal";
+import TransactionHistoryModal from "../../components/TransactionHistoryModal";
+import HelpCenterModal from "../../components/HelpCenterModal";
+import ContactUsModal from "../../components/ContactUsModal";
+
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+    const [activeModal, setActiveModal] = useState(null);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -37,6 +45,15 @@ const ProfilePage = () => {
 
     fetchUserData();
   }, []);
+
+  const handleSignOut = async () => {
+    await localforage.removeItem("token");
+    window.location.href = "/login";
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+  };
 
   if (loading) {
     return (
@@ -70,14 +87,6 @@ const ProfilePage = () => {
       </div>
     );
   }
-
-  const handleSignOut = () => {
-    localStorage.removeItem("token");
-    // Redirect to login page or home page
-    window.location.href = "/login";
-  };
-
-  const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#09100d" }}>
@@ -135,6 +144,7 @@ const ProfilePage = () => {
             <button
               className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium"
               style={{ backgroundColor: "#fea92a", color: "#09100d" }}
+                onClick={() => setActiveModal("withdraw")}
             >
               <IoMdAdd className="text-sm" />
               <span>Withdraw</span>
@@ -153,9 +163,16 @@ const ProfilePage = () => {
             Account
           </h3>
           <div className="space-y-2">
-            <MenuItem icon={<FaUser />} title="Personal Information" />
-            <MenuItem icon={<FaHistory />} title="Transaction History" />
-            <MenuItem icon={<FaWallet />} title="Payment Details" />
+            <MenuItem
+              icon={<FaUser />}
+              title="Personal Information"
+              onClick={() => setActiveModal("personal-info")}
+            />
+            <MenuItem
+              icon={<FaHistory />}
+              title="Transaction History"
+              onClick={() => setActiveModal("transaction-history")}
+            />
           </div>
         </div>
 
@@ -167,14 +184,22 @@ const ProfilePage = () => {
             Support
           </h3>
           <div className="space-y-2">
-            <MenuItem icon={<FaQuestionCircle />} title="Help Center" />
-            <MenuItem icon={<FaQuestionCircle />} title="Contact Us" />
+            <MenuItem
+              icon={<FaQuestionCircle />}
+              title="Help Center"
+              onClick={() => setActiveModal("help-center")}
+            />
+            <MenuItem
+              icon={<FaQuestionCircle />}
+              title="Contact Us"
+              onClick={() => setActiveModal("contact-us")}
+            />
           </div>
         </div>
 
         <div className="mt-8">
           <button
-            onClick={handleSignOut}
+            onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center justify-center space-x-2 py-3 rounded-lg font-medium"
             style={{ backgroundColor: "#376553", color: "#efefef" }}
           >
@@ -183,15 +208,76 @@ const ProfilePage = () => {
           </button>
         </div>
       </div>
+
+            {/* Modals */}
+      {activeModal === "withdraw" && (
+        <WithdrawModal
+          user={user}
+          onClose={closeModal}
+          onWithdrawSuccess={(newBalance) => {
+            setUser({ ...user, balance: newBalance });
+            closeModal();
+          }}
+        />
+      )}
+      {activeModal === "personal-info" && (
+        <PersonalInfoModal user={user} onClose={closeModal} />
+      )}
+      {activeModal === "transaction-history" && (
+        <TransactionHistoryModal user={user} onClose={closeModal} />
+      )}
+      {activeModal === "help-center" && (
+        <HelpCenterModal onClose={closeModal} />
+      )}
+      {activeModal === "contact-us" && (
+        <ContactUsModal onClose={closeModal} />
+      )}
+
+      {/* Logout Confirmation */}
+      {showLogoutConfirm && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
+          style={{ backgroundColor: "rgba(9, 16, 13, 0.8)" }}
+        >
+          <div
+            className="bg-gray rounded-lg p-6 max-w-sm w-full"
+            style={{ backgroundColor: "#162821" }}
+          >
+            <h3 className="text-lg font-bold mb-4" style={{ color: "#efefef" }}>
+              Confirm Logout
+            </h3>
+            <p style={{ color: "#efefef", marginBottom: "1.5rem" }}>
+              Are you sure you want to sign out?
+            </p>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2 rounded-lg"
+                style={{ backgroundColor: "#376553", color: "#efefef" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex-1 py-2 rounded-lg font-medium"
+                style={{ backgroundColor: "#fea92a", color: "#09100d" }}
+              >
+                Yes, Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Reusable menu item component
-const MenuItem = ({ icon, title }) => (
+const MenuItem = ({ icon, title, onClick }) => (
   <div
-    className="flex items-center justify-between p-3 rounded-lg"
+    className="flex items-center justify-between p-3 rounded-lg cursor-pointer"
     style={{ backgroundColor: "#162821" }}
+    onClick={onClick}
   >
     <div className="flex items-center space-x-3">
       <div style={{ color: "#fea92a" }}>{icon}</div>
