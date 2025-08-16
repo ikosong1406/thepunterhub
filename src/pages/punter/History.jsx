@@ -11,41 +11,95 @@ const TipsHistoryMobile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedTip, setSelectedTip] = useState(null);
+  const [newStatus, setNewStatus] = useState("");
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await localforage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+      const userResponse = await axios.post(`${Api}/client/getUser`, { token });
+      const userData = userResponse.data.data;
+      setUser(userData);
+      const userId = userData._id;
+      const signalsResponse = await axios.post(`${Api}/client/getSignal`, { userId });
+      const sortedSignals = signalsResponse.data.signals.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      setTips(sortedSignals);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const token = await localforage.getItem("token");
-        if (!token) {
-          throw new Error("No authentication token found.");
-        }
-        const userResponse = await axios.post(`${Api}/client/getUser`, { token });
-        const userData = userResponse.data.data;
-        setUser(userData);
-
-        const userId = userData._id;
-        const signalsResponse = await axios.post(`${Api}/client/getSignal`,{userId});
-        const sortedSignals = signalsResponse.data.signals.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-        setTips(sortedSignals);
-
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
-  const deleteTip = (id) => {
-    // Implement delete logic with API call if needed
-    setTips(tips.filter((tip) => tip._id !== id));
+  const openDeleteModal = (tip) => {
+    setSelectedTip(tip);
+    setIsDeleteModalOpen(true);
+  };
+
+  const openEditModal = (tip) => {
+    setSelectedTip(tip);
+    setNewStatus(tip.status);
+    setIsEditModalOpen(true);
+  };
+
+  const closeModals = () => {
+    setIsDeleteModalOpen(false);
+    setIsEditModalOpen(false);
+    setSelectedTip(null);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedTip) return;
+
+    try {
+      const response = await axios.post(`${Api}/client/deleteSignal`, { signalId: selectedTip._id });
+      if (response.data.success) {
+        setTips(tips.filter((tip) => tip._id !== selectedTip._id));
+      } else {
+        throw new Error(response.data.message || "Failed to delete tip.");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      closeModals();
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!selectedTip || !newStatus) return;
+
+    try {
+      const response = await axios.post(`${Api}/client/updateSignalStatus`, {
+        signalId: selectedTip._id,
+        status: newStatus,
+      });
+      if (response.data.success) {
+        setTips(
+          tips.map((tip) =>
+            tip._id === selectedTip._id ? { ...tip, status: newStatus, result: newStatus === 'active' ? '' : newStatus } : tip
+          )
+        );
+      } else {
+        throw new Error(response.data.message || "Failed to update tip status.");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      closeModals();
+    }
   };
 
   const filteredTips = tips.filter((tip) => {
@@ -75,7 +129,6 @@ const TipsHistoryMobile = () => {
     const diffInMinutes = Math.floor((now - postedDate) / (1000 * 60));
     const diffInHours = Math.floor(diffInMinutes / 60);
     const diffInDays = Math.floor(diffInHours / 24);
-
     if (diffInMinutes < 60) {
       return `${diffInMinutes} mins ago`;
     } else if (diffInHours < 24) {
@@ -84,6 +137,71 @@ const TipsHistoryMobile = () => {
       return `${diffInDays} days ago`;
     }
   };
+
+  const DeleteConfirmationModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-[#162821] p-6 rounded-lg shadow-xl max-w-sm w-full">
+        <h4 className="text-lg font-bold text-red-400 mb-2">Confirm Deletion</h4>
+        <p className="text-sm text-[#efefef]/70 mb-4">
+          Are you sure you want to delete this tip? This action cannot be undone.
+        </p>
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={closeModals}
+            className="px-4 py-2 text-sm font-medium rounded-md bg-[#376553] text-[#efefef] hover:bg-[#fea92a]/20 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const EditStatusModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-[#162821] p-6 rounded-lg shadow-xl max-w-sm w-full">
+        <h4 className="text-lg font-bold text-[#fea92a] mb-2">Edit Tip Status</h4>
+        <p className="text-sm text-[#efefef]/70 mb-4">
+          Change the status of this tip.
+        </p>
+        <div className="mb-4">
+          <label htmlFor="status-select" className="block text-sm font-medium text-[#efefef] mb-1">
+            Status
+          </label>
+          <select
+            id="status-select"
+            value={newStatus}
+            onChange={(e) => setNewStatus(e.target.value)}
+            className="w-full p-2 rounded-md bg-[#09100d] text-[#efefef] border border-[#376553] focus:outline-none focus:border-[#fea92a]"
+          >
+            <option value="active">Active</option>
+            <option value="win">Win</option>
+            <option value="loss">Loss</option>
+          </select>
+        </div>
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={closeModals}
+            className="px-4 py-2 text-sm font-medium rounded-md bg-[#376553] text-[#efefef] hover:bg-[#fea92a]/20 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleUpdateStatus}
+            className="px-4 py-2 text-sm font-medium rounded-md bg-[#fea92a] text-[#09100d] hover:bg-[#ffc666] transition"
+          >
+            Update
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#09100d] text-[#efefef] p-4 pb-20">
@@ -218,13 +336,13 @@ const TipsHistoryMobile = () => {
               {/* Action Buttons */}
               <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-end space-x-4">
                 <button
-                  onClick={() => console.log("Edit", tip._id)}
+                  onClick={() => openEditModal(tip)}
                   className="p-2 rounded-full bg-[#fea92a]/20 text-[#fea92a] hover:bg-[#fea92a] hover:text-[#09100d]"
                 >
                   <FiEdit size={18} />
                 </button>
                 <button
-                  onClick={() => deleteTip(tip._id)}
+                  onClick={() => openDeleteModal(tip)}
                   className="p-2 rounded-full bg-[#f57cff]/20 text-[#f57cff] hover:bg-[#f57cff] hover:text-[#09100d]"
                 >
                   <FiTrash2 size={18} />
@@ -235,6 +353,8 @@ const TipsHistoryMobile = () => {
         )}
       </div>
       <div className="h-16"></div>
+      {isDeleteModalOpen && <DeleteConfirmationModal />}
+      {isEditModalOpen && <EditStatusModal />}
     </div>
   );
 };

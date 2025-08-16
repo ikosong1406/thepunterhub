@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiUsers, FiDollarSign, FiBarChart2, FiChevronRight } from 'react-icons/fi';
+import { FiPlus, FiUsers, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
+import { IoIosInformationCircleOutline } from "react-icons/io";
+// import { MdErrorOutline } from "react-icons/md";
+// import { BsCheckCircle } from "react-icons/bs";
+// import { PiWarningCircle } from "react-icons/pi";
+// import { LiaHandshake } from "react-icons/lia";
 import Header from "./Header";
 import axios from "axios";
 import Api from "../../components/Api";
 import localforage from "localforage";
-import Colors from "../../components/colors"
+import Colors from "../../components/colors";
 
 const PunterDashboard = () => {
   const navigate = useNavigate();
-  
+
   // State for fetching and displaying data
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState([]);
@@ -21,7 +26,7 @@ const PunterDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-       const token = await localforage.getItem("token"); // or wherever you store your auth token
+        const token = await localforage.getItem("token");
         if (!token) {
           throw new Error("No authentication token found.");
         }
@@ -29,30 +34,36 @@ const PunterDashboard = () => {
         // Fetch user data
         const userResponse = await axios.post(`${Api}/client/getUser`, { token });
         const userData = userResponse.data.data;
-        
-        // --- Data Processing and Fallbacks ---
-        // Handle potential null/empty values from the backend
+        setUser(userData);
+
         const winRateValue = userData.win && userData.loss
           ? ((userData.win / (userData.win + userData.loss)) * 100).toFixed(0) + '%'
-          : '0%'; // Fallback for win rate
+          : '0%';
         
         const subscribersCount = userData.subscribers?.length || 0;
         const totalEarnings = userData.transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
 
-        // Set state with processed data and fallbacks
-        setUser(userData);
         setStats([
           { title: "Total Subscribers", value: subscribersCount, change: "+12%", icon: <FiUsers className="text-xl" /> },
           { title: "Total Earnings", value: `$${totalEarnings.toFixed(2)}`, change: "+18%", icon: <FiDollarSign className="text-xl" /> },
           { title: "Win Rate", value: winRateValue, change: "+3%", icon: <FiBarChart2 className="text-xl" /> },
         ]);
         
-        // This is a placeholder for recent activity, you'll need a separate endpoint for this
-        setRecentActivity([
-          { id: 1, action: "New subscriber", user: "John D.", time: "2 mins ago", amount: "+$10" },
-          { id: 2, action: "Tip won", details: "BTC prediction", time: "1 hour ago", amount: null },
-          { id: 3, action: "Subscription renewed", user: "Sarah M.", time: "3 hours ago", amount: "+$20" },
-        ]);
+        // Fetch recent notifications using user ID
+        const notificationsResponse = await axios.post(`${Api}/client/getNotification`, { userId: userData._id });
+        const notifications = notificationsResponse.data.data ?? []; // Fallback to empty array
+        
+        // Process notifications for display (top 5 only)
+        const recentNotifications = notifications.slice(0, 5).map(note => ({
+          ...note,
+          action: note.title, // Use title as action for display
+          details: note.description, // Use description as details
+          time: formatPostedAt(note.createdAt),
+          amount: note.amount > 0 ? `+$${note.amount.toFixed(2)}` : null,
+          icon: getNotificationIcon(note.type),
+        }));
+
+        setRecentActivity(recentNotifications);
 
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
@@ -65,7 +76,38 @@ const PunterDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Show a loading state while fetching data
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      // case 'success':
+      //   return <BsCheckCircle className="text-green-500" />;
+      // case 'warning':
+      //   return <PiWarningCircle className="text-yellow-500" />;
+      // case 'error':
+      //   return <MdErrorOutline className="text-red-500" />;
+      // case 'payment':
+      //   return <LiaHandshake className="text-blue-500" />;
+      case 'info':
+      default:
+        return <IoIosInformationCircleOutline className="text-gray-400" />;
+    }
+  };
+
+  const formatPostedAt = (dateString) => {
+    const now = new Date();
+    const postedDate = new Date(dateString);
+    const diffInMinutes = Math.floor((now - postedDate) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} mins ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hours ago`;
+    } else {
+      return `${diffInDays} days ago`;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#09100d] text-[#efefef] flex justify-center items-center">
@@ -77,7 +119,6 @@ const PunterDashboard = () => {
     );
   }
 
-  // Show an error message if fetching fails
   if (error) {
     return (
       <div className="min-h-screen bg-[#09100d] text-[#efefef] flex justify-center items-center">
@@ -89,23 +130,17 @@ const PunterDashboard = () => {
     );
   }
 
-  // Fallback for user object if data fetching succeeded but user is null for some reason
   const username = user?.username || "Guest";
 
   return (
     <div className="min-h-screen bg-[#09100d] text-[#efefef] p-6">
       <Header />
-      
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto">
-        {/* Welcome Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold">Welcome, <span className="font-medium text-[#fea92a]">{username}</span></h1>
           </div>
         </div>
-
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
           {stats.map((stat, index) => (
             <div key={index} className="bg-[#162821]/80 backdrop-blur-sm rounded-xl p-5 border border-[#376553]/30 hover:border-[#fea92a]/30 transition-all">
@@ -121,26 +156,23 @@ const PunterDashboard = () => {
             </div>
           ))}
         </div>
-
-        {/* Recent Activity */}
         <div className="bg-[#162821]/80 backdrop-blur-sm rounded-xl p-5 border border-[#376553]/30">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-lg font-semibold">Recent Activity</h2>
             <button className="text-sm text-[#fea92a] hover:underline">View All</button>
           </div>
-          
           <div className="divide-y divide-[#376553]/30">
             {recentActivity.length > 0 ? (
-              recentActivity.map(activity => (
-                <div key={activity.id} className="py-3 flex justify-between items-center">
+              recentActivity.map((activity, index) => (
+                <div key={index} className="py-3 flex justify-between items-center">
                   <div className="flex items-start">
                     <div className="p-2 rounded-lg bg-[#376553]/20 text-[#fea92a] mr-3">
-                      {activity.icon || <FiUsers className="text-lg" />}
+                      {activity.icon}
                     </div>
                     <div>
                       <p className="font-medium">{activity.action}</p>
                       <p className="text-sm text-[#efefef]/70">
-                        {activity.user || activity.details || 'N/A'} · {activity.time || 'N/A'}
+                        {activity.details} · {activity.time}
                       </p>
                     </div>
                   </div>
@@ -155,8 +187,6 @@ const PunterDashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Floating Action Button */}
       <button 
         className="fixed bottom-30 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#fea92a] to-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group"
         onClick={() => {navigate('/punter/create')}}
