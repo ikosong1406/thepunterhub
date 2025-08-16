@@ -6,61 +6,80 @@ import {
   FaBitcoin,
   FaDollarSign,
   FaBaseballBall,
+  FaRegNewspaper,
+  FaChartBar,
+  FaChessKnight,
 } from "react-icons/fa";
 import { IoMdFootball } from "react-icons/io";
-import { GiTennisBall } from "react-icons/gi";
-import { GiHandOfGod } from "react-icons/gi";
-import Header from "../customer/Header";
+import {
+  GiTennisBall,
+  GiCricketBat,
+  GiMetalDisc,
+} from "react-icons/gi";
+// import { TbStock } from "react-icons/tb";
+import Header from "./Header";
 
-// The new LiveSportsWidget component using the soccersapi.com widget
+// Helper function to create a script element
+const createScript = (src, id) => {
+  const script = document.createElement("script");
+  script.src = src;
+  script.type = "text/javascript";
+  script.async = true;
+  script.id = id;
+  return script;
+};
+
+// LiveSportsWidget component (now only for football as per API limitations)
 const LiveSportsWidget = memo(({ activeSport }) => {
   const container = useRef(null);
   const scriptRef = useRef(null);
+  const widgetLoaded = useRef(false);
 
   useEffect(() => {
     // Only load the script once when the component mounts
     if (scriptRef.current) return;
 
-    const script = document.createElement("script");
-    script.src =
-      "https://ls.soccersapi.com/widget/res/wo_w9751_689c608d09691/widget.js";
-    script.type = "text/javascript";
-    script.async = true;
-    script.id = "soccersapi-widget-script";
+    const script = createScript(
+      "https://ls.soccersapi.com/widget/res/wo_w9751_689c608d09691/widget.js",
+      "soccersapi-widget-script"
+    );
+
+    const handleScriptLoad = () => {
+      widgetLoaded.current = true;
+    };
+
+    script.addEventListener("load", handleScriptLoad);
     document.body.appendChild(script);
     scriptRef.current = script;
 
-    // Cleanup function to remove the script when the component unmounts
+    // Cleanup function
     return () => {
       if (document.body.contains(script)) {
         document.body.removeChild(script);
+        script.removeEventListener("load", handleScriptLoad);
         scriptRef.current = null;
+        widgetLoaded.current = false;
       }
     };
   }, []);
 
   useEffect(() => {
-    if (!container.current) {
-      return;
-    }
-
-    // Clear any previous widget content
+    if (!container.current) return;
     container.current.innerHTML = "";
 
+    // The soccersapi widget is hardcoded for football
     if (activeSport !== "football") {
       container.current.innerHTML = `<div class="text-center py-8 text-gray-400">
-        Live scores widget is only available for Football at the moment.
+        Live scores for this sport aren't available at the moment.
       </div>`;
       return;
     }
 
-    // Create the widget container div
     const widgetDiv = document.createElement("div");
     widgetDiv.id = "ls-widget";
     widgetDiv.className = "livescore-widget";
     widgetDiv.setAttribute("data-w", "wo_w9751_689c608d09691");
     widgetDiv.setAttribute("data-height", "1200");
-
     container.current.appendChild(widgetDiv);
   }, [activeSport]);
 
@@ -72,45 +91,90 @@ const LiveSportsWidget = memo(({ activeSport }) => {
   );
 });
 
-// TradingView Market Widget Component (No changes)
-const TradingViewMarketWidget = memo(({ activeCategory }) => {
-  const container = useRef();
+// TradingView Widget component
+const TradingViewWidget = memo(({ activeCategory }) => {
+  const container = useRef(null);
+  const tradingViewScriptRef = useRef(null);
+
   useEffect(() => {
-    if (!container.current) {
-      return;
+    if (!container.current) return;
+
+    const script = createScript(
+      "https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js",
+      "tradingview-market-overview-script"
+    );
+
+    let pairs;
+    let title;
+
+    switch (activeCategory) {
+      case "forex":
+        pairs = [
+          { s: "FX:EURUSD", d: "EUR/USD" },
+          { s: "FX:GBPUSD", d: "GBP/USD" },
+          { s: "FX:USDJPY", d: "USD/JPY" },
+          { s: "FX:USDCAD", d: "USD/CAD" },
+          { s: "FX:AUDUSD", d: "AUD/USD" },
+          { s: "OANDA:NZDUSD", d: "NZD/USD" },
+          { s: "FX:USDCHF", d: "USD/CHF" },
+          { s: "FX:EURJPY", d: "EUR/JPY" },
+          { s: "FX:EURGBP", d: "EUR/GBP" },
+          { s: "FX:GBPJPY", d: "GBP/JPY" },
+        ];
+        title = "Forex";
+        break;
+      case "crypto":
+        pairs = [
+          { s: "BINANCE:BTCUSDT", d: "Bitcoin" },
+          { s: "BINANCE:ETHUSDT", d: "Ethereum" },
+          { s: "BINANCE:BNBUSDT", d: "Binance Coin" },
+          { s: "BINANCE:SOLUSDT", d: "Solana" },
+          { s: "BINANCE:XRPUSDT", d: "XRP" },
+          { s: "BINANCE:ADAUSDT", d: "Cardano" },
+          { s: "BINANCE:DOGEUSDT", d: "Dogecoin" },
+          { s: "BINANCE:AVAXUSDT", d: "Avalanche" },
+          { s: "BINANCE:DOTUSDT", d: "Polkadot" },
+          { s: "BINANCE:LTCUSDT", d: "Litecoin" },
+        ];
+        title = "Crypto";
+        break;
+      case "commodities":
+        pairs = [
+          { s: "NYMEX:CL1!", d: "Crude Oil" },
+          { s: "TVC:GOLD", d: "Gold" },
+          { s: "TVC:SILVER", d: "Silver" },
+          { s: "NYMEX:NG1!", d: "Natural Gas" },
+          { s: "COMEX:GC1!", d: "Gold Futures" },
+          { s: "CBOT:ZC1!", d: "Corn Futures" },
+        ];
+        title = "Commodities";
+        break;
+      case "indices":
+        pairs = [
+          { s: "NASDAQ:NDAQ", d: "Nasdaq" },
+          { s: "FOREXCOM:SPXUSD", d: "S&P 500" },
+          { s: "FOREXCOM:UKXGBP", d: "UK 100" },
+          { s: "INDEX:DEU40", d: "DAX" },
+          { s: "NSE:NIFTY", d: "Nifty 50" },
+          { s: "FOREXCOM:DJI", d: "Dow 30" },
+        ];
+        title = "Indices";
+        break;
+      case "stocks":
+        // For stocks, we can't use the simple "Market Overview" widget.
+        // It's better to use a dedicated stock screener or a message.
+        container.current.innerHTML = `<div class="text-center py-8 text-gray-400">
+          Stock data will be displayed here using a dedicated widget in a future update.
+        </div>`;
+        return;
+      default:
+        container.current.innerHTML = `<div class="text-center py-8 text-gray-400">
+          Select a trading category above to view live market data.
+        </div>`;
+        return;
     }
+
     container.current.innerHTML = "";
-    const script = document.createElement("script");
-    script.src =
-      "https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js";
-    script.type = "text/javascript";
-    script.async = true;
-    const marketPairs =
-      activeCategory === "forex"
-        ? [
-            { s: "FX:EURUSD", d: "EUR/USD" },
-            { s: "FX:GBPUSD", d: "GBP/USD" },
-            { s: "FX:USDJPY", d: "USD/JPY" },
-            { s: "FX:USDCAD", d: "USD/CAD" },
-            { s: "FX:AUDUSD", d: "AUD/USD" },
-            { s: "OANDA:NZDUSD", d: "NZD/USD" },
-            { s: "FX:USDCHF", d: "USD/CHF" },
-            { s: "FX:EURJPY", d: "EUR/JPY" },
-            { s: "FX:EURGBP", d: "EUR/GBP" },
-            { s: "FX:GBPJPY", d: "GBP/JPY" },
-          ]
-        : [
-            { s: "BINANCE:BTCUSDT", d: "Bitcoin" },
-            { s: "BINANCE:ETHUSDT", d: "Ethereum" },
-            { s: "BINANCE:BNBUSDT", d: "Binance Coin" },
-            { s: "BINANCE:SOLUSDT", d: "Solana" },
-            { s: "BINANCE:XRPUSDT", d: "XRP" },
-            { s: "BINANCE:ADAUSDT", d: "Cardano" },
-            { s: "BINANCE:DOGEUSDT", d: "Dogecoin" },
-            { s: "BINANCE:AVAXUSDT", d: "Avalanche" },
-            { s: "BINANCE:DOTUSDT", d: "Polkadot" },
-            { s: "BINANCE:LTCUSDT", d: "Litecoin" },
-          ];
     script.innerHTML = `
       {
         "colorTheme": "dark",
@@ -130,11 +194,9 @@ const TradingViewMarketWidget = memo(({ activeCategory }) => {
         "symbolActiveColor": "rgba(41, 98, 255, 0.12)",
         "tabs": [
           {
-            "title": "${activeCategory === "forex" ? "Forex" : "Crypto"}",
-            "symbols": ${JSON.stringify(marketPairs)},
-            "originalTitle": "${
-              activeCategory === "forex" ? "Forex" : "Crypto"
-            }"
+            "title": "${title}",
+            "symbols": ${JSON.stringify(pairs)},
+            "originalTitle": "${title}"
           }
         ],
         "support_host": "https://www.tradingview.com",
@@ -144,13 +206,16 @@ const TradingViewMarketWidget = memo(({ activeCategory }) => {
         "showSymbolLogo": true,
         "showChart": true
       }`;
+
     container.current.appendChild(script);
+
     return () => {
       if (container.current && container.current.contains(script)) {
         container.current.removeChild(script);
       }
     };
   }, [activeCategory]);
+
   return (
     <div
       className="tradingview-widget-container"
@@ -178,20 +243,22 @@ const primaryCategories = [
 ];
 
 const sportCategories = [
-  // { name: "Football", icon: <IoMdFootball size={20} />, key: "football" },
-  // {
-  //   name: "Basketball",
-  //   icon: <FaBasketballBall size={18} />,
-  //   key: "basketball",
-  // },
-  // { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
-  // { name: "Handball", icon: <GiHandOfGod size={18} />, key: "handball" },
-  // { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
+  { name: "Football", icon: <IoMdFootball size={20} />, key: "football" },
+  {
+    name: "Basketball",
+    icon: <FaBasketballBall size={18} />,
+    key: "basketball",
+  },
+  { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
+  { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
 ];
 
 const tradingCategories = [
   { name: "Forex", icon: <FaDollarSign size={18} />, key: "forex" },
   { name: "Crypto", icon: <FaBitcoin size={18} />, key: "crypto" },
+  { name: "Commodities", icon: <GiMetalDisc size={18} />, key: "commodities" },
+  { name: "Indices", icon: <FaChartBar size={18} />, key: "indices" },
+  // { name: "Stocks", icon: <TbStock size={18} />, key: "stocks" },
 ];
 
 const LivePage = () => {
@@ -207,7 +274,9 @@ const LivePage = () => {
         {primaryCategories.map((category) => (
           <button
             key={category.key}
-            onClick={() => setActivePrimary(category.key)}
+            onClick={() => {
+              setActivePrimary(category.key);
+            }}
             className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 ${
               activePrimary === category.key
                 ? "text-[#18ffc8] border-b-2 border-[#18ffc8]"
@@ -251,19 +320,15 @@ const LivePage = () => {
               </button>
             ))}
       </div>
-      {/* Live Content - UPDATED LOGIC */}
+      {/* Live Content */}
       <div className="space-y-4">
         {activePrimary === "sports" ? (
-          <>
-            <LiveSportsWidget key={activeSport} activeSport={activeSport} />
-          </>
+          <LiveSportsWidget key={activeSport} activeSport={activeSport} />
         ) : (
-          <>
-            <TradingViewMarketWidget
-              key={activeTrading}
-              activeCategory={activeTrading}
-            />
-          </>
+          <TradingViewWidget
+            key={activeTrading}
+            activeCategory={activeTrading}
+          />
         )}
       </div>
     </div>
