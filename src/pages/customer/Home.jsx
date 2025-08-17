@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Api from "../../components/Api"; // Your API config
+import Api from "../../components/Api";
 import Header from "./Header";
 import {
   FaFootballBall,
@@ -101,12 +101,10 @@ const TradingViewTicker = memo(({ tradingType }) => {
 // ---------------------- LIVE SCORE TICKER ----------------------
 const LiveScoreTicker = () => {
   useEffect(() => {
-    // Create the container div with the exact ID from Broadage
     const container = document.createElement("div");
     container.id = "DOM_element_id_in_your_website_1755209641568";
     document.getElementById("broadage-ticker-container").appendChild(container);
 
-    // Load the Broadage script exactly as provided
     const script = document.createElement("script");
     script.innerHTML = `
       (function(b, s, p, o, r, t) {
@@ -134,7 +132,6 @@ const LiveScoreTicker = () => {
     document.body.appendChild(script);
 
     return () => {
-      // Cleanup
       const container = document.getElementById(
         "DOM_element_id_in_your_website_1755209641568"
       );
@@ -147,14 +144,7 @@ const LiveScoreTicker = () => {
   return (
     <div
       id="broadage-ticker-container"
-      style={{
-        width: "100%",
-        minHeight: "50px",
-        backgroundColor: "#0a120e",
-        border: "1px solid #2a3a34",
-        borderRadius: "8px",
-        overflow: "hidden",
-      }}
+      className="w-full min-h-[50px] bg-[#0a120e] border border-[#2a3a34] rounded-lg overflow-hidden"
     />
   );
 };
@@ -225,7 +215,7 @@ const Home = () => {
       <div
         key={punter._id}
         onClick={() => handlePunterClick(punter._id)}
-        className="bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] mb-4 cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+        className="bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] mb-4 cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:border-[#18ffc8]"
       >
         <div className="p-4 flex items-start">
           <div className="relative">
@@ -276,7 +266,13 @@ const Home = () => {
           </div>
         </div>
         <div className="border-t border-[#2a3a34] p-3 flex justify-between items-center">
-          <button className="bg-[#f57cff] text-black font-bold px-4 py-2 rounded-full text-sm">
+          <button 
+            className="bg-[#f57cff] text-black font-bold px-4 py-2 rounded-full text-sm hover:bg-[#e56cff] transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Handle subscription logic here
+            }}
+          >
             Subscribe {punter.price || "N/A"}
           </button>
         </div>
@@ -289,107 +285,109 @@ const Home = () => {
   );
 
   return (
-    <div className="bg-[#0a120e] min-h-screen text-white px-4 py-6 pb-20">
+    <div className="bg-[#0a120e] min-h-screen text-white">
       <Header />
 
-      {/* PRIMARY CATEGORY SELECTION */}
-      <div className="flex border-b border-[#2a3a34] mb-4">
-        {primaryCategories.map((category) => (
-          <button
-            key={category.key}
-            onClick={() => setActivePrimary(category.key)}
-            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 ${
-              activePrimary === category.key
-                ? "text-[#18ffc8] border-b-2 border-[#18ffc8]"
-                : "text-gray-400"
-            }`}
-          >
-            {category.icon}
-            {category.name}
-          </button>
-        ))}
-      </div>
+      <div className="container mx-auto px-4 py-6 lg:px-8 lg:py-8">
+        {/* PRIMARY CATEGORY SELECTION */}
+        <div className="flex border-b border-[#2a3a34] mb-6">
+          {primaryCategories.map((category) => (
+            <button
+              key={category.key}
+              onClick={() => setActivePrimary(category.key)}
+              className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 text-lg ${
+                activePrimary === category.key
+                  ? "text-[#18ffc8] border-b-2 border-[#18ffc8]"
+                  : "text-gray-400 hover:text-white transition-colors"
+              }`}
+            >
+              {category.icon}
+              {category.name}
+            </button>
+          ))}
+        </div>
 
-      {/* SECONDARY CATEGORY SELECTION */}
-      <div className="flex overflow-x-auto gap-2 mb-6 pb-2">
-        {activePrimary === "sports"
-          ? sportCategories.map((category) => (
-              <button
-                key={category.key}
-                onClick={() => setActiveSport(category.key)}
-                className={`flex flex-col items-center min-w-[70px] px-3 py-2 rounded-xl ${
-                  activeSport === category.key
-                    ? "bg-[#855391] text-white shadow-lg"
-                    : "bg-[#162821] text-white"
-                }`}
-              >
-                {category.icon}
-                <span className="text-xs mt-1">{category.name}</span>
-              </button>
-            ))
-          : tradingCategories.map((category) => (
-              <button
-                key={category.key}
-                onClick={() => setActiveTrading(category.key)}
-                className={`flex flex-col items-center min-w-[70px] px-3 py-2 rounded-xl ${
-                  activeTrading === category.key
-                    ? "bg-[#855391] text-white shadow-lg"
-                    : "bg-[#162821] text-white"
-                }`}
-              >
-                {category.icon}
-                <span className="text-xs mt-1">{category.name}</span>
-              </button>
-            ))}
-      </div>
-
-      {/* CONDITIONAL CONTENT */}
-      <div className="mb-8">
-        {activePrimary === "sports" ? (
-          <>
-            <h2 className="text-xl font-bold mb-4">Live Scores</h2>
-            <div className="p-2 border border-[#2a3a34] rounded-xl overflow-hidden">
-              <LiveScoreTicker />
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 className="text-xl font-bold mb-4">
-              Current {activeTrading} Market
-            </h2>
-            <div className="p-2 border border-[#2a3a34] rounded-xl overflow-hidden">
-              <TradingViewTicker tradingType={activeTrading} />
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* PUNTERS LIST */}
-      <div>
-        <h2 className="text-xl font-bold mb-4 flex items-center">
-          <FaStar className="mr-2 text-[#fea92a]" />
-          Top{" "}
+        {/* SECONDARY CATEGORY SELECTION */}
+        <div className="flex overflow-x-auto gap-3 mb-8 pb-3 scrollbar-hide">
           {activePrimary === "sports"
-            ? "Punters"
-            : `Traders (${activeTrading})`}
-        </h2>
-        {loading ? (
-          <div className="text-center text-gray-400 py-8">
-            Loading punters...
-          </div>
-        ) : error ? (
-          <div className="text-center text-red-400 py-8">{error}</div>
-        ) : (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            {filteredPunters.length > 0 ? (
-              filteredPunters.map((punter) => renderPunterCard(punter))
-            ) : (
-              <div className="text-center text-gray-400 py-8">
-                No punters found for this category.
+            ? sportCategories.map((category) => (
+                <button
+                  key={category.key}
+                  onClick={() => setActiveSport(category.key)}
+                  className={`flex flex-col items-center min-w-[90px] px-4 py-3 rounded-xl transition-all ${
+                    activeSport === category.key
+                      ? "bg-[#855391] text-white shadow-lg"
+                      : "bg-[#162821] text-white hover:bg-[#1e332b]"
+                  }`}
+                >
+                  <span className="text-xl">{category.icon}</span>
+                  <span className="text-sm mt-1">{category.name}</span>
+                </button>
+              ))
+            : tradingCategories.map((category) => (
+                <button
+                  key={category.key}
+                  onClick={() => setActiveTrading(category.key)}
+                  className={`flex flex-col items-center min-w-[90px] px-4 py-3 rounded-xl transition-all ${
+                    activeTrading === category.key
+                      ? "bg-[#855391] text-white shadow-lg"
+                      : "bg-[#162821] text-white hover:bg-[#1e332b]"
+                  }`}
+                >
+                  <span className="text-xl">{category.icon}</span>
+                  <span className="text-sm mt-1">{category.name}</span>
+                </button>
+              ))}
+        </div>
+
+        {/* CONDITIONAL CONTENT */}
+        <div className="mb-8">
+          {activePrimary === "sports" ? (
+            <>
+              <h2 className="text-xl font-bold mb-4 lg:text-2xl">Live Scores</h2>
+              <div className="p-3 border border-[#2a3a34] rounded-xl overflow-hidden bg-[#0f1f1a]">
+                <LiveScoreTicker />
               </div>
-            )}
-          </div>
-        )}
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold mb-4 lg:text-2xl">
+                Current {activeTrading} Market
+              </h2>
+              <div className="p-3 border border-[#2a3a34] rounded-xl overflow-hidden bg-[#0f1f1a]">
+                <TradingViewTicker tradingType={activeTrading} />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* PUNTERS LIST */}
+        <div>
+          <h2 className="text-xl font-bold mb-4 flex items-center lg:text-2xl">
+            <FaStar className="mr-2 text-[#fea92a]" />
+            Top{" "}
+            {activePrimary === "sports"
+              ? "Punters"
+              : `Traders (${activeTrading})`}
+          </h2>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#18ffc8]"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-400 py-8">{error}</div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredPunters.length > 0 ? (
+                filteredPunters.map((punter) => renderPunterCard(punter))
+              ) : (
+                <div className="col-span-full text-center text-gray-400 py-8">
+                  No punters found for this category.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
