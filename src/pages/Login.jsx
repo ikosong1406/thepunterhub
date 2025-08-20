@@ -6,6 +6,7 @@ import localforage from "localforage";
 import toast, { Toaster } from "react-hot-toast";
 import Api from "../components/Api";
 import "../styles/Splash.css";
+import logoImage from "../assets/logo2.png";
 
 const LoginScreen = ({ platformName = "PH" }) => {
   const navigate = useNavigate();
@@ -87,7 +88,9 @@ const LoginScreen = ({ platformName = "PH" }) => {
     } catch (error) {
       console.error("Login failed:", error);
       if (error.response) {
-        const errorMessage = error.response.data.error || "Login failed. Please check your credentials.";
+        const errorMessage =
+          error.response.data.error ||
+          "Login failed. Please check your credentials.";
         toast.error(errorMessage);
       } else {
         toast.error("An unexpected error occurred. Please check your network.");
@@ -100,7 +103,7 @@ const LoginScreen = ({ platformName = "PH" }) => {
   return (
     <div className="min-h-screen bg-[#09100d] text-white flex">
       <Toaster position="top-center" reverseOrder={false} />
-      
+
       {/* Left side - decorative for desktop only */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#09100d] to-[#162821] items-center justify-center p-12">
         <div className="max-w-md w-full">
@@ -120,7 +123,10 @@ const LoginScreen = ({ platformName = "PH" }) => {
               />
             </svg>
             {/* Inner Arc */}
-            <svg className="absolute w-3/4 h-3/4 spin-medium" viewBox="0 0 100 100">
+            <svg
+              className="absolute w-3/4 h-3/4 spin-medium"
+              viewBox="0 0 100 100"
+            >
               <path
                 d="M50,0 A50,50 0 1,1 0,50"
                 fill="none"
@@ -132,19 +138,21 @@ const LoginScreen = ({ platformName = "PH" }) => {
             </svg>
             {/* Center Circle */}
             <div className="relative flex items-center justify-center w-64 h-64 p-4 border-6 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
-              <span className="text-white text-5xl font-bold tracking-widest uppercase">
-                {platformName}
-              </span>
+              <img
+                src={logoImage}
+                alt="Platform Logo"
+                className="max-w-full max-h-full"
+              />
             </div>
           </div>
-          
+
           <h2 className="text-3xl font-bold mt-8 text-center">Welcome Back</h2>
           <p className="text-gray-400 mt-4 text-center">
             Login to access your account and continue your journey with us.
           </p>
         </div>
       </div>
-      
+
       {/* Right side - login form */}
       <div className="w-full lg:w-1/2 px-6 py-8 flex flex-col lg:justify-center">
         <div className="max-w-md w-full mx-auto">
@@ -181,7 +189,10 @@ const LoginScreen = ({ platformName = "PH" }) => {
                   className="glow-stroke"
                 />
               </svg>
-              <svg className="absolute w-3/4 h-3/4 spin-medium" viewBox="0 0 100 100">
+              <svg
+                className="absolute w-3/4 h-3/4 spin-medium"
+                viewBox="0 0 100 100"
+              >
                 <path
                   d="M50,0 A50,50 0 1,1 0,50"
                   fill="none"
@@ -192,9 +203,11 @@ const LoginScreen = ({ platformName = "PH" }) => {
                 />
               </svg>
               <div className="relative flex items-center justify-center w-28 h-28 p-4 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
-                <span className="text-white text-2xl font-bold tracking-widest uppercase">
-                  {platformName}
-                </span>
+                <img
+                  src={logoImage}
+                  alt="Platform Logo"
+                  className="max-w-full max-h-full"
+                />
               </div>
             </div>
           </div>
@@ -227,7 +240,10 @@ const LoginScreen = ({ platformName = "PH" }) => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {loginType === "email" ? (
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-400 mb-1"
+                >
                   Email Address
                 </label>
                 <input
@@ -270,7 +286,10 @@ const LoginScreen = ({ platformName = "PH" }) => {
             )}
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-400 mb-1"
+              >
                 Password
               </label>
               <input
@@ -289,26 +308,44 @@ const LoginScreen = ({ platformName = "PH" }) => {
               <button
                 type="submit"
                 className={`w-full py-4 font-semibold rounded-xl transition ${
-                  loading 
-                    ? "bg-[#98ffec] text-black cursor-not-allowed" 
+                  loading
+                    ? "bg-[#98ffec] text-black cursor-not-allowed"
                     : "bg-[#18ffc8] text-black hover:bg-[#0fe5b5]"
                 }`}
                 disabled={loading}
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-black"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Logging In...
                   </span>
-                ) : "Login"}
+                ) : (
+                  "Login"
+                )}
               </button>
             </div>
 
             <div className="text-center mt-4">
-              <button 
+              <button
                 type="button"
                 className="text-gray-400 hover:text-[#18ffc8] text-sm transition"
                 onClick={() => navigate("/forgot-password")}

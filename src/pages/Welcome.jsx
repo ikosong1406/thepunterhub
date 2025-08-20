@@ -3,8 +3,9 @@ import React from "react";
 import { useNavigate } from "react-router-dom"; // for navigation
 import tipsterImage from "../assets/field.jpg";
 import "../styles/Splash.css";
+import logoImage from "../assets/logo2.png";
 
-const WelcomeScreen = ({ platformName = "PH" }) => {
+const WelcomeScreen = ({ platformName = "PunterHub" }) => {
   const navigate = useNavigate();
 
   const handleLogin = () => {
@@ -59,9 +60,11 @@ const WelcomeScreen = ({ platformName = "PH" }) => {
 
           {/* Center Logo */}
           <div className="relative flex items-center justify-center w-[13rem] h-[13rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
-            <span className="text-white text-5xl font-bold tracking-widest uppercase">
-              {platformName}
-            </span>
+            <img
+              src={logoImage}
+              alt="Platform Logo"
+              className="max-w-full max-h-full"
+            />
           </div>
         </div>
 
@@ -71,7 +74,8 @@ const WelcomeScreen = ({ platformName = "PH" }) => {
             Welcome to {platformName}
           </h1>
           <p className="text-base">
-            Unlock the power of expert predictions and tips, live updates, and more.
+            Unlock the power of expert predictions and tips, live updates, and
+            more.
           </p>
         </div>
 

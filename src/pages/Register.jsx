@@ -4,6 +4,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import Api from "../components/Api";
+import logoImage from "../assets/logo2.png";
 
 const SignupScreen = () => {
   const navigate = useNavigate();
@@ -132,9 +133,11 @@ const SignupScreen = () => {
             </svg>
             {/* Center Circle */}
             <div className="relative flex items-center justify-center w-64 h-64 p-4 border-6 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
-              <span className="text-white text-5xl font-bold tracking-widest uppercase">
-                PH
-              </span>
+             <img
+                           src={logoImage}
+                           alt="Platform Logo"
+                           className="max-w-full max-h-full"
+                         />
             </div>
           </div>
           

@@ -6,8 +6,9 @@ import axios from "axios";
 import tipsterImage from "../assets/field.jpg";
 import "../styles/Splash.css";
 import Api from "../components/Api"
+import logoImage from "../assets/logo2.png"
 
-const SplashScreen = ({ platformName = "PH" }) => {
+const SplashScreen = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,11 +92,9 @@ const SplashScreen = ({ platformName = "PH" }) => {
               className="glow-stroke"
             />
           </svg>
-          <div className="relative flex items-center justify-center w-[13rem] h-[13rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
-            <span className="text-white text-5xl font-bold tracking-widest uppercase">
-              {platformName}
-            </span>
-          </div>
+           <div className="relative flex items-center justify-center w-[13rem] h-[13rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
+        <img src={logoImage} alt="Platform Logo" className="max-w-full max-h-full" />
+      </div>
         </div>
       </div>
     </div>

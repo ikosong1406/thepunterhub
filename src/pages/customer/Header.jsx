@@ -4,8 +4,9 @@ import axios from "axios";
 import Api from "../../components/Api";
 import localforage from "localforage";
 import toast, { Toaster } from "react-hot-toast";
+import logoImage from "../../assets/logo1.png";
 
-const Header = ({ platformName = "Punter Hub" }) => {
+const Header = () => {
   const navigate = useNavigate();
 
   // State to manage user data, loading, and errors
@@ -34,16 +35,15 @@ const Header = ({ platformName = "Punter Hub" }) => {
   }, []);
 
   const handleSwitchClick = async () => {
-    
     try {
       // Check if user data is loaded and is a punter
       if (user && user.isPunter) {
         // If user is a punter, update their role
         const data = { userId: user._id, role: "punter" };
         await axios.post(`${Api}/client/changeRole`, data);
-        
+
         // Update toast to success and redirect after delay
-        toast.success("Redirecting, please login again with your details", { id: toastId });
+        toast.success("Redirecting, please login again with your details");
         setTimeout(() => navigate("/punter/home"), 2000);
       } else {
         // If not a punter, show message and redirect to become page
@@ -51,7 +51,7 @@ const Header = ({ platformName = "Punter Hub" }) => {
       }
     } catch (err) {
       // Show error toast if something fails
-      toast.error("Failed to process your request", { id: toastId });
+      toast.error("Failed to process your request");
       console.error("Failed to update user role:", err);
     }
   };
@@ -60,11 +60,9 @@ const Header = ({ platformName = "Punter Hub" }) => {
     <header className="w-full bg-[#09100d] py-3 flex items-center justify-between shadow-md">
       {/* Toast container */}
       <Toaster />
-      
+
       {/* Logo / Platform Name */}
-      <h1 className="text-[#fea92a] text-xl font-bold tracking-widest uppercase">
-        {platformName}
-      </h1>
+      <img src={logoImage} alt="Platform Logo" className="max-w-45" />
 
       {/* Switch Button */}
       <button

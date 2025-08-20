@@ -286,9 +286,11 @@ const Home = () => {
 
   return (
     <div className="bg-[#0a120e] min-h-screen text-white">
+      <div className="p-4">
       <Header />
+      </div>
 
-      <div className="container mx-auto px-4 py-6 lg:px-8 lg:py-8">
+      <div className="container mx-auto px-4 py-2 lg:px-8 lg:py-8">
         {/* PRIMARY CATEGORY SELECTION */}
         <div className="flex border-b border-[#2a3a34] mb-6">
           {primaryCategories.map((category) => (
