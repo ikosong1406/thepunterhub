@@ -7,6 +7,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import localforage from "localforage";
+import logoImage from "./assets/logo2.png";
 import "./styles/Splash.css";
 import SplashScreen from "./pages/Splash"; // Ensure this component handles the conditional navigation
 import WelcomeScreen from "./pages/Welcome";
@@ -19,7 +20,7 @@ import CustomerLive from "./pages/customer/Live";
 import CustomerProfile from "./pages/customer/Profile";
 import CustomerPunters from "./pages/customer/Punters";
 import CustomerSearch from "./pages/customer/Search";
-import CustomerBecome from "./pages/customer/Become"
+import CustomerBecome from "./pages/customer/Become";
 import PunterLayout from "./pages/punter/PunterLayout";
 import PunterHome from "./pages/punter/Home";
 import PunterHistory from "./pages/punter/History";
@@ -63,42 +64,47 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (authStatus.loading) {
     return (
-      <div
-           className="bg-[#09100d] flex flex-col items-center justify-center w-screen h-screen bg-cover bg-center text-center"
-         >
-           
-           {/* Arcs + Logo */}
-           <div className="flex flex-col items-center space-y-6">
-             <div className="relative w-[18rem] h-[18rem] flex items-center justify-center">
-               {/* ... (Your SVG and logo JSX here) */}
-               <svg className="absolute w-full h-full spin-slow" viewBox="0 0 100 100">
-                 <path
-                   d="M50,0 A50,50 0 1,1 0,50"
-                   fill="none"
-                   stroke="#fea92a"
-                   strokeWidth="4"
-                   strokeLinecap="round"
-                   className="glow-stroke"
-                 />
-               </svg>
-               <svg className="absolute w-[16rem] h-[16rem] spin-medium" viewBox="0 0 100 100">
-                 <path
-                   d="M50,0 A50,50 0 1,1 0,50"
-                   fill="none"
-                   stroke="#855391"
-                   strokeWidth="4"
-                   strokeLinecap="round"
-                   className="glow-stroke"
-                 />
-               </svg>
-               <div className="relative flex items-center justify-center w-[13rem] h-[13rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
-                 <span className="text-white text-5xl font-bold tracking-widest uppercase">
-                   PH
-                 </span>
-               </div>
-             </div>
-           </div>
-         </div>
+      <div className="bg-[#09100d] flex flex-col items-center justify-center w-screen h-screen bg-cover bg-center text-center">
+        {/* Arcs + Logo */}
+        <div className="flex flex-col items-center space-y-6">
+          <div className="relative w-[18rem] h-[18rem] flex items-center justify-center">
+            {/* ... (Your SVG and logo JSX here) */}
+            <svg
+              className="absolute w-full h-full spin-slow"
+              viewBox="0 0 100 100"
+            >
+              <path
+                d="M50,0 A50,50 0 1,1 0,50"
+                fill="none"
+                stroke="#fea92a"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="glow-stroke"
+              />
+            </svg>
+            <svg
+              className="absolute w-[16rem] h-[16rem] spin-medium"
+              viewBox="0 0 100 100"
+            >
+              <path
+                d="M50,0 A50,50 0 1,1 0,50"
+                fill="none"
+                stroke="#855391"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="glow-stroke"
+              />
+            </svg>
+            <div className="relative flex items-center justify-center w-[13rem] h-[13rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
+              <img
+                src={logoImage}
+                alt="Platform Logo"
+                className="max-w-full max-h-full"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
