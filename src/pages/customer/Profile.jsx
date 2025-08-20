@@ -90,6 +90,13 @@ const ProfilePage = () => {
 
   const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
 
+  // Get first name and last name initials
+  const initials = ((user.firstname && user.lastname) ? 
+    `${user.firstname.charAt(0)}${user.lastname.charAt(0)}` : 
+    (user.firstname ? user.firstname.charAt(0) : 
+    (user.lastname ? user.lastname.charAt(0) : "U"))
+  ).toUpperCase();
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#09100d" }}>
       {/* Header */}
@@ -107,7 +114,9 @@ const ProfilePage = () => {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <FaUser className="text-lg" style={{ color: "#efefef" }} />
+                <span className="text-lg font-bold" style={{ color: "#efefef" }}>
+                  {initials}
+                </span>
               )}
             </div>
             <div>

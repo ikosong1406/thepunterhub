@@ -1,27 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
+import axios from 'axios';
+import localforage from 'localforage';
+import Api from "../components/Api"
 
-const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
-  const [amount, setAmount] = useState('');
-  const [bankCode, setBankCode] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [accountName, setAccountName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [banks, setBanks] = useState([]);
-  const [accountVerified, setAccountVerified] = useState(false);
-
-  // Sample bank data (in a real app, you'd fetch this from your API)
-  const sampleBanks = [
+// Define the bank options for each country
+const bankOptions = {
+  '+234': [ // Nigeria 🇳🇬
     { code: '044', name: 'Access Bank' },
-    { code: '063', name: 'Diamond Bank' },
-    { code: '050', name: 'Ecobank Nigeria' },
+    { code: '063', name: 'Ecobank Nigeria' },
     { code: '070', name: 'Fidelity Bank' },
     { code: '011', name: 'First Bank of Nigeria' },
     { code: '214', name: 'First City Monument Bank' },
     { code: '058', name: 'Guaranty Trust Bank' },
     { code: '030', name: 'Heritage Bank' },
-    { code: '301', name: 'Jaiz Bank' },
+    { code: '301', name: 'Jaiz Bank (Microfinance)' },
     { code: '082', name: 'Keystone Bank' },
     { code: '076', name: 'Polaris Bank' },
     { code: '221', name: 'Stanbic IBTC Bank' },
@@ -32,85 +25,114 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
     { code: '215', name: 'Unity Bank' },
     { code: '035', name: 'Wema Bank' },
     { code: '057', name: 'Zenith Bank' },
-  ];
+    { code: 'MTN', name: 'MTN MoMo (Mobile Money)' },
+    { code: 'AIRTEL', name: 'Airtel Money (Mobile Money)' },
+  ],
+  '+233': [ // Ghana 🇬🇭
+    { code: '101', name: 'Absa Bank' },
+    { code: '102', name: 'Ecobank Ghana' },
+    { code: '103', name: 'Fidelity Bank Ghana' },
+    { code: '104', name: 'First Atlantic Bank' },
+    { code: '105', name: 'Ghana Commercial Bank' },
+    { code: '106', name: 'Stanbic Bank Ghana' },
+    { code: '107', name: 'United Bank for Africa (UBA) Ghana' },
+    { code: 'MTN', name: 'MTN MoMo (Mobile Money)' },
+    { code: 'VODAFONE', name: 'Vodafone Cash (Mobile Money)' },
+    { code: 'AIRTELTIGO', name: 'AirtelTigo Money (Mobile Money)' },
+  ],
+  '+44': [ // United Kingdom 🇬🇧
+    { code: 'BARCLAYS', name: 'Barclays' },
+    { code: 'HSBC', name: 'HSBC' },
+    { code: 'LLOYDS', name: 'Lloyds Bank' },
+    { code: 'NATWEST', name: 'NatWest' },
+    { code: 'SANTANDER', name: 'Santander UK' },
+    { code: 'TSB', name: 'TSB Bank' },
+    { code: 'REVOLUT', name: 'Revolut' },
+    { code: 'MONZO', name: 'Monzo' },
+  ],
+  '+1': [ // United States 🇺🇸
+    { code: 'CHASE', name: 'Chase Bank' },
+    { code: 'BOA', name: 'Bank of America' },
+    { code: 'WELLS_FARGO', name: 'Wells Fargo' },
+    { code: 'CITI', name: 'Citibank' },
+    { code: 'USBANK', name: 'U.S. Bank' },
+    { code: 'VENMO', name: 'Venmo' },
+    { code: 'CASHAPP', name: 'Cash App' },
+    { code: 'PAYPAL', name: 'PayPal' },
+  ],
+};
 
-  useEffect(() => {
-    // Simulate bank data loading
-    setBanks(sampleBanks);
-  }, []);
+const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
+  const [amount, setAmount] = useState('');
+  const [bankCode, setBankCode] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const calculateEquivalent = () => {
     if (!amount) return '0.00';
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount)) return '0.00';
     
-    // Conversion rates (would come from your API in real app)
-    const rate = user.countryCode === '+234' ? 5 : 0.1; // NGN or GHS
+    // Conversion rates (would come from your API in a real app)
+    let rate;
+    let currencySymbol;
+
+    switch (user.countryCode) {
+        case '+234':
+            rate = 5; // Example: 1 coin = 5 NGN
+            currencySymbol = '₦';
+            break;
+        case '+233':
+            rate = 0.1; // Example: 1 coin = 0.1 GHS
+            currencySymbol = 'GH₵';
+            break;
+        case '+44':
+            rate = 0.005; // Example: 1 coin = 0.005 GBP
+            currencySymbol = '£';
+            break;
+        case '+1':
+        default:
+            rate = 0.007; // Example: 1 coin = 0.007 USD
+            currencySymbol = '$';
+            break;
+    }
+    
     const equivalent = numericAmount * rate;
     
-    return equivalent.toFixed(2);
-  };
-
-  const verifyAccount = async () => {
-    if (!bankCode || !accountNumber) {
-      setError('Please select bank and enter account number');
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Simulate API call to verify account
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In real app, you would call your verification endpoint:
-      // const response = await axios.post(`${Api}/verify-account`, {
-      //   bankCode,
-      //   accountNumber
-      // });
-      
-      // For demo, we'll use a mock account name
-      setAccountName('John Doe'); // Would come from API response
-      setAccountVerified(true);
-    } catch (err) {
-      setError('Account verification failed. Please check details and try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    return `${currencySymbol}${equivalent.toFixed(2)}`;
   };
 
   const handleWithdraw = async () => {
     if (!amount || !bankCode || !accountNumber || !accountName) {
-      setError('Please fill all fields');
+      setError('Please fill all fields.');
       return;
     }
-    
-    if (!accountVerified) {
-      setError('Please verify your account first');
+
+    if (parseFloat(amount) > user.balance) {
+      setError('Insufficient balance.');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
+
+    const data =  {
+        userId: user._id, // Send the user's ID
+        amount: parseFloat(amount),
+        bankCode,
+        accountNumber,
+        accountName,
+      }
     
     try {
-      // Simulate withdrawal processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await axios.post(`${Api}/client/withdrawal`, data);
       
-      // In real app:
-      // const response = await axios.post(`${Api}/withdraw`, {
-      //   token: await localforage.getItem("token"),
-      //   amount,
-      //   bankCode,
-      //   accountNumber,
-      //   accountName
-      // });
-      
-      onWithdrawSuccess(parseFloat(amount));
+      onWithdrawSuccess(response.data.newBalance);
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Withdrawal failed. Please try again.');
+      setError(err.response?.data?.error || 'Withdrawal failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -192,18 +214,18 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
             </div>
             <div className="mt-2 text-right">
               <p className="text-xs" style={{ color: "#376553" }}>
-                ≈ {user.countryCode === '+234' ? '₦' : 'GH₵'}{calculateEquivalent()}
+                ≈ {calculateEquivalent()}
               </p>
             </div>
           </div>
 
-          {/* Bank Selection */}
+          {/* Bank/Mobile Money Selection */}
           <div className="mb-6">
             <label 
               className="block text-sm mb-2"
               style={{ color: "#f57cff" }}
             >
-              Select Bank
+              Select Bank or Mobile Money
             </label>
             <div 
               className="relative rounded-lg overflow-hidden"
@@ -211,36 +233,27 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
             >
               <select
                 value={bankCode}
-                onChange={(e) => {
-                  setBankCode(e.target.value);
-                  setAccountVerified(false);
-                }}
+                onChange={(e) => setBankCode(e.target.value)}
                 className="w-full py-3 px-4 pr-10 focus:outline-none appearance-none"
                 style={{ backgroundColor: "#162821", color: "#efefef" }}
               >
-                <option value="">Select your bank</option>
-                {banks.map(bank => (
-                  <option key={bank.code} value={bank.code}>
-                    {bank.name}
+                <option value="">Select your option</option>
+                {bankOptions[user.countryCode]?.map(option => (
+                  <option key={option.code} value={option.code}>
+                    {option.name}
                   </option>
                 ))}
               </select>
-              <div 
-                className="absolute right-3 top-3"
-                style={{ color: "#18ffc8" }}
-              >
-                {/* <RiBankFill size={18} /> */}
-              </div>
             </div>
           </div>
 
-          {/* Account Number */}
+          {/* Account Number/Mobile Number */}
           <div className="mb-6">
             <label 
               className="block text-sm mb-2"
               style={{ color: "#f57cff" }}
             >
-              Account Number
+              Account Number / Mobile Number
             </label>
             <div 
               className="relative rounded-lg overflow-hidden"
@@ -249,81 +262,36 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
               <input
                 type="text"
                 value={accountNumber}
-                onChange={(e) => {
-                  setAccountNumber(e.target.value);
-                  setAccountVerified(false);
-                }}
-                placeholder="Enter account number"
+                onChange={(e) => setAccountNumber(e.target.value)}
+                placeholder="Enter number"
                 className="w-full py-3 px-4 pr-10 focus:outline-none"
                 style={{ backgroundColor: "#162821", color: "#efefef" }}
               />
-              <div 
-                className="absolute right-3 top-3"
-                style={{ color: "#18ffc8" }}
-              >
-                {/* <FaBank size={16} /> */}
-              </div>
             </div>
           </div>
-
-          {/* Account Verification */}
-          {accountNumber && bankCode && (
-            <div className="mb-4">
-              <button
-                onClick={verifyAccount}
-                disabled={isLoading || accountVerified}
-                className={`w-full py-3 rounded-lg font-bold flex items-center justify-center ${
-                  isLoading ? 'opacity-70' : 'hover:opacity-90'
-                } ${accountVerified ? 'bg-green-500' : 'bg-blue'}`}
-                style={{ color: "#09100d" }}
-              >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Verifying...
-                  </>
-                ) : accountVerified ? (
-                  'Account Verified'
-                ) : (
-                  'Verify Account'
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Account Name (display only after verification) */}
-          {accountVerified && (
-            <div className="mb-6">
-              <label 
-                className="block text-sm mb-2"
-                style={{ color: "#f57cff" }}
-              >
-                Account Name
-              </label>
-              <div 
-                className="p-3 rounded-lg"
+          
+          {/* Account Name */}
+          <div className="mb-6">
+            <label 
+              className="block text-sm mb-2"
+              style={{ color: "#f57cff" }}
+            >
+              Account Name
+            </label>
+            <div 
+              className="relative rounded-lg overflow-hidden"
+              style={{ backgroundColor: "#162821" }}
+            >
+              <input
+                type="text"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="Enter account name"
+                className="w-full py-3 px-4 pr-10 focus:outline-none"
                 style={{ backgroundColor: "#162821", color: "#efefef" }}
-              >
-                {accountName}
-              </div>
-              <div 
-                className="mt-2 p-2 rounded-lg flex items-start"
-                style={{ backgroundColor: "rgba(254, 169, 42, 0.1)" }}
-              >
-                {/* <FaExclamationTriangle 
-                  className="mt-1 mr-2 flex-shrink-0" 
-                  style={{ color: "#fea92a" }} 
-                /> */}
-                <p className="text-xs" style={{ color: "#fea92a" }}>
-                  The account name must match your registered name ({user.firstname} {user.lastname}) 
-                  or your withdrawal may fail. Please double-check before proceeding.
-                </p>
-              </div>
+              />
             </div>
-          )}
+          </div>
 
           {/* Error Message */}
           {error && (
@@ -343,7 +311,7 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
         >
           <button
             onClick={handleWithdraw}
-            disabled={isLoading || !accountVerified}
+            disabled={isLoading}
             className={`w-full py-3 rounded-lg font-bold flex items-center justify-center ${
               isLoading ? 'opacity-70' : 'hover:opacity-90'
             }`}

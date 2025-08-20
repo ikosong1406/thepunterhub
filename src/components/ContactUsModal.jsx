@@ -21,15 +21,6 @@ const ContactUsModal = ({ onClose }) => {
       color: "#f57cff",
       buttonText: "Compose Email"
     },
-    {
-      type: "Phone",
-      icon: <FaPhone size={24} />,
-      details: "+234 987 654 3210",
-      action: "tel:+2349876543210",
-      description: "Call our customer service line (9am-5pm WAT)",
-      color: "#18ffc8",
-      buttonText: "Call Now"
-    }
   ];
 
   return (

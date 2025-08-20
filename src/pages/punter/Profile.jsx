@@ -22,8 +22,8 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-    const [activeModal, setActiveModal] = useState(null);
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -88,6 +88,19 @@ const ProfilePage = () => {
     );
   }
 
+  const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
+
+  // Get first name and last name initials
+  const initials = (
+    user.firstname && user.lastname
+      ? `${user.firstname.charAt(0)}${user.lastname.charAt(0)}`
+      : user.firstname
+      ? user.firstname.charAt(0)
+      : user.lastname
+      ? user.lastname.charAt(0)
+      : "U"
+  ).toUpperCase();
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#09100d" }}>
       {/* Header */}
@@ -105,7 +118,9 @@ const ProfilePage = () => {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <FaUser className="text-lg" style={{ color: "#efefef" }} />
+                <span className="text-lg font-bold" style={{ color: "#efefef" }}>
+                  {initials}
+                </span>
               )}
             </div>
             <div>
@@ -113,7 +128,7 @@ const ProfilePage = () => {
                 {user.isPunter ? user.username : "User"}
               </h1>
               <p className="text-xs" style={{ color: "#18ffc8" }}>
-               Punter Account
+                Punter Account
               </p>
             </div>
           </div>
@@ -144,7 +159,7 @@ const ProfilePage = () => {
             <button
               className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium"
               style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-                onClick={() => setActiveModal("withdraw")}
+              onClick={() => setActiveModal("withdraw")}
             >
               <IoMdAdd className="text-sm" />
               <span>Withdraw</span>
@@ -209,7 +224,7 @@ const ProfilePage = () => {
         </div>
       </div>
 
-            {/* Modals */}
+      {/* Modals */}
       {activeModal === "withdraw" && (
         <WithdrawModal
           user={user}
@@ -229,9 +244,7 @@ const ProfilePage = () => {
       {activeModal === "help-center" && (
         <HelpCenterModal onClose={closeModal} />
       )}
-      {activeModal === "contact-us" && (
-        <ContactUsModal onClose={closeModal} />
-      )}
+      {activeModal === "contact-us" && <ContactUsModal onClose={closeModal} />}
 
       {/* Logout Confirmation */}
       {showLogoutConfirm && (

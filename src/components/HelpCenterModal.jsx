@@ -271,28 +271,6 @@ const HelpCenterModal = ({ onClose }) => {
             </div>
           )}
         </div>
-
-        {/* Contact Support Footer */}
-        {!activeQuestion && (
-          <div 
-            className="px-6 py-4 border-t"
-            style={{ borderColor: "#376553" }}
-          >
-            <h3 
-              className="text-sm font-semibold mb-3"
-              style={{ color: "#f57cff" }}
-            >
-              Still need help?
-            </h3>
-            <button
-              onClick={() => {/* You would link this to your contact modal */}}
-              className="w-full py-3 rounded-lg font-bold flex items-center justify-center"
-              style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-            >
-              Contact Support
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

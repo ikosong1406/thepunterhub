@@ -74,6 +74,13 @@ const PersonalInfoModal = ({ user, onClose }) => {
     { name: 'username', label: 'Username', icon: <FaUserTag />, disabled: true },
   ];
 
+  // Get first name and last name initials
+  const initials = ((user.firstname && user.lastname) ? 
+    `${user.firstname.charAt(0)}${user.lastname.charAt(0)}` : 
+    (user.firstname ? user.firstname.charAt(0) : 
+    (user.lastname ? user.lastname.charAt(0) : "U"))
+  ).toUpperCase();
+
   return (
     <div 
       className="fixed inset-0 z-50 overflow-y-auto"
@@ -133,7 +140,9 @@ const PersonalInfoModal = ({ user, onClose }) => {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <FaUser className="text-3xl" style={{ color: "#efefef" }} />
+                <span className="text-3xl font-bold" style={{ color: "#efefef" }}>
+                  {initials}
+                </span>
               )}
               {isEditing && (
                 <button
@@ -241,56 +250,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
               >
                 You don't have any active subscriptions
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t" style={{ borderColor: "#376553" }}>
-          <div className="flex space-x-3">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center ${
-                    loading ? 'opacity-70' : 'hover:opacity-90'
-                  }`}
-                  style={{ backgroundColor: "#18ffc8", color: "#09100d" }}
-                >
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <FaSave className="mr-2" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 py-3 rounded-xl font-bold flex items-center justify-center"
-                  style={{ backgroundColor: "#376553", color: "#efefef" }}
-                >
-                  <FaTimes className="mr-2" />
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="w-full py-3 rounded-xl font-bold flex items-center justify-center"
-                style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-              >
-                <FaEdit className="mr-2" />
-                Edit Profile
-              </button>
             )}
           </div>
         </div>
