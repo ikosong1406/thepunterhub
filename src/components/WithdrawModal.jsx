@@ -293,6 +293,14 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
             </div>
           </div>
 
+          {/* New Warning Message */}
+          <div 
+            className="mb-4 p-3 rounded-lg text-sm"
+            style={{ backgroundColor: "rgba(255, 178, 102, 0.1)", color: "#FFB266" }}
+          >
+            ⚠️ Please ensure the account name matches the name on your bank account to avoid withdrawal delays or failures.
+          </div>
+
           {/* Error Message */}
           {error && (
             <div 

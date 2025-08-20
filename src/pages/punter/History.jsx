@@ -61,46 +61,44 @@ const TipsHistoryMobile = () => {
     setSelectedTip(null);
   };
 
-  const handleDelete = async () => {
-    if (!selectedTip) return;
-
-    try {
-      const response = await axios.post(`${Api}/client/deleteSignal`, { signalId: selectedTip._id });
-      if (response.data.success) {
-        setTips(tips.filter((tip) => tip._id !== selectedTip._id));
-      } else {
-        throw new Error(response.data.message || "Failed to delete tip.");
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      closeModals();
+// Inside handleDelete
+const handleDelete = async () => {
+  if (!selectedTip) return;
+  try {
+    const response = await axios.post(`${Api}/client/deleteSignal`, { signalId: selectedTip._id });
+if (response.data.status === "ok") {
+      // Instead of setTips, just refetch all tips
+      await fetchData(); 
+    } else {
+      throw new Error(response.data.message || "Failed to delete tip.");
     }
-  };
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    closeModals();
+  }
+};
 
-  const handleUpdateStatus = async () => {
-    if (!selectedTip || !newStatus) return;
-
-    try {
-      const response = await axios.post(`${Api}/client/updateSignalStatus`, {
-        signalId: selectedTip._id,
-        status: newStatus,
-      });
-      if (response.data.success) {
-        setTips(
-          tips.map((tip) =>
-            tip._id === selectedTip._id ? { ...tip, status: newStatus, result: newStatus === 'active' ? '' : newStatus } : tip
-          )
-        );
-      } else {
-        throw new Error(response.data.message || "Failed to update tip status.");
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      closeModals();
+// Inside handleUpdateStatus
+const handleUpdateStatus = async () => {
+  if (!selectedTip || !newStatus) return;
+  try {
+    const response = await axios.post(`${Api}/client/editSignal`, {
+      signalId: selectedTip._id,
+      status: newStatus,
+    });
+  if (response.data.status === "ok") {
+      // Instead of setTips, just refetch all tips
+      await fetchData();
+    } else {
+      throw new Error(response.data.message || "Failed to update tip status.");
     }
-  };
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    closeModals();
+  }
+};
 
   const filteredTips = tips.filter((tip) => {
     if (activeFilter === "all") return true;
