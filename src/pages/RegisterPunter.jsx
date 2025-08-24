@@ -685,7 +685,7 @@ const RegisterScreen = () => {
                   htmlFor="pricePerWeek"
                   className="block text-sm font-medium text-gray-400 mb-1"
                 >
-                  Price per Week (in Coin)
+                  Price per Week (in Coin, 1 coin = 1 usd)
                 </label>
                 <input
                   type="number"
