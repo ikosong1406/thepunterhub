@@ -6,7 +6,7 @@ import toast, { Toaster } from "react-hot-toast";
 import Api from "../components/Api";
 import logoImage from "../assets/logo2.png";
 
-const SignupScreen = () => {
+const RegisterScreen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -366,4 +366,4 @@ const SignupScreen = () => {
   );
 };
 
-export default SignupScreen;
+export default RegisterScreen;

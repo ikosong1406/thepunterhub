@@ -11,7 +11,9 @@ import logoImage from "./assets/logo2.png";
 import "./styles/Splash.css";
 import SplashScreen from "./pages/Splash"; // Ensure this component handles the conditional navigation
 import WelcomeScreen from "./pages/Welcome";
+import RegisterOptionScreen from "./pages/RegisterOption";
 import RegisterScreen from "./pages/Register";
+import RegisterPunter from "./pages/RegisterPunter"
 import LoginScreen from "./pages/Login";
 import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerHome from "./pages/customer/Home";
@@ -128,8 +130,10 @@ const App = () => {
         {/* The SplashScreen component now handles all initial logic. */}
         <Route path="/" element={<SplashScreen />} />
         <Route path="/welcome" element={<WelcomeScreen />} />
-        <Route path="/register" element={<RegisterScreen />} />
+        <Route path="/register" element={<RegisterOptionScreen />} />
         <Route path="/login" element={<LoginScreen />} />
+        <Route path="/userRegister" element={<RegisterScreen />} />
+        <Route path="/punterRegister" element={<RegisterPunter />} />
 
         <Route
           path="/customer/*"
