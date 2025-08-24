@@ -244,13 +244,13 @@ const primaryCategories = [
 
 const sportCategories = [
   { name: "Football", icon: <IoMdFootball size={20} />, key: "football" },
-  {
-    name: "Basketball",
-    icon: <FaBasketballBall size={18} />,
-    key: "basketball",
-  },
-  { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
-  { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
+  // {
+  //   name: "Basketball",
+  //   icon: <FaBasketballBall size={18} />,
+  //   key: "basketball",
+  // },
+  // { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
+  // { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
 ];
 
 const tradingCategories = [
