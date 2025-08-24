@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Api from "../../components/Api";
 import Header from "./Header";
+import localforage from "localforage";
 import {
   FaFootballBall,
   FaBasketballBall,
@@ -157,13 +158,13 @@ const primaryCategories = [
 
 const sportCategories = [
   { name: "Football", icon: <IoMdFootball size={20} />, key: "football" },
-  {
-    name: "Basketball",
-    icon: <FaBasketballBall size={18} />,
-    key: "basketball",
-  },
-  { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
-  { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
+  // {
+  //   name: "Basketball",
+  //   icon: <FaBasketballBall size={18} />,
+  //   key: "basketball",
+  // },
+  // { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
+  // { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
 ];
 
 const tradingCategories = [
@@ -173,16 +174,54 @@ const tradingCategories = [
   { name: "Indices", icon: <FaChartBar size={18} />, key: "indices" },
 ];
 
+// ---------------------- UTILITY FUNCTIONS ----------------------
+const shuffleArray = (array) => {
+  let currentIndex = array.length,
+    randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex],
+      array[currentIndex],
+    ];
+  }
+  return array;
+};
+
 // ---------------------- HOME COMPONENT ----------------------
 const Home = () => {
   const navigate = useNavigate();
   const [activePrimary, setActivePrimary] = useState("sports");
   const [activeSport, setActiveSport] = useState("football");
   const [activeTrading, setActiveTrading] = useState("forex");
-
-  const [punters, setPunters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
+  const [punters, setPunters] = useState([]);
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = await localforage.getItem("token");
+        if (!token) {
+          throw new Error("No authentication token found.");
+        }
+
+        const response = await axios.post(`${Api}/client/getUser`, { token });
+
+        setUser(response.data.data);
+        setLoggedInUserId(response.data.data._id);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const fetchPunters = async () => {
@@ -190,7 +229,11 @@ const Home = () => {
         setLoading(true);
         setError(null);
         const response = await axios.get(`${Api}/client/getPunters`);
-        setPunters(response.data.data);
+        // Filter out the logged-in user and shuffle the array
+        const filteredAndShuffledPunters = shuffleArray(
+          response.data.data.filter((punter) => punter._id !== loggedInUserId)
+        );
+        setPunters(filteredAndShuffledPunters);
       } catch (err) {
         console.error("Failed to fetch punters:", err);
         setError("Failed to load punters. Please try again later.");
@@ -199,7 +242,7 @@ const Home = () => {
       }
     };
     fetchPunters();
-  }, []);
+  }, [loggedInUserId]); // Dependency on loggedInUserId to refetch if user changes
 
   const handlePunterClick = (punterId) => {
     navigate(`/customer/punters`, { state: { punterId } });
@@ -251,9 +294,7 @@ const Home = () => {
                 <div className="text-xs text-gray-400">Wins</div>
               </div>
               <div className="bg-[#0a120e] p-2 rounded">
-                <div className="text-red-400 font-bold">
-                  {punter.loss || 0}
-                </div>
+                <div className="text-red-400 font-bold">{punter.loss || 0}</div>
                 <div className="text-xs text-gray-400">Losses</div>
               </div>
               <div className="bg-[#0a120e] p-2 rounded">
@@ -266,14 +307,14 @@ const Home = () => {
           </div>
         </div>
         <div className="border-t border-[#2a3a34] p-3 flex justify-between items-center">
-          <button 
+          <button
             className="bg-[#f57cff] text-black font-bold px-4 py-2 rounded-full text-sm hover:bg-[#e56cff] transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               // Handle subscription logic here
             }}
           >
-            Subscribe {punter.price || "N/A"}
+            {punter.price || "N/A"}/week
           </button>
         </div>
       </div>
@@ -287,7 +328,7 @@ const Home = () => {
   return (
     <div className="bg-[#0a120e] min-h-screen text-white">
       <div className="p-4">
-      <Header />
+        <Header />
       </div>
 
       <div className="container mx-auto px-4 py-2 lg:px-8 lg:py-8">
@@ -346,7 +387,9 @@ const Home = () => {
         <div className="mb-8">
           {activePrimary === "sports" ? (
             <>
-              <h2 className="text-xl font-bold mb-4 lg:text-2xl">Live Scores</h2>
+              <h2 className="text-xl font-bold mb-4 lg:text-2xl">
+                Live Scores
+              </h2>
               <div className="p-3 border border-[#2a3a34] rounded-xl overflow-hidden bg-[#0f1f1a]">
                 <LiveScoreTicker />
               </div>

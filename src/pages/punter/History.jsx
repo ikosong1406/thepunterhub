@@ -1,4 +1,14 @@
-import { FiTrash2, FiEdit, FiCheck, FiX, FiChevronRight } from "react-icons/fi";
+import {
+  FiTrash2,
+  FiEdit,
+  FiCheck,
+  FiX,
+  FiChevronRight,
+  FiThumbsUp,
+  FiThumbsDown,
+  FiStar,
+} from "react-icons/fi";
+import { MdPushPin } from "react-icons/md";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Api from "../../components/Api";
@@ -28,7 +38,9 @@ const TipsHistoryMobile = () => {
       const userData = userResponse.data.data;
       setUser(userData);
       const userId = userData._id;
-      const signalsResponse = await axios.post(`${Api}/client/getSignal`, { userId });
+      const signalsResponse = await axios.post(`${Api}/client/getSignal`, {
+        userId,
+      });
       const sortedSignals = signalsResponse.data.signals.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
@@ -61,56 +73,81 @@ const TipsHistoryMobile = () => {
     setSelectedTip(null);
   };
 
-// Inside handleDelete
-const handleDelete = async () => {
-  if (!selectedTip) return;
-  try {
-    const response = await axios.post(`${Api}/client/deleteSignal`, { signalId: selectedTip._id });
-if (response.data.status === "ok") {
-      // Instead of setTips, just refetch all tips
-      await fetchData(); 
-    } else {
-      throw new Error(response.data.message || "Failed to delete tip.");
-    }
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    closeModals();
-  }
-};
+  // New function to handle pin/unpin
+  const handlePinUnpin = async (tipId, isCurrentlyPinned) => {
+    try {
+      const response = await axios.post(`${Api}/client/pinSignal`, {
+        signalId: tipId,
+        isPinned: !isCurrentlyPinned, // Toggle the pin status
+      });
 
-// Inside handleUpdateStatus
-const handleUpdateStatus = async () => {
-  if (!selectedTip || !newStatus) return;
-  try {
-    const response = await axios.post(`${Api}/client/editSignal`, {
-      signalId: selectedTip._id,
-      status: newStatus,
-    });
-  if (response.data.status === "ok") {
-      // Instead of setTips, just refetch all tips
-      await fetchData();
-    } else {
-      throw new Error(response.data.message || "Failed to update tip status.");
+      if (response.data.status === "ok") {
+        // Refetch tips to get the updated, sorted list
+        await fetchData();
+      } else {
+        throw new Error(
+          response.data.message || "Failed to update pin status."
+        );
+      }
+    } catch (err) {
+      setError(err.message);
     }
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    closeModals();
-  }
-};
+  };
+
+  // Inside handleDelete
+  const handleDelete = async () => {
+    if (!selectedTip) return;
+    try {
+      const response = await axios.post(`${Api}/client/deleteSignal`, {
+        signalId: selectedTip._id,
+      });
+      if (response.data.status === "ok") {
+        // Instead of setTips, just refetch all tips
+        await fetchData();
+      } else {
+        throw new Error(response.data.message || "Failed to delete tip.");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      closeModals();
+    }
+  };
+
+  // Inside handleUpdateStatus
+  const handleUpdateStatus = async () => {
+    if (!selectedTip || !newStatus) return;
+    try {
+      const response = await axios.post(`${Api}/client/editSignal`, {
+        signalId: selectedTip._id,
+        status: newStatus,
+      });
+      if (response.data.status === "ok") {
+        // Instead of setTips, just refetch all tips
+        await fetchData();
+      } else {
+        throw new Error(
+          response.data.message || "Failed to update tip status."
+        );
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      closeModals();
+    }
+  };
 
   const filteredTips = tips.filter((tip) => {
     if (activeFilter === "all") return true;
     if (activeFilter === "active") return tip.status === "active";
-    if (activeFilter === "win") return tip.result === "win";
-    if (activeFilter === "loss") return tip.result === "loss";
+    if (activeFilter === "win") return tip.status === "win";
+    if (activeFilter === "loss") return tip.status === "loss";
     return true;
   });
 
-  const getStatusColor = (status, result) => {
-    if (result === "win") return "bg-[#18ffc8]/20 text-[#18ffc8]";
-    if (result === "loss") return "bg-[#f57cff]/20 text-[#f57cff]";
+  const getStatusColor = (status) => {
+    if (status === "win") return "bg-[#18ffc8]/20 text-[#18ffc8]";
+    if (status === "loss") return "bg-[#f57cff]/20 text-[#f57cff]";
     if (status === "active") return "bg-[#fea92a]/20 text-[#fea92a]";
     return "bg-[#376553]/20 text-[#efefef]";
   };
@@ -139,9 +176,12 @@ const handleUpdateStatus = async () => {
   const DeleteConfirmationModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-[#162821] p-6 rounded-lg shadow-xl max-w-sm w-full">
-        <h4 className="text-lg font-bold text-red-400 mb-2">Confirm Deletion</h4>
+        <h4 className="text-lg font-bold text-red-400 mb-2">
+          Confirm Deletion
+        </h4>
         <p className="text-sm text-[#efefef]/70 mb-4">
-          Are you sure you want to delete this tip? This action cannot be undone.
+          Are you sure you want to delete this tip? This action cannot be
+          undone.
         </p>
         <div className="flex justify-end space-x-2">
           <button
@@ -164,12 +204,17 @@ const handleUpdateStatus = async () => {
   const EditStatusModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-[#162821] p-6 rounded-lg shadow-xl max-w-sm w-full">
-        <h4 className="text-lg font-bold text-[#fea92a] mb-2">Edit Tip Status</h4>
+        <h4 className="text-lg font-bold text-[#fea92a] mb-2">
+          Edit Tip Status
+        </h4>
         <p className="text-sm text-[#efefef]/70 mb-4">
           Change the status of this tip.
         </p>
         <div className="mb-4">
-          <label htmlFor="status-select" className="block text-sm font-medium text-[#efefef] mb-1">
+          <label
+            htmlFor="status-select"
+            className="block text-sm font-medium text-[#efefef] mb-1"
+          >
             Status
           </label>
           <select
@@ -273,7 +318,7 @@ const handleUpdateStatus = async () => {
                   {tip.result || tip.status}
                 </span>
               </div>
-              
+
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {tip.primaryCategory !== "sports" ? (
                   <>
@@ -311,7 +356,7 @@ const handleUpdateStatus = async () => {
                   </>
                 )}
               </div>
-              
+
               <div className="mt-3">
                 <div className="flex justify-between text-xs mb-1">
                   <span>Confidence Level</span>
@@ -332,19 +377,44 @@ const handleUpdateStatus = async () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-end space-x-4">
-                <button
-                  onClick={() => openEditModal(tip)}
-                  className="p-2 rounded-full bg-[#fea92a]/20 text-[#fea92a] hover:bg-[#fea92a] hover:text-[#09100d]"
-                >
-                  <FiEdit size={18} />
-                </button>
-                <button
-                  onClick={() => openDeleteModal(tip)}
-                  className="p-2 rounded-full bg-[#f57cff]/20 text-[#f57cff] hover:bg-[#f57cff] hover:text-[#09100d]"
-                >
-                  <FiTrash2 size={18} />
-                </button>
+              <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-between space-x-4">
+                <div className="flex space-x-4">
+                  <div className="flex items-center space-x-1 text-green-400">
+                    <FiThumbsUp size={16} />
+                    <span className="text-sm">{tip.thumbsUpCount || 0}</span>
+                  </div>
+
+                  <div className="flex items-center space-x-1 text-red-400">
+                    <FiThumbsDown size={16} />
+                    <span className="text-sm">{tip.thumbsDownCount || 0}</span>
+                  </div>
+                </div>
+                <div className="flex space-x-4">
+                  {/* Pin Icon */}
+                  <button
+                    onClick={() => handlePinUnpin(tip._id, tip.isPinned)}
+                    className="p-1 rounded-full text-white/50 hover:text-white transition"
+                  >
+                    {tip.isPinned ? (
+                      <MdPushPin size={20} className="text-yellow-400" />
+                    ) : (
+                      <MdPushPin size={20} />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => openEditModal(tip)}
+                    className="p-2 rounded-full bg-[#fea92a]/20 text-[#fea92a] hover:bg-[#fea92a] hover:text-[#09100d]"
+                  >
+                    <FiEdit size={18} />
+                  </button>
+                  <button
+                    onClick={() => openDeleteModal(tip)}
+                    className="p-2 rounded-full bg-[#f57cff]/20 text-[#f57cff] hover:bg-[#f57cff] hover:text-[#09100d]"
+                  >
+                    <FiTrash2 size={18} />
+                  </button>
+                </div>
               </div>
             </div>
           ))

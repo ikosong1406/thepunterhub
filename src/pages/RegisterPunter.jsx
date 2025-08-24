@@ -57,8 +57,7 @@ const PHONE_CODES = [
 
 const PRIMARY_CATEGORIES = [
   { value: "sports", label: "Sports" },
-  { value: "forex", label: "Forex" },
-  { value: "crypto", label: "Crypto" },
+  { value: "trading", label: "Trading" },
 ];
 
 const SECONDARY_CATEGORIES = {
@@ -66,18 +65,15 @@ const SECONDARY_CATEGORIES = {
     { value: "football", label: "Football" },
     { value: "basketball", label: "Basketball" },
     { value: "tennis", label: "Tennis" },
+    { value: "cricket", label: "Cricket" },
     { value: "baseball", label: "Baseball" },
   ],
-  forex: [
-    { value: "major-pairs", label: "Major Pairs" },
-    { value: "minor-pairs", label: "Minor Pairs" },
-    { value: "exotic-pairs", label: "Exotic Pairs" },
-  ],
-  crypto: [
-    { value: "btc", label: "Bitcoin" },
-    { value: "eth", label: "Ethereum" },
-    { value: "sol", label: "Solana" },
-    { value: "shib", label: "Shiba Inu" },
+  trading: [
+    { value: "forex", label: "Forex" },
+    { value: "crypto", label: "Crypto" },
+    { value: "stocks", label: "Stocks" },
+    { value: "commodities", label: "Commodities" },
+    { value: "indices", label: "Indices" },
   ],
 };
 
@@ -229,7 +225,7 @@ const RegisterScreen = () => {
       username: formData.username,
       primaryCategory: formData.primaryCategory,
       secondaryCategory: formData.secondaryCategory,
-      pricePerWeek: parseFloat(formData.pricePerWeek),
+      price: parseFloat(formData.pricePerWeek),
     };
 
     try {
