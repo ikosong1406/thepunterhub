@@ -512,7 +512,7 @@ const BecomePunter = () => {
                   className="block text-sm font-medium mb-2"
                   style={{ color: Colors.white }}
                 >
-                  Price per Week (in Coin, 1 coin = 1 usd)
+                  Price per Week (in USD)
                 </label>
                 <input
                   type="number"
