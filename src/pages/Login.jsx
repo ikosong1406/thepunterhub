@@ -348,7 +348,7 @@ const LoginScreen = ({ platformName = "PH" }) => {
               <button
                 type="button"
                 className="text-gray-400 hover:text-[#18ffc8] text-sm transition"
-                onClick={() => navigate("/forgot-password")}
+                onClick={() => navigate("/forgot")}
               >
                 Forgot Password?
               </button>

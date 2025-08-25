@@ -16,13 +16,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  
-  // Sample subscribed punters data
-  const [subscribedPunters, setSubscribedPunters] = useState([
-    { id: 1, name: "Goal Prophet", since: "2023-05-15", avatar: "G", active: true },
-    { id: 2, name: "Bet Master", since: "2023-06-22", avatar: "B", active: true },
-    { id: 3, name: "Win Guru", since: "2023-07-10", avatar: "W", active: false },
-  ]);
 
   const handleChange = (e) => {
     setFormData({
@@ -52,18 +45,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleUnsubscribe = (punterId) => {
-    setSubscribedPunters(subscribedPunters.map(p => 
-      p.id === punterId ? { ...p, active: false } : p
-    ));
-  };
-
-  const handleResubscribe = (punterId) => {
-    setSubscribedPunters(subscribedPunters.map(p => 
-      p.id === punterId ? { ...p, active: true } : p
-    ));
   };
 
   const fieldConfig = [
@@ -185,72 +166,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
                 )}
               </div>
             ))}
-          </div>
-
-          {/* Subscribed Punters Section */}
-          <div className="mb-6">
-            <h3 
-              className="text-lg font-semibold mb-4 flex items-center"
-              style={{ color: "#efefef" }}
-            >
-              <FaUserTag className="mr-2" style={{ color: "#f57cff" }} />
-              Your Subscriptions
-            </h3>
-            
-            {subscribedPunters.length > 0 ? (
-              <div className="space-y-3">
-                {subscribedPunters.map(punter => (
-                  <div 
-                    key={punter.id} 
-                    className="flex items-center justify-between p-4 rounded-xl"
-                    style={{ backgroundColor: "#162821" }}
-                  >
-                    <div className="flex items-center">
-                      <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center mr-3"
-                        style={{ backgroundColor: "#376553", color: "#efefef" }}
-                      >
-                        {punter.avatar}
-                      </div>
-                      <div>
-                        <p style={{ color: "#efefef" }}>{punter.name}</p>
-                        <p 
-                          className="text-xs"
-                          style={{ color: "#18ffc8" }}
-                        >
-                          Since {new Date(punter.since).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    {punter.active ? (
-                      <button
-                        onClick={() => handleUnsubscribe(punter.id)}
-                        className="px-3 py-1 rounded-full text-xs font-medium"
-                        style={{ backgroundColor: "rgba(245, 124, 255, 0.2)", color: "#f57cff" }}
-                      >
-                        Unsubscribe
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleResubscribe(punter.id)}
-                        className="px-3 py-1 rounded-full text-xs font-medium flex items-center"
-                        style={{ backgroundColor: "rgba(24, 255, 200, 0.2)", color: "#18ffc8" }}
-                      >
-                        <FaCheck className="mr-1" size={10} />
-                        Resubscribe
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div 
-                className="p-4 rounded-xl text-center"
-                style={{ backgroundColor: "#162821", color: "#efefef" }}
-              >
-                You don't have any active subscriptions
-              </div>
-            )}
           </div>
         </div>
       </div>

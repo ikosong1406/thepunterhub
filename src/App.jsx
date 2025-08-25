@@ -15,6 +15,7 @@ import RegisterOptionScreen from "./pages/RegisterOption";
 import RegisterScreen from "./pages/Register";
 import RegisterPunter from "./pages/RegisterPunter"
 import LoginScreen from "./pages/Login";
+import ForgetScreen from "./pages/Forgot";
 import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerHome from "./pages/customer/Home";
 import CustomerFeed from "./pages/customer/Feed";
@@ -134,6 +135,7 @@ const App = () => {
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/userRegister" element={<RegisterScreen />} />
         <Route path="/punterRegister" element={<RegisterPunter />} />
+        <Route path="/forgot" element={<ForgetScreen />} />
 
         <Route
           path="/customer/*"

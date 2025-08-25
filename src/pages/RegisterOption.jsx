@@ -77,13 +77,13 @@ const RegisterOptionScreen = ({ platformName = "PunterHub" }) => {
             onClick={handleUser}
             className="w-full py-3 rounded-xl text-black font-semibold bg-[#18ffc8] hover:opacity-90 transition"
           >
-            As a User
+            As Rookies
           </button>
           <button
             onClick={handlePunter}
             className="w-full py-3 rounded-xl border-2 border-[#18ffc8] text-[#18ffc8] font-semibold hover:bg-[#18ffc8]/10 transition"
           >
-            As a Punter
+            As TipMaster
           </button>
         </div>
       </div>
