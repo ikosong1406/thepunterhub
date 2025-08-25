@@ -13,6 +13,7 @@ import {
   FaBaseballBall,
   FaChartBar,
   FaStar,
+  FaMoneyBillWave,
 } from "react-icons/fa";
 import { IoMdFootball } from "react-icons/io";
 import { GiTennisBall, GiMetalDisc } from "react-icons/gi";
@@ -254,6 +255,11 @@ const Home = () => {
         ? (punter.win / (punter.win + punter.loss)) * 100
         : 0;
 
+    const getInitials = (username) => {
+      const fInitial = username ? username.charAt(0) : "";
+      return `${fInitial}`.toUpperCase();
+    };
+
     return (
       <div
         key={punter._id}
@@ -261,22 +267,15 @@ const Home = () => {
         className="bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] mb-4 cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:border-[#18ffc8]"
       >
         <div className="p-4 flex items-start">
-          <div className="relative">
-            <img
-              src={punter.avatar || "https://i.pravatar.cc/150?img=1"}
-              alt={punter.firstname}
-              className="w-14 h-14 rounded-full object-cover border-2 border-[#18ffc8]"
-            />
-            {punter.isOnline && (
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0f1f1a]"></div>
-            )}
+          <div className="relative mr-4">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center bg-[#18ffc8]/20 text-[#18ffc8] text-3xl font-bold border-2 border-[#18ffc8]">
+              {getInitials(punter.username)}
+            </div>
           </div>
           <div className="ml-4 flex-1">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-bold text-lg">
-                  {punter.firstname} {punter.lastname}
-                </h3>
+                <h3 className="font-bold text-lg">{punter.username}</h3>
                 <p className="text-sm text-gray-400">
                   {punter.primaryCategory} & {punter.secondaryCategory}
                 </p>
@@ -307,14 +306,9 @@ const Home = () => {
           </div>
         </div>
         <div className="border-t border-[#2a3a34] p-3 flex justify-between items-center">
-          <button
-            className="bg-[#f57cff] text-black font-bold px-4 py-2 rounded-full text-sm hover:bg-[#e56cff] transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle subscription logic here
-            }}
-          >
-            {punter.price || "N/A"}/week
+          <button className="w-full bg-[#f57cff] text-black font-bold py-3 rounded-lg flex items-center justify-center">
+            <FaMoneyBillWave className="mr-2" />
+            Subscribe for {punter.price || "N/A"}/week
           </button>
         </div>
       </div>

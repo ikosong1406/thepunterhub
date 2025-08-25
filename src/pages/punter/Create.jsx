@@ -104,6 +104,11 @@ const CreateTipPage = () => {
     setIsSubmitting(true);
 
     try {
+      if (!user.isVerified) {
+        toast.error("You must be verified to publish a tip.");
+        setIsSubmitting(false);
+        return; // Stop the function execution
+      }
       // This is the updated code block
       let signalData = {};
 
