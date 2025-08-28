@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { FaUser, FaSearch, FaFire, FaNewspaper} from "react-icons/fa";
 import { PiBroadcastFill } from "react-icons/pi";
+import { IoChatbubblesSharp } from "react-icons/io5";
 import { useState, useEffect } from "react";
 
 export default function CustomerLayout() {
@@ -23,15 +24,20 @@ export default function CustomerLayout() {
       name: "Explore",
       icon: <FaSearch size={20} />,
     },
+        {
+      path: "/customer/live",
+      name: "Live",
+      icon: <PiBroadcastFill size={20} />,
+    },
     {
       path: "/customer/feed",
       name: "Feed",
       icon: <FaNewspaper size={20} />,
     },
     {
-      path: "/customer/live",
-      name: "Live",
-      icon: <PiBroadcastFill size={20} />,
+      path: "/customer/chat",
+      name: "Chat",
+      icon: <IoChatbubblesSharp size={20} />,
     },
     {
       path: "/customer/profile",
@@ -82,7 +88,7 @@ export default function CustomerLayout() {
   return (
     <div className="flex flex-col h-screen w-full ">
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto w-full mb-15">
+      <div className="flex-1 overflow-y-auto w-full">
         <Outlet />
       </div>
 

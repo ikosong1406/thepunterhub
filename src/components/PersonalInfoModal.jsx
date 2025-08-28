@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { FaEdit, FaSave, FaTimes, FaUser, FaEnvelope, FaPhone, FaUserTag, FaCheck } from 'react-icons/fa';
-// import axios from 'axios';
-// import Api from '../../components/Api';
 import localforage from 'localforage';
 
 const PersonalInfoModal = ({ user, onClose }) => {
@@ -48,11 +46,11 @@ const PersonalInfoModal = ({ user, onClose }) => {
   };
 
   const fieldConfig = [
-    { name: 'firstname', label: 'First Name', icon: <FaUser /> },
-    { name: 'lastname', label: 'Last Name', icon: <FaUser /> },
-    { name: 'email', label: 'Email', icon: <FaEnvelope />, disabled: true },
-    { name: 'phone', label: 'Phone', icon: <FaPhone /> },
-    { name: 'username', label: 'Username', icon: <FaUserTag />, disabled: true },
+    { name: 'firstname', label: 'First Name', icon: <FaUser />, editable: false },
+    { name: 'lastname', label: 'Last Name', icon: <FaUser />, editable: false },
+    { name: 'email', label: 'Email', icon: <FaEnvelope />, editable: false },
+    { name: 'phone', label: 'Phone', icon: <FaPhone />, editable: true },
+    { name: 'username', label: 'Username', icon: <FaUserTag />, editable: true },
   ];
 
   // Get first name and last name initials
@@ -81,7 +79,7 @@ const PersonalInfoModal = ({ user, onClose }) => {
           </h2>
           <button 
             onClick={onClose}
-            className="p-1 rounded-full"
+            className="p-2 rounded-full"
             style={{ color: "#efefef" }}
           >
             <FaTimes size={20} />
@@ -147,7 +145,7 @@ const PersonalInfoModal = ({ user, onClose }) => {
                   <span className="mr-2">{field.icon}</span>
                   {field.label}
                 </label>
-                {isEditing && !field.disabled ? (
+                {isEditing && field.editable ? (
                   <input
                     type="text"
                     name={field.name}
@@ -166,6 +164,59 @@ const PersonalInfoModal = ({ user, onClose }) => {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Action Buttons at Bottom */}
+          <div className="flex justify-center space-x-4 mt-8">
+            {isEditing ? (
+              <>
+                <button 
+                  onClick={handleSave}
+                  disabled={loading}
+                  className="py-3 px-6 rounded-lg flex items-center text-lg font-semibold"
+                  style={{ 
+                    backgroundColor: "#18ffc8", 
+                    color: "#09100d",
+                    opacity: loading ? 0.7 : 1
+                  }}
+                >
+                  <FaSave className="mr-2" size={18} />
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData({
+                      firstname: user.firstname || '',
+                      lastname: user.lastname || '',
+                      email: user.email || '',
+                      phone: user.phonenumber || '',
+                      username: user.username || '',
+                    });
+                  }}
+                  className="py-3 px-6 rounded-lg flex items-center text-lg font-semibold"
+                  style={{ 
+                    backgroundColor: "#f57cff", 
+                    color: "#09100d" 
+                  }}
+                >
+                  <FaTimes className="mr-2" size={18} />
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="py-3 px-6 rounded-lg flex items-center text-lg font-semibold"
+                style={{ 
+                  backgroundColor: "#fea92a", 
+                  color: "#09100d" 
+                }}
+              >
+                <FaEdit className="mr-2" size={18} />
+                Edit Information
+              </button>
+            )}
           </div>
         </div>
       </div>

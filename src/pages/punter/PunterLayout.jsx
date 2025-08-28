@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { FiHome } from "react-icons/fi";
-import { FaHistory, FaUser, FaWallet, FaFire, FaGamepad } from "react-icons/fa";
+import { FaHistory, FaUser, FaFire } from "react-icons/fa";
+import { IoChatbubblesSharp } from "react-icons/io5";
 import { PiBroadcastFill } from "react-icons/pi";
 import { useState, useEffect } from "react";
 
@@ -28,6 +29,11 @@ export default function PunterLayout() {
       path: "/punter/live",
       name: "Live",
       icon: <PiBroadcastFill size={20} />,
+    },
+    {
+      path: "/punter/chat",
+      name: "Chat",
+      icon: <IoChatbubblesSharp size={20} />,
     },
     {
       path: "/punter/profile",
@@ -78,7 +84,7 @@ export default function PunterLayout() {
   return (
     <div className="flex flex-col h-screen w-full ">
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto w-full mb-15">
+      <div className="flex-1 overflow-y-auto w-full">
         <Outlet />
       </div>
 

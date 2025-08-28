@@ -11,12 +11,17 @@ import {
   FaSignOutAlt,
 } from "react-icons/fa";
 import { IoMdAdd } from "react-icons/io";
+import { MdPriceChange, MdLeaderboard } from "react-icons/md";
+import { HiIdentification } from "react-icons/hi2";
 
 import WithdrawModal from "../../components/WithdrawModal";
 import PersonalInfoModal from "../../components/PersonalInfoModal";
 import TransactionHistoryModal from "../../components/TransactionHistoryModal";
 import HelpCenterModal from "../../components/HelpCenterModal";
 import ContactUsModal from "../../components/ContactUsModal";
+import PricesModal from "../../components/PricesModal";
+import LeaderboardModal from "../../components/LeaderboardModal";
+import VerificationModal from "../../components/VerificationModal"
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -118,7 +123,10 @@ const ProfilePage = () => {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <span className="text-lg font-bold" style={{ color: "#efefef" }}>
+                <span
+                  className="text-lg font-bold"
+                  style={{ color: "#efefef" }}
+                >
                   {initials}
                 </span>
               )}
@@ -188,6 +196,21 @@ const ProfilePage = () => {
               title="Transaction History"
               onClick={() => setActiveModal("transaction-history")}
             />
+            <MenuItem
+              icon={<MdPriceChange />}
+              title="Prices"
+              onClick={() => setActiveModal("prices")}
+            />
+            <MenuItem
+              icon={<MdLeaderboard />}
+              title="Leaderboard"
+              onClick={() => setActiveModal("leaderboard")}
+            />
+            <MenuItem
+              icon={<HiIdentification />}
+              title="Verification"
+              onClick={() => setActiveModal("verification")}
+            />
           </div>
         </div>
 
@@ -240,6 +263,15 @@ const ProfilePage = () => {
       )}
       {activeModal === "transaction-history" && (
         <TransactionHistoryModal user={user} onClose={closeModal} />
+      )}
+      {activeModal === "prices" && (
+        <PricesModal user={user} onClose={closeModal} />
+      )}
+      {activeModal === "leaderboard" && (
+        <LeaderboardModal user={user} onClose={closeModal} />
+      )}
+      {activeModal === "verification" && (
+        <VerificationModal user={user} onClose={closeModal} />
       )}
       {activeModal === "help-center" && (
         <HelpCenterModal onClose={closeModal} />

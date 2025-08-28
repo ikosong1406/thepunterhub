@@ -10,12 +10,14 @@ import {
   FaQuestionCircle,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { MdLeaderboard } from "react-icons/md";
 import { IoMdAdd } from "react-icons/io";
 
 // Import modal components
 import BuyCoinModal from "../../components/BuyCoinModal";
 import PersonalInfoModal from "../../components/PersonalInfoModal";
 import TransactionHistoryModal from "../../components/TransactionHistoryModal";
+import LeaderboardModal from "../../components/LeaderboardModal";
 import HelpCenterModal from "../../components/HelpCenterModal";
 import ContactUsModal from "../../components/ContactUsModal";
 
@@ -91,10 +93,14 @@ const ProfilePage = () => {
   const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
 
   // Get first name and last name initials
-  const initials = ((user.firstname && user.lastname) ? 
-    `${user.firstname.charAt(0)}${user.lastname.charAt(0)}` : 
-    (user.firstname ? user.firstname.charAt(0) : 
-    (user.lastname ? user.lastname.charAt(0) : "U"))
+  const initials = (
+    user.firstname && user.lastname
+      ? `${user.firstname.charAt(0)}${user.lastname.charAt(0)}`
+      : user.firstname
+      ? user.firstname.charAt(0)
+      : user.lastname
+      ? user.lastname.charAt(0)
+      : "U"
   ).toUpperCase();
 
   return (
@@ -114,7 +120,10 @@ const ProfilePage = () => {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <span className="text-lg font-bold" style={{ color: "#efefef" }}>
+                <span
+                  className="text-lg font-bold"
+                  style={{ color: "#efefef" }}
+                >
                   {initials}
                 </span>
               )}
@@ -184,6 +193,11 @@ const ProfilePage = () => {
               title="Transaction History"
               onClick={() => setActiveModal("transaction-history")}
             />
+            <MenuItem
+              icon={<MdLeaderboard />}
+              title="Leaderboard"
+              onClick={() => setActiveModal("leaderboard")}
+            />
           </div>
         </div>
 
@@ -237,12 +251,13 @@ const ProfilePage = () => {
       {activeModal === "transaction-history" && (
         <TransactionHistoryModal user={user} onClose={closeModal} />
       )}
+      {activeModal === "leaderboard" && (
+        <LeaderboardModal user={user} onClose={closeModal} />
+      )}
       {activeModal === "help-center" && (
         <HelpCenterModal onClose={closeModal} />
       )}
-      {activeModal === "contact-us" && (
-        <ContactUsModal onClose={closeModal} />
-      )}
+      {activeModal === "contact-us" && <ContactUsModal onClose={closeModal} />}
 
       {/* Logout Confirmation */}
       {showLogoutConfirm && (

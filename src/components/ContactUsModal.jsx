@@ -6,8 +6,8 @@ const ContactUsModal = ({ onClose }) => {
     {
       type: "WhatsApp",
       icon: <FaWhatsapp size={24} />,
-      details: "+234 123 456 7890",
-      action: "https://wa.me/2341234567890",
+      details: "+44 777 003 9379",
+      action: "https://wa.me/447770039379",
       description: "Chat with our support team in real-time",
       color: "#25D366",
       buttonText: "Open WhatsApp"
@@ -15,8 +15,8 @@ const ContactUsModal = ({ onClose }) => {
     {
       type: "Email",
       icon: <FaEnvelope size={24} />,
-      details: "support@bettingapp.com",
-      action: "mailto:support@bettingapp.com",
+      details: "support@thepunterhub.com",
+      action: "mailto:support@thepunterhub.com",
       description: "Send us an email and we'll respond within 24 hours",
       color: "#f57cff",
       buttonText: "Compose Email"
