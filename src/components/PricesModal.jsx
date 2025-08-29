@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { FaTimes, FaPlus, FaCheck, FaDollarSign } from 'react-icons/fa';
+import Api from "./Api";
 
-const PricingPlansModal = ({ onClose }) => {
+const PricingPlansModal = ({ onClose, user }) => {
   const [selectedPlan, setSelectedPlan] = useState("silver");
   const [plans, setPlans] = useState({
     silver: { price: '', offers: [''] },
@@ -10,6 +12,20 @@ const PricingPlansModal = ({ onClose }) => {
   });
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  // Use useEffect to populate the state with user's existing pricing data
+  useEffect(() => {
+    // Check if the user object and its pricingPlans property exist
+    if (user && user.pricingPlans) {
+      const userPricingPlans = user.pricingPlans;
+      
+      // If the pricingPlans object is not empty, use it to set the state
+      if (Object.keys(userPricingPlans).length > 0) {
+        setPlans(userPricingPlans);
+      }
+    }
+  }, [user]); // The effect re-runs if the 'user' prop changes
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
@@ -61,24 +77,36 @@ const PricingPlansModal = ({ onClose }) => {
     }));
   };
 
-  const handleSave = () => {
-    // Validate at least one plan is configured
-    if (!selectedPlan) {
-      setError("Please select a plan to configure");
+  const handleSave = async () => {
+    if (!selectedPlan || !plans[selectedPlan].price) {
+      setError("Please set a price for the selected plan.");
       return;
     }
-    
-    if (!plans[selectedPlan].price) {
-      setError("Please set a price for the selected plan");
-      return;
+
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const data = {
+        userId: user._id,
+        plans
+      };
+      
+      const response = await axios.post(`${Api}/client/pricing`, data);
+      
+      console.log('Plans saved:', response.data);
+      setSuccess('Pricing plans saved successfully!');
+      
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error('Error saving plans:', err.response?.data || err.message);
+      setError("Failed to save pricing plans. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    
-    // In a real app, you would save this data to your backend
-    console.log('Plans data:', plans);
-    setSuccess('Pricing plans saved successfully!');
-    setTimeout(() => {
-      onClose();
-    }, 1500);
   };
 
   const planColors = {
@@ -93,7 +121,6 @@ const PricingPlansModal = ({ onClose }) => {
       style={{ backgroundColor: "#09100d" }}
     >
       <div className="min-h-screen flex flex-col">
-        {/* Header */}
         <div 
           className="px-6 py-4 flex justify-between items-center border-b"
           style={{ borderColor: "#376553" }}
@@ -113,7 +140,6 @@ const PricingPlansModal = ({ onClose }) => {
           </button>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 px-6 py-4 overflow-y-auto">
           {error && (
             <div 
@@ -133,7 +159,6 @@ const PricingPlansModal = ({ onClose }) => {
             </div>
           )}
 
-          {/* Plan Selection Buttons */}
           <div className="grid grid-cols-3 gap-4 mb-8">
             {['silver', 'gold', 'diamond'].map((plan) => (
               <button
@@ -153,7 +178,6 @@ const PricingPlansModal = ({ onClose }) => {
             ))}
           </div>
 
-          {/* Plan Configuration */}
           {selectedPlan && (
             <div className="mb-6">
               <div className="mb-6">
@@ -225,7 +249,6 @@ const PricingPlansModal = ({ onClose }) => {
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: "#376553" }}>
             <button
               onClick={onClose}
@@ -236,12 +259,18 @@ const PricingPlansModal = ({ onClose }) => {
             </button>
             <button
               onClick={handleSave}
-              disabled={!selectedPlan}
+              disabled={!selectedPlan || saving}
               className="py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: "#fea92a", color: "#09100d" }}
             >
-              <FaCheck size={14} />
-              Save Plans
+              {saving ? (
+                <span>Saving...</span>
+              ) : (
+                <>
+                  <FaCheck size={14} />
+                  Save Plans
+                </>
+              )}
             </button>
           </div>
         </div>

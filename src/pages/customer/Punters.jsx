@@ -275,10 +275,6 @@ const sliderSettings = {
             <p className="text-[#18ffc8]">
               {punter.primaryCategory} - {punter.secondaryCategory}
             </p>
-            <div className="flex items-center mt-1">
-              <FaStar className="text-[#fea92a] mr-1" />
-              <span>{punter.rating || "N/A"}</span>
-            </div>
           </div>
         </div>
 

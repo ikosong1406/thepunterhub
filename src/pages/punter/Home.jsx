@@ -2,10 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiUsers, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
 import { IoIosInformationCircleOutline } from "react-icons/io";
-// import { MdErrorOutline } from "react-icons/md";
-// import { BsCheckCircle } from "react-icons/bs";
-// import { PiWarningCircle } from "react-icons/pi";
-// import { LiaHandshake } from "react-icons/lia";
 import Header from "./Header";
 import axios from "axios";
 import Api from "../../components/Api";
@@ -35,11 +31,17 @@ const PunterDashboard = () => {
         const userResponse = await axios.post(`${Api}/client/getUser`, { token });
         const userData = userResponse.data.data;
         setUser(userData);
-
-        const winRateValue = userData.win && userData.loss
-          ? ((userData.win / (userData.win + userData.loss)) * 100).toFixed(0) + '%'
-          : '0%';
         
+        // --- NEW API CALL FOR WIN/LOSS STATS ---
+        const punterId = userData._id;
+        const statsResponse = await axios.post(`${Api}/client/winloss`, {punterId});
+        const { wins, losses } = statsResponse.data;
+
+        const winRateValue = (wins + losses) > 0 
+          ? ((wins / (wins + losses)) * 100).toFixed(0) + '%'
+          : '0%';
+        // --- END OF NEW API CALL ---
+
         const subscribersCount = userData.subscribers?.length || 0;
         const totalEarnings = userData.transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
 
@@ -51,13 +53,13 @@ const PunterDashboard = () => {
         
         // Fetch recent notifications using user ID
         const notificationsResponse = await axios.post(`${Api}/client/getNotification`, { userId: userData._id });
-        const notifications = notificationsResponse.data.data ?? []; // Fallback to empty array
+        const notifications = notificationsResponse.data.data ?? [];
         
         // Process notifications for display (top 5 only)
         const recentNotifications = notifications.slice(0, 5).map(note => ({
           ...note,
-          action: note.title, // Use title as action for display
-          details: note.description, // Use description as details
+          action: note.title,
+          details: note.description,
           time: formatPostedAt(note.createdAt),
           amount: note.amount > 0 ? `+$${note.amount.toFixed(2)}` : null,
           icon: getNotificationIcon(note.type),
@@ -78,14 +80,6 @@ const PunterDashboard = () => {
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      // case 'success':
-      //   return <BsCheckCircle className="text-green-500" />;
-      // case 'warning':
-      //   return <PiWarningCircle className="text-yellow-500" />;
-      // case 'error':
-      //   return <MdErrorOutline className="text-red-500" />;
-      // case 'payment':
-      //   return <LiaHandshake className="text-blue-500" />;
       case 'info':
       default:
         return <IoIosInformationCircleOutline className="text-gray-400" />;

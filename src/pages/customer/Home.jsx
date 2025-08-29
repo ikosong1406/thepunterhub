@@ -159,13 +159,6 @@ const primaryCategories = [
 
 const sportCategories = [
   { name: "Football", icon: <IoMdFootball size={20} />, key: "football" },
-  // {
-  //   name: "Basketball",
-  //   icon: <FaBasketballBall size={18} />,
-  //   key: "basketball",
-  // },
-  // { name: "Tennis", icon: <GiTennisBall size={18} />, key: "tennis" },
-  // { name: "Baseball", icon: <FaBaseballBall size={18} />, key: "baseball" },
 ];
 
 const tradingCategories = [
@@ -200,6 +193,7 @@ const Home = () => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [punters, setPunters] = useState([]);
+  const [puntersStats, setPuntersStats] = useState({}); // New state for stats
   const [loggedInUserId, setLoggedInUserId] = useState(null);
 
   useEffect(() => {
@@ -235,6 +229,29 @@ const Home = () => {
           response.data.data.filter((punter) => punter._id !== loggedInUserId)
         );
         setPunters(filteredAndShuffledPunters);
+
+        // Fetch stats for each punter concurrently
+        const statsPromises = filteredAndShuffledPunters.map(async (punter) => {
+          try {
+            const statsResponse = await axios.post(`${Api}/client/winloss`, {
+              punterId: punter._id,
+            });
+            return { id: punter._id, stats: statsResponse.data };
+          } catch (statsErr) {
+            console.error(
+              `Failed to fetch stats for punter ${punter._id}:`,
+              statsErr
+            );
+            return { id: punter._id, stats: { wins: 0, losses: 0 } };
+          }
+        });
+
+        const allStats = await Promise.all(statsPromises);
+        const statsMap = allStats.reduce((acc, curr) => {
+          acc[curr.id] = curr.stats;
+          return acc;
+        }, {});
+        setPuntersStats(statsMap);
       } catch (err) {
         console.error("Failed to fetch punters:", err);
         setError("Failed to load punters. Please try again later.");
@@ -242,18 +259,20 @@ const Home = () => {
         setLoading(false);
       }
     };
-    fetchPunters();
-  }, [loggedInUserId]); // Dependency on loggedInUserId to refetch if user changes
+    if (loggedInUserId) {
+      fetchPunters();
+    }
+  }, [loggedInUserId]);
 
   const handlePunterClick = (punterId) => {
     navigate(`/customer/punters`, { state: { punterId } });
   };
 
   const renderPunterCard = (punter) => {
-    const winRate =
-      punter.win && punter.loss
-        ? (punter.win / (punter.win + punter.loss)) * 100
-        : 0;
+    const stats = puntersStats[punter._id] || { wins: 0, losses: 0 };
+    const { wins, losses } = stats;
+    const total = wins + losses;
+    const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
 
     const getInitials = (username) => {
       const fInitial = username ? username.charAt(0) : "";
@@ -280,26 +299,18 @@ const Home = () => {
                   {punter.primaryCategory} & {punter.secondaryCategory}
                 </p>
               </div>
-              <div className="flex items-center bg-[#1e332b] px-2 py-1 rounded-full">
-                <FaStar className="text-[#fea92a] mr-1" />
-                <span>{punter.rating || "N/A"}</span>
-              </div>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
               <div className="bg-[#0a120e] p-2 rounded">
-                <div className="text-green-400 font-bold">
-                  {punter.win || 0}
-                </div>
+                <div className="text-green-400 font-bold">{wins || 0}</div>
                 <div className="text-xs text-gray-400">Wins</div>
               </div>
               <div className="bg-[#0a120e] p-2 rounded">
-                <div className="text-red-400 font-bold">{punter.loss || 0}</div>
+                <div className="text-red-400 font-bold">{losses || 0}</div>
                 <div className="text-xs text-gray-400">Losses</div>
               </div>
               <div className="bg-[#0a120e] p-2 rounded">
-                <div className="text-[#18ffc8] font-bold">
-                  {winRate.toFixed(1)}%
-                </div>
+                <div className="text-[#18ffc8] font-bold">{winRate}%</div>
                 <div className="text-xs text-gray-400">Win Rate</div>
               </div>
             </div>
@@ -308,7 +319,7 @@ const Home = () => {
         <div className="border-t border-[#2a3a34] p-3 flex justify-between items-center">
           <button className="w-full bg-[#f57cff] text-black font-bold py-3 rounded-lg flex items-center justify-center">
             <FaMoneyBillWave className="mr-2" />
-            Subscribe for {punter.price || "N/A"}/week
+            Subscribe
           </button>
         </div>
       </div>

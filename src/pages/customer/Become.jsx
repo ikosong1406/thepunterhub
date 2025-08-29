@@ -52,7 +52,6 @@ const BecomePunter = () => {
   const [primaryCategory, setPrimaryCategory] = useState("");
   const [secondaryCategory, setSecondaryCategory] = useState("");
   const [subcategories, setSubcategories] = useState([]);
-  const [pricePerWeek, setPricePerWeek] = useState(""); // New state for price
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -127,10 +126,6 @@ const BecomePunter = () => {
       setError("Please select your secondary category.");
       return;
     }
-    if (!pricePerWeek || isNaN(pricePerWeek) || parseFloat(pricePerWeek) <= 0) {
-      setError("Please enter a valid price per week.");
-      return;
-    }
     if (!agreedToTerms) {
       setError("You must agree to the terms and conditions.");
       return;
@@ -144,8 +139,7 @@ const BecomePunter = () => {
         userId: user._id,
         username,
         primaryCategory,
-        secondaryCategory,
-        price: parseFloat(pricePerWeek), // Add the price
+        secondaryCategory
       };
 
       const response = await axios.post(`${Api}/client/becomePunter`, data);
@@ -504,32 +498,6 @@ const BecomePunter = () => {
                   </select>
                 </div>
               )}
-
-              {/* Price per Week Input */}
-              <div className="mb-6">
-                <label
-                  htmlFor="price-per-week"
-                  className="block text-sm font-medium mb-2"
-                  style={{ color: Colors.white }}
-                >
-                  Price per Week (in USD)
-                </label>
-                <input
-                  type="number"
-                  id="price-per-week"
-                  value={pricePerWeek}
-                  onChange={(e) => setPricePerWeek(e.target.value)}
-                  className="block w-full px-3 py-2 rounded-md focus:outline-none sm:text-sm"
-                  style={{
-                    backgroundColor: Colors.black,
-                    border: `1px solid ${Colors.lightGray}`,
-                    color: Colors.white,
-                  }}
-                  disabled={isSubmitting}
-                  placeholder="e.g. 100"
-                  min="0"
-                />
-              </div>
 
               <div className="mb-6">
                 <div className="flex items-start">

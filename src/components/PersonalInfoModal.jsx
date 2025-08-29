@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { FaEdit, FaSave, FaTimes, FaUser, FaEnvelope, FaPhone, FaUserTag, FaCheck } from 'react-icons/fa';
+import { FaEdit, FaSave, FaTimes, FaUser, FaEnvelope, FaPhone, FaUserTag, FaComments } from 'react-icons/fa';
 import localforage from 'localforage';
+import axios from 'axios';
+import Api from './Api'; // Make sure to import your API file
 
 const PersonalInfoModal = ({ user, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -10,50 +12,55 @@ const PersonalInfoModal = ({ user, onClose }) => {
     email: user.email || '',
     phone: user.phonenumber || '',
     username: user.username || '',
+    isMessageable: user.isMessageable || false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
   const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
-
+  
   const handleSave = async () => {
     try {
       setLoading(true);
       setError(null);
+      setSuccess(null);
       
-      const token = await localforage.getItem("token");
-      if (!token) throw new Error("Authentication required");
+      const dataToUpdate = {
+        userId: user._id,
+        username: formData.username,
+        phonenumber: formData.phone,
+        isMessageable: formData.isMessageable,
+      };
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await axios.post(`${Api}/client/editProfile`, dataToUpdate);
       
-      // In a real app, you would call:
-      // const response = await axios.post(`${Api}/client/updateProfile`, { token, ...formData });
-      
-      setSuccess('Profile updated successfully');
+      setSuccess(response.data.message || 'Profile updated successfully!');
       setIsEditing(false);
+      
     } catch (err) {
-      setError(err.response?.data?.message || "Update failed");
+      console.error("Update error:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Update failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const fieldConfig = [
-    { name: 'firstname', label: 'First Name', icon: <FaUser />, editable: false },
-    { name: 'lastname', label: 'Last Name', icon: <FaUser />, editable: false },
-    { name: 'email', label: 'Email', icon: <FaEnvelope />, editable: false },
-    { name: 'phone', label: 'Phone', icon: <FaPhone />, editable: true },
-    { name: 'username', label: 'Username', icon: <FaUserTag />, editable: true },
+    { name: 'firstname', label: 'First Name', icon: <FaUser />, editable: false, type: 'text' },
+    { name: 'lastname', label: 'Last Name', icon: <FaUser />, editable: false, type: 'text' },
+    { name: 'email', label: 'Email', icon: <FaEnvelope />, editable: false, type: 'text' },
+    { name: 'phone', label: 'Phone', icon: <FaPhone />, editable: true, type: 'text' },
+    { name: 'username', label: 'Username', icon: <FaUserTag />, editable: true, type: 'text' },
+    { name: 'isMessageable', label: 'Accept Messages', icon: <FaComments />, editable: true, type: 'toggle' },
   ];
 
-  // Get first name and last name initials
   const initials = ((user.firstname && user.lastname) ? 
     `${user.firstname.charAt(0)}${user.lastname.charAt(0)}` : 
     (user.firstname ? user.firstname.charAt(0) : 
@@ -96,7 +103,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
               {error}
             </div>
           )}
-
           {success && (
             <div 
               className="mb-4 p-3 rounded-lg text-center text-sm"
@@ -123,14 +129,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
                   {initials}
                 </span>
               )}
-              {isEditing && (
-                <button
-                  className="absolute bottom-0 right-0 p-2 rounded-full"
-                  style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-                >
-                  <FaEdit size={14} />
-                </button>
-              )}
             </div>
           </div>
 
@@ -145,22 +143,42 @@ const PersonalInfoModal = ({ user, onClose }) => {
                   <span className="mr-2">{field.icon}</span>
                   {field.label}
                 </label>
-                {isEditing && field.editable ? (
+                {field.type === 'toggle' ? (
+                  <div className={`flex items-center space-x-2 ${!isEditing && 'opacity-50'}`}>
+                    <div
+                      className={`relative w-12 h-6 rounded-full transition-colors duration-300 cursor-pointer ${
+                        isEditing ? 'opacity-100' : 'cursor-not-allowed'
+                      } ${
+                        formData.isMessageable ? 'bg-[#18ffc8]' : 'bg-[#376553]'
+                      }`}
+                      onClick={() => isEditing && setFormData({ ...formData, isMessageable: !formData.isMessageable })}
+                    >
+                      <div
+                        className={`absolute left-0 top-0 w-6 h-6 rounded-full transition-transform duration-300 ease-in-out transform ${
+                          formData.isMessageable ? 'translate-x-6' : 'translate-x-0'
+                        }`}
+                        style={{ backgroundColor: '#09100d', border: '2px solid #376553' }}
+                      />
+                    </div>
+                    <span className="text-sm" style={{ color: "#efefef" }}>
+                      {formData.isMessageable ? 'Messages Accepted' : 'Messages Blocked'}
+                    </span>
+                  </div>
+                ) : (
                   <input
-                    type="text"
+                    type={field.type}
                     name={field.name}
                     value={formData[field.name]}
                     onChange={handleChange}
+                    disabled={!isEditing || !field.editable}
                     className="w-full p-3 rounded-lg"
-                    style={{ backgroundColor: "#162821", color: "#efefef", borderColor: "#376553" }}
+                    style={{ 
+                      backgroundColor: "#162821", 
+                      color: "#efefef", 
+                      borderColor: "#376553", 
+                      opacity: (!isEditing || !field.editable) ? 0.6 : 1
+                    }}
                   />
-                ) : (
-                  <div 
-                    className="w-full p-3 rounded-lg"
-                    style={{ backgroundColor: "#162821", color: "#efefef", borderColor: "#376553" }}
-                  >
-                    {formData[field.name] || 'Not provided'}
-                  </div>
                 )}
               </div>
             ))}
@@ -192,6 +210,7 @@ const PersonalInfoModal = ({ user, onClose }) => {
                       email: user.email || '',
                       phone: user.phonenumber || '',
                       username: user.username || '',
+                      isMessageable: user.isMessageable || false,
                     });
                   }}
                   className="py-3 px-6 rounded-lg flex items-center text-lg font-semibold"
