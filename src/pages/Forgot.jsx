@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import axios from "axios";
 import "../styles/Splash.css";
 import logoImage from "../assets/logo2.png";
+import Api from "../components/Api";
+import toast, { Toaster } from "react-hot-toast";
+import { useNavigate } from 'react-router-dom'; 
 
 const ForgetScreen = () => {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [code, setCode] = useState(["", "", "", ""]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,61 +19,82 @@ const ForgetScreen = () => {
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    // Removed local error/success state to use toast
+    toast.dismiss(); // Clear any existing toasts
 
     try {
-      // Replace with your actual API endpoint
-      await axios.post("/api/forgot-password", { email });
+      await axios.post(`${Api}/client/reset`, { email });
       setStep(2);
-      setSuccess("Verification code sent to your email");
+      toast.success("Verification code sent to your email!");
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to send verification code"
+      toast.error(
+        err.response?.data?.message || "Failed to send verification code."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCodeSubmit = (e) => {
+  const handleCodeSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     const verificationCode = code.join("");
+    toast.dismiss();
 
-    if (verificationCode.length !== 6) {
-      setError("Please enter the 6-digit code");
+    if (verificationCode.length !== 4) {
+      toast.error("Please enter the 4-digit code.");
+      setLoading(false);
       return;
     }
 
-    setStep(3);
-    setError("");
+    try {
+      // Send email and code to the backend for verification
+      await axios.post(`${Api}/client/verifyCode`, {
+        email,
+        code: verificationCode,
+      });
+      setStep(3);
+      toast.success("Code verified successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to verify code.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    toast.dismiss();
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match.");
+      setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      toast.error("Password must be at least 6 characters.");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-
     try {
-      // Replace with your actual API endpoint
-      await axios.post("/api/reset-password", {
+      const navigate = useNavigate();
+      // Send email and new password to the backend to finalize the reset
+      await axios.post(`${Api}/client/newPassword`, {
         email,
-        code: code.join(""),
         password,
       });
-      setSuccess("Password reset successfully");
-      // Optionally redirect to login page
+
+      toast.success("Password reset successfully! Redirecting to login...");
+
+      // Wait for 3 seconds before navigating
+      setTimeout(() => {
+        navigate("/login"); // Redirect to the login page
+      }, 3000);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to reset password");
+      toast.error(err.response?.data?.message || "Failed to reset password.");
     } finally {
       setLoading(false);
     }
@@ -101,6 +125,7 @@ const ForgetScreen = () => {
       className="min-h-screen flex-1 items-center justify-center p-4"
       style={{ backgroundColor: "#09100d" }}
     >
+          <Toaster position="top-center" reverseOrder={false} />
       {/* Logo for mobile only */}
       <div className="lg:hidden flex justify-center mb-10 mt-10">
         <div className="relative w-40 h-40 flex items-center justify-center">
@@ -247,7 +272,7 @@ const ForgetScreen = () => {
                 ))}
               </div>
               <p className="text-sm mt-2" style={{ color: "#efefef" }}>
-                We sent a 6-digit code to {email}
+                We sent a 4-digit code to {email}
               </p>
             </div>
             <button

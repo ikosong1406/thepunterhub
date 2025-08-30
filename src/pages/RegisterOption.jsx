@@ -67,7 +67,7 @@ const RegisterOptionScreen = ({ platformName = "PunterHub" }) => {
         {/* Welcome Text */}
         <div className="text-white max-w-md text-center px-4">
           <h1 className="text-2xl font-bold text-[#efefef] mb-2">
-            How do want to be resgistered on {platformName}
+            Choose your role to get started on {platformName}
           </h1>
         </div>
 
@@ -77,13 +77,13 @@ const RegisterOptionScreen = ({ platformName = "PunterHub" }) => {
             onClick={handleUser}
             className="w-full py-3 rounded-xl text-black font-semibold bg-[#18ffc8] hover:opacity-90 transition"
           >
-            As Rookies
+            Join Signal Plan
           </button>
           <button
             onClick={handlePunter}
             className="w-full py-3 rounded-xl border-2 border-[#18ffc8] text-[#18ffc8] font-semibold hover:bg-[#18ffc8]/10 transition"
           >
-            As TipMaster
+            I'm a Strategist
           </button>
         </div>
       </div>

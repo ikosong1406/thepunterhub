@@ -93,7 +93,6 @@ const RegisterScreen = () => {
     username: "",
     primaryCategory: "",
     secondaryCategory: "",
-    pricePerWeek: "",
   });
   const [usernameStatus, setUsernameStatus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -169,8 +168,7 @@ const RegisterScreen = () => {
       acceptTerms,
       username,
       primaryCategory,
-      secondaryCategory,
-      pricePerWeek,
+      secondaryCategory
     } = formData;
 
     if (
@@ -182,8 +180,7 @@ const RegisterScreen = () => {
       !confirmPassword ||
       !username ||
       !primaryCategory ||
-      !secondaryCategory ||
-      !pricePerWeek
+      !secondaryCategory
     ) {
       toast.error("Please fill in all required fields.");
       return false;
@@ -224,8 +221,7 @@ const RegisterScreen = () => {
       promoCode: formData.promoCode,
       username: formData.username,
       primaryCategory: formData.primaryCategory,
-      secondaryCategory: formData.secondaryCategory,
-      price: parseFloat(formData.pricePerWeek),
+      secondaryCategory: formData.secondaryCategory
     };
 
     try {
@@ -674,28 +670,6 @@ const RegisterScreen = () => {
                   </select>
                 </div>
               )}
-
-              {/* Price per Week Input */}
-              <div>
-                <label
-                  htmlFor="pricePerWeek"
-                  className="block text-sm font-medium text-gray-400 mb-1"
-                >
-                  Price per Week (in USD)
-                </label>
-                <input
-                  type="number"
-                  id="pricePerWeek"
-                  name="pricePerWeek"
-                  value={formData.pricePerWeek}
-                  onChange={handleChange}
-                  className="block w-full p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
-                  disabled={loading}
-                  placeholder="e.g. 100"
-                  min="0"
-                  required
-                />
-              </div>
             </div>
 
             {/* Terms and Submit Button */}
