@@ -129,7 +129,7 @@ const PricingPlansModal = ({ onClose, user }) => {
             className="text-xl font-bold"
             style={{ color: "#efefef" }}
           >
-            Set Pricing Plans
+            Set Categories Plans
           </h2>
           <button 
             onClick={onClose}
@@ -186,7 +186,7 @@ const PricingPlansModal = ({ onClose, user }) => {
                   style={{ color: "#f57cff" }}
                 >
                   <span className="mr-2"><FaDollarSign /></span>
-                  Price for {selectedPlan} plan
+                  Price for {selectedPlan} plan / week
                 </label>
                 <div className="relative">
                   <input

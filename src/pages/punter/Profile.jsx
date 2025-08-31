@@ -198,7 +198,7 @@ const ProfilePage = () => {
             />
             <MenuItem
               icon={<MdPriceChange />}
-              title="Prices"
+              title="Categories"
               onClick={() => setActiveModal("prices")}
             />
             <MenuItem
