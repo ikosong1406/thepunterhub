@@ -381,12 +381,12 @@ const TipsHistoryMobile = () => {
                 <div className="flex space-x-4">
                   <div className="flex items-center space-x-1 text-green-400">
                     <FiThumbsUp size={16} />
-                    <span className="text-sm">{tip.thumbsUpCount || 0}</span>
+                    <span className="text-sm">{tip.thumbsUp || 0}</span>
                   </div>
 
                   <div className="flex items-center space-x-1 text-red-400">
                     <FiThumbsDown size={16} />
-                    <span className="text-sm">{tip.thumbsDownCount || 0}</span>
+                    <span className="text-sm">{tip.thumbsDown || 0}</span>
                   </div>
                 </div>
                 <div className="flex space-x-4">

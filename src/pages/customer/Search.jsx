@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaStar, FaSearch } from "react-icons/fa";
+import { FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "../customer/Header";
@@ -46,8 +46,7 @@ const PunterSearchPage = () => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const results = allPunters.filter(
         (punter) =>
-          punter.firstname?.toLowerCase().includes(lowercasedSearchTerm) ||
-          punter.lastname?.toLowerCase().includes(lowercasedSearchTerm) ||
+          punter.username?.toLowerCase().includes(lowercasedSearchTerm) ||
           punter.primaryCategory
             ?.toLowerCase()
             .includes(lowercasedSearchTerm) ||
@@ -61,6 +60,11 @@ const PunterSearchPage = () => {
     navigate(`/customer/punters`, { state: { punterId: punterId } });
   };
 
+  const getInitials = (username) => {
+    const fInitial = username ? username.charAt(0) : "";
+    return `${fInitial}`.toUpperCase();
+  };
+
   const PunterCard = ({ punter }) => {
     return (
       <div
@@ -68,29 +72,20 @@ const PunterSearchPage = () => {
         className="bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] mb-4 cursor-pointer hover:border-[#18ffc8] transition-all duration-200"
       >
         <div className="p-4 flex items-start">
-          <div className="relative">
-            <img
-              src={punter.avatar || "https://i.pravatar.cc/150?img=1"}
-              alt={`${punter.firstname} ${punter.lastname}`}
-              className="w-14 h-14 rounded-full object-cover border-2 border-[#18ffc8]"
-            />
-            {punter.isOnline && (
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0f1f1a]"></div>
-            )}
+          <div className="relative mr-4">
+            <div className="w-15 h-15 rounded-full flex items-center justify-center bg-[#18ffc8]/20 text-[#18ffc8] text-3xl font-bold border-2 border-[#18ffc8]">
+              {getInitials(punter.username)}
+            </div>
           </div>
           <div className="ml-4 flex-1">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-bold text-lg text-white">
-                  {`${punter.firstname} ${punter.lastname}`}
+                  {`${punter.username}`}
                 </h3>
                 <p className="text-sm text-gray-400">
                   {punter.primaryCategory} - {punter.secondaryCategory}
                 </p>
-              </div>
-              <div className="flex items-center bg-[#1e332b] px-2 py-1 rounded-full">
-                <FaStar className="text-[#fea92a] mr-1" />
-                <span className="text-white">{punter.rating || "N/A"}</span>
               </div>
             </div>
           </div>
@@ -127,7 +122,7 @@ const PunterSearchPage = () => {
         </div>
       );
     }
-    
+
     if (!hasSearched) {
       return (
         <div className="text-center py-10">

@@ -34,26 +34,30 @@ const PunterDashboard = () => {
         
         // --- NEW API CALL FOR WIN/LOSS STATS ---
         const punterId = userData._id;
-        const statsResponse = await axios.post(`${Api}/client/winloss`, {punterId});
+        const statsResponse = await axios.post(`${Api}/client/winloss`, { punterId });
         const { wins, losses } = statsResponse.data;
-
         const winRateValue = (wins + losses) > 0 
           ? ((wins / (wins + losses)) * 100).toFixed(0) + '%'
           : '0%';
         // --- END OF NEW API CALL ---
 
+        // --- NEW API CALL FOR EARNINGS ---
+        const earningsResponse = await axios.post(`${Api}/client/getTransaction`, { userId: userData._id });
+        const paymentTransactions = earningsResponse.data.transactions.filter(t => t.type === 'payment');
+        const totalEarnings = paymentTransactions.reduce((sum, t) => sum + t.amount, 0).toFixed(1);
+        // --- END OF NEW API CALL ---
+
         const subscribersCount = userData.subscribers?.length || 0;
-        const totalEarnings = userData.transactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
 
         setStats([
           { title: "Total Subscribers", value: subscribersCount, change: "+12%", icon: <FiUsers className="text-xl" /> },
-          { title: "Total Earnings", value: `$${totalEarnings.toFixed(2)}`, change: "+18%", icon: <FiDollarSign className="text-xl" /> },
+          { title: "Total Earnings", value: `$${totalEarnings}`, change: "+18%", icon: <FiDollarSign className="text-xl" /> },
           { title: "Win Rate", value: winRateValue, change: "+3%", icon: <FiBarChart2 className="text-xl" /> },
         ]);
         
         // Fetch recent notifications using user ID
         const notificationsResponse = await axios.post(`${Api}/client/getNotification`, { userId: userData._id });
-        const notifications = notificationsResponse.data.data ?? [];
+        const notifications = notificationsResponse.data.notifications ?? [];
         
         // Process notifications for display (top 5 only)
         const recentNotifications = notifications.slice(0, 5).map(note => ({

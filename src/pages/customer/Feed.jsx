@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import localforage from "localforage";
 import axios from "axios";
-import {
-  FaFootballBall,
-  FaChartLine,
-  FaStar,
-  FaDollarSign,
-  FaBitcoin,
-} from "react-icons/fa";
+import { FaFootballBall, FaChartLine } from "react-icons/fa";
+import { FiThumbsUp, FiThumbsDown } from "react-icons/fi";
 import Header from "../customer/Header";
 import Api from "../../components/Api";
 
@@ -19,10 +15,14 @@ const primaryCategories = [
 
 const FeedPage = () => {
   const [activePrimary, setActivePrimary] = useState("sports");
-  const [feedData, setFeedData] = useState([]);
+  const [allFeedData, setAllFeedData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
+  const [likedSignals, setLikedSignals] = useState({});
+  const [dislikedSignals, setDislikedSignals] = useState({});
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -31,210 +31,346 @@ const FeedPage = () => {
         if (!token) {
           throw new Error("No authentication token found.");
         }
-
         const response = await axios.post(`${Api}/client/getUser`, { token });
-
         setUser(response.data.data);
-        setLoading(false);
       } catch (err) {
         setError(err.message);
+      } finally {
         setLoading(false);
       }
     };
-
     fetchUserData();
   }, []);
 
-  // Fetch feed data from the backend based only on the primary category
   useEffect(() => {
     if (user) {
-      const fetchFeed = async () => {
+      const fetchAllFeed = async () => {
         setLoading(true);
         try {
-          const response = await axios.post(`${Api}/client/getFeed`, {
+          const feedResponse = await axios.post(`${Api}/client/getFeed`, {
             userId: user._id,
-            category: activePrimary, // Send only the primary category
           });
-          setFeedData(response.data);
+          // Set the data directly without sorting
+          setAllFeedData(feedResponse.data.data);
+
+          const signalIds = sortedData.map((s) => s._id);
+          const reactionsResponse = await axios.post(
+            `${Api}/client/getReaction`,
+            {
+              userId: user._id,
+              signalIds: signalIds,
+            }
+          );
+          setLikedSignals(reactionsResponse.data.likedSignals);
+          setDislikedSignals(reactionsResponse.data.dislikedSignals);
         } catch (error) {
           console.error("Error fetching feed data:", error);
-          setFeedData([]); // Clear data on error
+          setAllFeedData([]);
+          setLikedSignals({});
+          setDislikedSignals({});
         } finally {
           setLoading(false);
         }
       };
-      fetchFeed();
+      fetchAllFeed();
     }
-  }, [activePrimary, user]);
+  }, [user]);
 
-  // Render a single sport betting tip card
+  const handleThumbsClick = async (signalId, type) => {
+    if (!user) {
+      setError("Please log in to like or dislike signals.");
+      return;
+    }
+    const newFeedData = allFeedData.map((s) => {
+      if (s._id === signalId) {
+        if (type === "up") {
+          if (likedSignals[signalId]) {
+            s.thumbsUp -= 1;
+            setLikedSignals((prev) => {
+              const newState = { ...prev };
+              delete newState[signalId];
+              return newState;
+            });
+          } else {
+            s.thumbsUp += 1;
+            setLikedSignals((prev) => ({ ...prev, [signalId]: true }));
+            if (dislikedSignals[signalId]) {
+              s.thumbsDown -= 1;
+              setDislikedSignals((prev) => {
+                const newState = { ...prev };
+                delete newState[signalId];
+                return newState;
+              });
+            }
+          }
+        } else if (type === "down") {
+          if (dislikedSignals[signalId]) {
+            s.thumbsDown -= 1;
+            setDislikedSignals((prev) => {
+              const newState = { ...prev };
+              delete newState[signalId];
+              return newState;
+            });
+          } else {
+            s.thumbsDown += 1;
+            setDislikedSignals((prev) => ({ ...prev, [signalId]: true }));
+            if (likedSignals[signalId]) {
+              s.thumbsUp -= 1;
+              setLikedSignals((prev) => {
+                const newState = { ...prev };
+                delete newState[signalId];
+                return newState;
+              });
+            }
+          }
+        }
+      }
+      return s;
+    });
+    setAllFeedData(newFeedData);
+
+    try {
+      const userId = user._id;
+      await axios.post(`${Api}/client/updateReaction`, {
+        signalId,
+        userId,
+        type,
+      });
+    } catch (err) {
+      console.error("Failed to update signal reaction:", err);
+      setAllFeedData(allFeedData);
+      setLikedSignals(likedSignals);
+      setDislikedSignals(dislikedSignals);
+      setError("Failed to update reaction.");
+    }
+  };
+
+  const getInitials = (username) => {
+    const fInitial = username ? username.charAt(0) : "";
+    return `${fInitial}`.toUpperCase();
+  };
+
+  const formatPostedAt = (dateString) => {
+    const now = new Date();
+    const postedDate = new Date(dateString);
+    const diffInMinutes = Math.floor((now - postedDate) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} mins ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hours ago`;
+    } else {
+      return `${diffInDays} days ago`;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    if (status === "win") return "bg-[#18ffc8]/20 text-[#18ffc8]";
+    if (status === "loss") return "bg-[#f57cff]/20 text-[#f57cff]";
+    if (status === "active") return "bg-[#fea92a]/20 text-[#fea92a]";
+    return "bg-[#376553]/20 text-[#efefef]";
+  };
+
+  const getDirectionColor = (direction) => {
+    return direction.toLowerCase() === "buy" ||
+      direction.toLowerCase() === "long"
+      ? "bg-green-900/20 text-green-400"
+      : "bg-red-900/20 text-red-400";
+  };
+
+  const handlePunterClick = (punterId) => {
+    navigate(`/customer/punters`, { state: { punterId: punterId } });
+  };
+
   const renderSportTip = (tip) => (
     <div
       key={tip._id}
-      className="bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] mb-6"
+      className="relative rounded-xl bg-[#162821] border border-[#376553]/30 p-4 mb-4"
     >
-      {/* Tipster Header */}
-      <div className="flex items-center p-4 border-b border-[#2a3a34]">
-        <img
-          src={tip.punterAvatar || "https://i.pravatar.cc/150?img=1"}
-          alt={tip.punterName || "Punter"}
-          className="w-12 h-12 rounded-full object-cover border-2 border-[#18ffc8]"
-        />
-        <div className="ml-3 flex-1">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold">
-              {tip.punterName || "Anonymous Punter"}
-            </h2>
-            {tip.streak && (
-              <span className="text-xs bg-[#f57cff] text-black px-2 py-1 rounded-full font-bold">
-                {tip.streak}W streak
-              </span>
-            )}
-          </div>
-          <div className="flex justify-between items-center text-xs text-gray-300 mt-1">
-            <span>
-              {tip.followers ? tip.followers.toLocaleString() : 0} followers
-            </span>
-            <span className="flex items-center">
-              <FaChartLine className="mr-1" />
-              {tip.confidenceLevel || 0}% confidence
-            </span>
-          </div>
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-medium text-lg text-white">
+            {tip.bettingSite || "Sports Tip"}
+          </h3>
+          <p className="text-sm text-[#efefef]/70 mt-1">
+            {tip.createdAt ? formatPostedAt(tip.createdAt) : "Just now"}
+          </p>
         </div>
+        <span
+          className={`px-2 py-1 rounded-full text-xs capitalize font-bold ${getStatusColor(
+            tip.status
+          )}`}
+        >
+          {tip.status}
+        </span>
       </div>
-
-      {/* Matches */}
-      <div className="p-4 space-y-3">
-        {tip.matches?.map((match, i) => (
-          <div key={i} className="bg-[#0f1f1a] p-3 rounded-lg">
-            <div className="font-medium text-sm mb-1">{match.team}</div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-[#18ffc8]">{match.prediction}</span>
-              <span className="bg-[#18ffc8] text-black px-2 py-1 rounded font-bold">
-                {match.odd || "N/A"}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div className="bg-[#0a120e] p-3 flex justify-between items-center">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-white">
         <div className="text-sm">
-          <span className="text-gray-400">Starts at </span>
-          <span className="font-bold">
-            {tip.startTime
-              ? new Date(tip.startTime).toLocaleTimeString()
-              : "N/A"}
-          </span>
+          <p className="text-[#efefef]/70">Code</p>
+          <p>{tip.bettingCode || "N/A"}</p>
         </div>
-        <div className="flex items-center">
-          {tip.bettingSite && (
-            <span className="text-xs bg-[#1e332b] px-2 py-1 rounded mr-2">
-              {tip.bettingSite}
-            </span>
-          )}
-          {tip.bettingCode && (
-            <span className="text-xs bg-[#fea92a] text-black px-2 py-1 rounded font-bold">
-              Code: {tip.bettingCode}
-            </span>
+        <div className="text-sm">
+          <p className="text-[#efefef]/70">Total Odd</p>
+          <p>{tip.totalOdd || "N/A"}</p>
+        </div>
+        <div className="text-sm col-span-2">
+          <p className="text-[#efefef]/70">Matches</p>
+          {tip.matches?.length > 0 ? (
+            tip.matches.map((match, i) => (
+              <div
+                key={i}
+                className="flex justify-between items-center text-xs bg-[#0f1f1a] p-2 rounded mt-1"
+              >
+                <span>{match.team}</span>
+                <span className="text-[#18ffc8]">
+                  {match.prediction} - {match.odd}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-xs text-gray-500">No matches listed.</p>
           )}
         </div>
-        <div className="text-lg font-bold bg-gradient-to-r from-[#18ffc8] to-[#0c9] text-transparent bg-clip-text">
-          {tip.totalOdd || "N/A"}
+      </div>
+      <div className="mt-3">
+        <div className="flex justify-between text-xs mb-1 text-white">
+          <span>Confidence Level</span>
+          <span>{tip.confidenceLevel || 0}%</span>
+        </div>
+        <div className="w-full bg-[#376553]/30 h-2 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${
+              tip.confidenceLevel >= 80
+                ? "bg-[#18ffc8]"
+                : tip.confidenceLevel >= 60
+                ? "bg-[#fea92a]"
+                : "bg-[#f57cff]"
+            }`}
+            style={{ width: `${tip.confidenceLevel || 0}%` }}
+          ></div>
+        </div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-between items-center">
+        <div
+          className="flex items-center space-x-2 text-sm text-[#efefef]"
+          onClick={() => handlePunterClick(tip.punterId)}
+        >
+          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#18ffc8]/20 text-[#18ffc8] text-sm font-bold border-2 border-[#18ffc8]">
+            {getInitials(tip.punterUsername)}
+          </div>
+          <span>{tip.punterUsername || "Anonymous"}</span>
+        </div>
+        <div className="flex space-x-4">
+          <button
+            onClick={() => handleThumbsClick(tip._id, "up")}
+            className={`flex items-center space-x-1 transition ${
+              likedSignals[tip._id] ? "text-[#18ffc8]" : "text-gray-400"
+            }`}
+          >
+            <FiThumbsUp size={20} />
+            <span className="text-sm">{tip.thumbsUp || 0}</span>
+          </button>
+          <button
+            onClick={() => handleThumbsClick(tip._id, "down")}
+            className={`flex items-center space-x-1 transition ${
+              dislikedSignals[tip._id] ? "text-red-400" : "text-gray-400"
+            }`}
+          >
+            <FiThumbsDown size={20} />
+            <span className="text-sm">{tip.thumbsDown || 0}</span>
+          </button>
         </div>
       </div>
     </div>
   );
 
-  // Render a single trading signal card
   const renderTradingSignal = (signal) => (
     <div
       key={signal._id}
-      className="bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] mb-6"
+      className="relative rounded-xl bg-[#162821] border border-[#376553]/30 p-4 mb-4"
     >
-      {/* Trader Header */}
-      <div className="flex items-center p-4 border-b border-[#2a3a34]">
-        <img
-          src={signal.traderAvatar || "https://i.pravatar.cc/150?img=1"}
-          alt={signal.traderName || "Trader"}
-          className="w-12 h-12 rounded-full object-cover border-2 border-[#18ffc8]"
-        />
-        <div className="ml-3 flex-1">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold">
-              {signal.traderName || "Anonymous Trader"}
-            </h2>
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-bold text-black ${
-                signal.status === "pending"
-                  ? "bg-blue-500"
-                  : signal.status === "won"
-                  ? "bg-[#18ffc8]"
-                  : signal.status === "lost"
-                  ? "bg-red-500"
-                  : "bg-gray-500"
-              }`}
-            >
-              {signal.status}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-xs text-gray-300 mt-1">
-            <span>
-              {signal.updatedAt
-                ? new Date(signal.updatedAt).toLocaleString()
-                : "Just now"}
-            </span>
-            <span className="flex items-center">
-              <FaChartLine className="mr-1" />
-              {signal.confidenceLevel || 0}% confidence
-            </span>
-          </div>
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-medium text-lg text-white">
+            {signal.pair || "Trading Signal"}
+          </h3>
+          <p className="text-sm text-[#efefef]/70 mt-1">
+            {signal.createdAt ? formatPostedAt(signal.createdAt) : "Just now"}
+          </p>
+        </div>
+        <span
+          className={`px-2 py-1 rounded-full text-xs capitalize font-bold ${getStatusColor(
+            signal.status
+          )}`}
+        >
+          {signal.status}
+        </span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-white">
+        <div className="text-sm">
+          <p className="text-[#efefef]/70">Direction</p>
+          <p className={`font-bold ${getDirectionColor(signal.direction)}`}>
+            {signal.direction || "N/A"}
+          </p>
+        </div>
+        <div className="text-sm">
+          <p className="text-[#efefef]/70">Entry</p>
+          <p>{signal.entryPrice || "N/A"}</p>
+        </div>
+        <div className="text-sm">
+          <p className="text-[#efefef]/70">Take Profit</p>
+          <p className="text-[#18ffc8]">{signal.takeProfit || "N/A"}</p>
+        </div>
+        <div className="text-sm">
+          <p className="text-[#efefef]/70">Stop Loss</p>
+          <p className="text-[#f57cff]">{signal.stopLoss || "N/A"}</p>
         </div>
       </div>
-
-      {/* Signal Details */}
-      <div className="p-4 space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#0f1f1a] p-3 rounded-lg">
-            <div className="text-xs text-gray-400 mb-1">Pair</div>
-            <div className="font-bold">{signal.pair || "N/A"}</div>
-          </div>
-          <div className="bg-[#0f1f1a] p-3 rounded-lg">
-            <div className="text-xs text-gray-400 mb-1">Direction</div>
-            <div
-              className={`font-bold ${
-                signal.direction === "buy" || signal.direction === "long"
-                  ? "text-green-400"
-                  : "text-red-400"
-              }`}
-            >
-              {signal.direction || "N/A"}
-            </div>
-          </div>
-          <div className="bg-[#0f1f1a] p-3 rounded-lg">
-            <div className="text-xs text-gray-400 mb-1">Entry</div>
-            <div className="font-bold">{signal.entryPrice || "N/A"}</div>
-          </div>
-          <div className="bg-[#0f1f1a] p-3 rounded-lg">
-            <div className="text-xs text-gray-400 mb-1">Time Frame</div>
-            <div className="font-bold">{signal.timeFrame || "N/A"}</div>
-          </div>
+      <div className="mt-3">
+        <div className="flex justify-between text-xs mb-1 text-white">
+          <span>Confidence Level</span>
+          <span>{signal.confidenceLevel || 0}%</span>
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#0f1f1a] p-3 rounded-lg">
-            <div className="text-xs text-gray-400 mb-1">Take Profit</div>
-            <div className="font-bold text-green-400">
-              {signal.takeProfit || "N/A"}
-            </div>
+        <div className="w-full bg-[#376553]/30 h-2 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${
+              signal.confidenceLevel >= 80
+                ? "bg-[#18ffc8]"
+                : signal.confidenceLevel >= 60
+                ? "bg-[#fea92a]"
+                : "bg-[#f57cff]"
+            }`}
+            style={{ width: `${signal.confidenceLevel || 0}%` }}
+          ></div>
+        </div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-between items-center">
+        <div className="flex items-center space-x-2 text-sm text-[#efefef]">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#18ffc8]/20 text-[#18ffc8] text-sm font-bold border-2 border-[#18ffc8]">
+            {getInitials(signal.punterUsername)}
           </div>
-          <div className="bg-[#0f1f1a] p-3 rounded-lg">
-            <div className="text-xs text-gray-400 mb-1">Stop Loss</div>
-            <div className="font-bold text-red-400">
-              {signal.stopLoss || "N/A"}
-            </div>
-          </div>
+          <span>{signal.punterUsername || "Anonymous"}</span>
+        </div>
+        <div className="flex space-x-4">
+          <button
+            onClick={() => handleThumbsClick(signal._id, "up")}
+            className={`flex items-center space-x-1 transition ${
+              likedSignals[signal._id] ? "text-[#18ffc8]" : "text-gray-400"
+            }`}
+          >
+            <FiThumbsUp size={20} />
+            <span className="text-sm">{signal.thumbsUp || 0}</span>
+          </button>
+          <button
+            onClick={() => handleThumbsClick(signal._id, "down")}
+            className={`flex items-center space-x-1 transition ${
+              dislikedSignals[signal._id] ? "text-red-400" : "text-gray-400"
+            }`}
+          >
+            <FiThumbsDown size={20} />
+            <span className="text-sm">{signal.thumbsDown || 0}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -246,26 +382,31 @@ const FeedPage = () => {
         <div className="text-center py-8 text-gray-400">Loading feed...</div>
       );
     }
-
-    if (!feedData || !Array.isArray(feedData) || feedData.length === 0) {
+    const filteredFeedData = allFeedData.filter(
+      (item) => item.primaryCategory === activePrimary
+    );
+    if (
+      !filteredFeedData ||
+      !Array.isArray(filteredFeedData) ||
+      filteredFeedData.length === 0
+    ) {
       return (
         <div className="text-center py-8 text-gray-400">
-          No {activePrimary === "sports" ? "tips" : "signals"} available right now.
+          No {activePrimary === "sports" ? "tips" : "signals"} available right
+          now.
         </div>
       );
     }
-
     if (activePrimary === "sports") {
-      return feedData.map((tip) => renderSportTip(tip));
+      return filteredFeedData.map((tip) => renderSportTip(tip));
     } else {
-      return feedData.map((signal) => renderTradingSignal(signal));
+      return filteredFeedData.map((signal) => renderTradingSignal(signal));
     }
   };
 
   return (
     <div className="bg-[#0a120e] min-h-screen text-white px-4 py-6 pb-20">
       <Header />
-      {/* Primary Category Selection */}
       <div className="flex border-b border-[#2a3a34] mb-4">
         {primaryCategories.map((category) => (
           <button
@@ -282,19 +423,7 @@ const FeedPage = () => {
           </button>
         ))}
       </div>
-
-      {/* The secondary category selection is removed */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-bold flex items-center">
-          {activePrimary === "sports" ? (
-            <FaStar className="mr-2 text-[#fea92a]" />
-          ) : (
-            <FaChartLine className="mr-2" />
-          )}
-          {activePrimary === "sports" ? "Sports Betting Tips" : "Trading Signals"}
-        </h2>
-        {renderFeedContent()}
-      </div>
+      <div className="space-y-6">{renderFeedContent()}</div>
     </div>
   );
 };

@@ -94,8 +94,6 @@ const PricingPlansModal = ({ onClose, user }) => {
       };
       
       const response = await axios.post(`${Api}/client/pricing`, data);
-      
-      console.log('Plans saved:', response.data);
       setSuccess('Pricing plans saved successfully!');
       
       setTimeout(() => {
@@ -109,11 +107,25 @@ const PricingPlansModal = ({ onClose, user }) => {
     }
   };
 
+  const calculateEarnings = (price) => {
+    if (isNaN(price) || price === '') return { companyTake: '0.00', yourShare: '0.00' };
+    const priceNum = parseFloat(price);
+    const companyTake = priceNum * 0.20; // 20%
+    const yourShare = priceNum - companyTake;
+    return {
+      companyTake: companyTake.toFixed(2),
+      yourShare: yourShare.toFixed(2)
+    };
+  };
+
   const planColors = {
     silver: { bg: "#c0c0c0", text: "#09100d" },
     gold: { bg: "#ffd700", text: "#09100d" },
     diamond: { bg: "#b9f2ff", text: "#09100d" }
   };
+
+  const selectedPlanPrice = plans[selectedPlan]?.price;
+  const earnings = calculateEarnings(selectedPlanPrice);
 
   return (
     <div 
@@ -207,6 +219,17 @@ const PricingPlansModal = ({ onClose, user }) => {
                   </span>
                 </div>
               </div>
+              
+              {selectedPlanPrice && (
+                <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "#162821", border: "1px solid #376553" }}>
+                  <p className="text-sm mb-2" style={{ color: "#efefef" }}>
+                    <span className="font-bold">Company's Take (20%):</span> ${earnings.companyTake}
+                  </p>
+                  <p className="text-sm" style={{ color: "#efefef" }}>
+                    <span className="font-bold">Your Share:</span> ${earnings.yourShare}
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label 

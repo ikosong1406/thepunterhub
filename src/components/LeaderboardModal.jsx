@@ -74,10 +74,6 @@ const LeaderboardModal = ({ onClose, navigateToPunter }) => {
               <FaUsers className="mr-1" style={{ color: "#fea92a" }} />
               <span style={{ color: "#efefef" }}>{punter.subscribers.toLocaleString()}</span>
             </div>
-            <div className="flex items-center justify-end">
-              <FaChartLine className="mr-1" style={{ color: "#18ffc8" }} />
-              <span style={{ color: "#efefef" }}>{punter.performance || 'N/A'}%</span>
-            </div>
           </div>
         </div>
       </div>
