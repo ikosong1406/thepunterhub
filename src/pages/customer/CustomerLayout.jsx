@@ -88,7 +88,7 @@ export default function CustomerLayout() {
   return (
     <div className="flex flex-col h-screen w-full ">
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto w-full">
+      <div className="flex-1 overflow-y-auto w-full pb-13">
         <Outlet />
       </div>
 

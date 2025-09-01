@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { FaTimes, FaSearch, FaFilter } from 'react-icons/fa';
-import { FiDownload } from 'react-icons/fi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FaTimes, FaSearch } from 'react-icons/fa';
 import axios from 'axios';
-import localforage from 'localforage';
-import Api from "../components/Api"
+import Api from "../components/Api";
 
 const TransactionHistoryModal = ({ user, onClose }) => {
   const [activeFilter, setActiveFilter] = useState('all');
@@ -12,36 +10,40 @@ const TransactionHistoryModal = ({ user, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      if (!user?._id) {
-        setIsLoading(false);
-        setError("User data not available.");
-        return;
-      }
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await axios.post(`${Api}/client/getTransaction`, { userId: user._id });
-        setTransactions(response.data.transactions);
-      } catch (err) {
-        setError("Failed to fetch transactions.");
-        console.error("Error fetching transactions:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const isPositiveTransaction = (type) => ['deposit', 'payment'].includes(type);
 
+  const fetchTransactions = useCallback(async () => {
+    if (!user?._id) {
+      setIsLoading(false);
+      setError("User data not available.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${Api}/client/getTransaction`, { userId: user._id });
+      setTransactions(response.data.transactions);
+    } catch (err) {
+      setError("Failed to fetch transactions.");
+      console.error("Error fetching transactions:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
     fetchTransactions();
-  }, [user]); // The dependency array ensures this effect runs when the user object changes.
+  }, [fetchTransactions]);
 
   const filteredTransactions = transactions
     .filter(tx =>
       (activeFilter === 'all' || tx.type.toLowerCase() === activeFilter) &&
       (tx.reference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       tx.type.toLowerCase().includes(searchQuery.toLowerCase()))
+        tx.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.amount && parseFloat(tx.amount).toFixed(1).includes(searchQuery))
+      )
     )
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -76,38 +78,19 @@ const TransactionHistoryModal = ({ user, onClose }) => {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 overflow-y-auto"
-      style={{ backgroundColor: "#09100d" }}
-    >
+    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ backgroundColor: "#09100d" }}>
       <div className="min-h-screen flex flex-col">
-        {/* Header */}
-        <div
-          className="px-6 py-4 flex justify-between items-center border-b"
-          style={{ borderColor: "#376553" }}
-        >
-          <h2
-            className="text-xl font-bold"
-            style={{ color: "#efefef" }}
-          >
+        <div className="px-6 py-4 flex justify-between items-center border-b" style={{ borderColor: "#376553" }}>
+          <h2 className="text-xl font-bold" style={{ color: "#efefef" }}>
             Transaction History
           </h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-full"
-            style={{ color: "#efefef" }}
-          >
+          <button onClick={onClose} className="p-1 rounded-full" style={{ color: "#efefef" }}>
             <FaTimes size={20} />
           </button>
         </div>
 
-        {/* Controls */}
         <div className="px-6 py-4 flex flex-col space-y-3">
-          {/* Search Bar */}
-          <div
-            className="relative rounded-lg overflow-hidden"
-            style={{ backgroundColor: "#162821" }}
-          >
+          <div className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#162821" }}>
             <input
               type="text"
               placeholder="Search transactions..."
@@ -116,23 +99,17 @@ const TransactionHistoryModal = ({ user, onClose }) => {
               className="w-full py-3 px-4 pr-10 focus:outline-none"
               style={{ backgroundColor: "#162821", color: "#efefef" }}
             />
-            <div
-              className="absolute right-3 top-3"
-              style={{ color: "#f57cff" }}
-            >
+            <div className="absolute right-3 top-3" style={{ color: "#f57cff" }}>
               <FaSearch size={16} />
             </div>
           </div>
 
-          {/* Filters */}
           <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-            {['all', 'deposit', 'withdrawal'].map(filter => (
+            {['all', 'deposit', 'withdrawal', 'subscription', 'payment'].map(filter => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
-                  activeFilter === filter ? 'bg-[#18ffc8] text-black' : 'bg-gray text-white'
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${activeFilter === filter ? 'bg-[#18ffc8] text-black' : 'bg-gray text-white'}`}
               >
                 {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
               </button>
@@ -140,7 +117,6 @@ const TransactionHistoryModal = ({ user, onClose }) => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 px-6 py-2 overflow-y-auto">
           {error ? (
             <div className="p-8 text-center" style={{ color: "#f57cff" }}>
@@ -150,31 +126,26 @@ const TransactionHistoryModal = ({ user, onClose }) => {
             <div className="space-y-3">
               {filteredTransactions.map(tx => (
                 <div
-                  key={tx._id} // Use the unique transaction ID from the backend
+                  key={tx._id}
                   className="p-4 rounded-lg"
                   style={{ backgroundColor: "#162821" }}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3
-                        className="font-medium"
-                        style={{ color: "#efefef" }}
-                      >
+                      <h3 className="font-medium" style={{ color: "#efefef" }}>
                         {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
                       </h3>
-                      <p
-                        className="text-xs"
-                        style={{ color: "#376553" }}
-                      >
-                        {formatDate(tx.createdAt)} {/* Use createdAt from timestamps */}
+                      <p className="text-xs" style={{ color: "#376553" }}>
+                        {formatDate(tx.createdAt)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p
                         className={`font-bold`}
-                        style={{ color: tx.type === 'deposit' || tx.type === 'won' ? '#18ffc8' : '#f57cff' }}
+                        style={{ color: isPositiveTransaction(tx.type) ? '#18ffc8' : '#f57cff' }}
                       >
-                        {tx.type === 'deposit' ? '+' : '-'}{tx.amount} coins
+                        {isPositiveTransaction(tx.type) ? '+' : '-'}
+                        {parseFloat(tx.amount).toFixed(1)} coins
                       </p>
                       <p
                         className="text-xs capitalize"
@@ -184,14 +155,16 @@ const TransactionHistoryModal = ({ user, onClose }) => {
                       </p>
                     </div>
                   </div>
+                  {tx.reference && (
+                    <p className="text-xs" style={{ color: "#376553" }}>
+                      Reference: {tx.reference}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
-            <div
-              className="p-8 text-center rounded-lg"
-              style={{ backgroundColor: "#162821" }}
-            >
+            <div className="p-8 text-center rounded-lg" style={{ backgroundColor: "#162821" }}>
               <p style={{ color: "#efefef" }}>No transactions found</p>
               {searchQuery && (
                 <button
