@@ -422,15 +422,6 @@ const PunterDetailsPage = () => {
     );
   };
 
-  const handleMessageClick = () => {
-    navigate("/messages", {
-      state: {
-        punterId: punter._id,
-        punterName: punter.username
-      }
-    });
-  };
-
   const pricingPlans = punter.pricingPlans || {};
 
   return (
@@ -463,14 +454,6 @@ const PunterDetailsPage = () => {
               </p>
             </div>
           </div>
-          {isSubscribed && punter.isMessageable && (
-            <button
-              onClick={handleMessageClick}
-              className="p-2 rounded-full hover:bg-[#162821] flex items-center space-x-2 text-[#f57cff]"
-            >
-              <AiOutlineMessage size={24} />
-            </button>
-          )}
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-6">
