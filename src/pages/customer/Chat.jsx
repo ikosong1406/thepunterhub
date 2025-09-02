@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   FaSearch,
   FaPaperPlane,
   FaTimes,
-  FaUser,
   FaEllipsisV,
   FaArrowLeft,
 } from "react-icons/fa";
@@ -29,6 +28,13 @@ const ChatInterface = () => {
   const [loadingChats, setLoadingChats] = useState(true);
   const [chatError, setChatError] = useState(null);
 
+  const messagesEndRef = useRef(null);
+  const [loadingChatMessages, setLoadingChatMessages] = useState(false);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -47,69 +53,107 @@ const ChatInterface = () => {
     fetchUserData();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      const fetchChats = async () => {
-        setLoadingChats(true);
-        try {
-          const response = await axios.post(`${Api}/client/getMessages`, {
-            id: user._id,
-          });
-          const formattedChats = formatMessagesToChats(
-            response.data.messages,
-            user._id
-          );
-          setChatList(formattedChats);
-        } catch (err) {
-          setChatError("Failed to fetch messages.");
-        } finally {
-          setLoadingChats(false);
-        }
+  const formatMessagesToChats = (chats, currentUserId) => {
+    if (!chats) return [];
+
+    return chats.map((chat) => {
+      const { chatId, opponent, latestMessage } = chat;
+      // Determine if the latest message was sent by the current user
+      const isMyMessage = latestMessage.role === "user";
+
+      // The message content to display in the chat list
+      const lastMessageContent = latestMessage.content;
+      const displayMessage = isMyMessage
+        ? `You: ${lastMessageContent}`
+        : lastMessageContent;
+
+      return {
+        id: chatId,
+        punterId: opponent.id,
+        userId: currentUserId,
+        name: opponent.username,
+        lastMessage: displayMessage,
+        timestamp: new Date(latestMessage.timestamp).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        unread: 0, // This logic needs to be handled by the backend
+        avatar: null, // Placeholder for avatars
+        messages: [], // We don't have the full message history from this endpoint
+        isPunterLastMessage: !isMyMessage,
       };
-      fetchChats();
+    });
+  };
+
+  const fetchChats = useCallback(async () => {
+    if (!user) return;
+    setLoadingChats(true);
+    try {
+      const response = await axios.post(`${Api}/client/getMessages`, {
+        id: user._id,
+      });
+      const formattedChats = formatMessagesToChats(
+        response.data.chats,
+        user._id
+      );
+      setChatList(formattedChats);
+    } catch (err) {
+      setChatError("Failed to fetch messages.");
+    } finally {
+      setLoadingChats(false);
     }
   }, [user]);
 
-  const formatMessagesToChats = (messages, currentUserId) => {
-    const chatsMap = {};
-    messages.forEach((msg) => {
-      const isMyMessage = msg.sender === currentUserId;
-      const otherPartyId = isMyMessage ? msg.punterId : msg.userId;
-      const otherPartyName = isMyMessage ? msg.punterName : "Me"; // Assuming punterName is available
-
-      if (!chatsMap[otherPartyId]) {
-        chatsMap[otherPartyId] = {
-          id: otherPartyId,
-          name: otherPartyName,
-          lastMessage: msg.message,
-          timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          unread: 0, // This needs to be managed on the backend
-          avatar: null, // Placeholder
-          messages: [],
-        };
-      } else {
-        chatsMap[otherPartyId].lastMessage = msg.message;
-        chatsMap[otherPartyId].timestamp = new Date(
-          msg.timestamp
-        ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      }
-
-      chatsMap[otherPartyId].messages.push({
+  const fetchChatMessages = useCallback(async (chatId) => {
+    setLoadingChatMessages(true);
+    try {
+      const response = await axios.post(`${Api}/client/getMessagedetails`, {
+        chatId,
+      });
+      const formattedMessages = response.data.messages.map((msg) => ({
         id: msg._id,
-        text: msg.message,
-        sender: isMyMessage ? "me" : "them",
+        text: msg.content,
+        sender: msg.role === "user" ? "user" : "punter",
         time: new Date(msg.timestamp).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         }),
-      });
-    });
+      }));
+      setSelectedChat((prevChat) => ({
+        ...prevChat,
+        messages: formattedMessages,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch chat messages:", error);
+    } finally {
+      setLoadingChatMessages(false);
+    }
+  }, []);
 
-    return Object.values(chatsMap);
-  };
+  useEffect(() => {
+    if (user) {
+      fetchChats();
+      const interval = setInterval(() => {
+        fetchChats();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [user, fetchChats]);
+
+  // New useEffect to periodically fetch chat messages
+  useEffect(() => {
+    if (selectedChat) {
+      fetchChatMessages(selectedChat.id);
+      const interval = setInterval(() => {
+        fetchChatMessages(selectedChat.id);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedChat, fetchChatMessages]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [selectedChat?.messages]);
 
   const filteredChats = chatList.filter((chat) =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -118,45 +162,53 @@ const ChatInterface = () => {
   const handleSendMessage = async () => {
     if (message.trim() === "" || !selectedChat || !user) return;
 
-    const newMessage = {
-      punterId: selectedChat.id,
-      userId: user._id,
-      message: message,
-      role: "user",
+    const tempNewMessage = {
+      id: Date.now(),
+      text: message,
+      sender: "user",
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       }),
     };
 
-    const tempNewMessage = {
-      id: Date.now(),
-      text: message,
-      sender: "me",
-      time: newMessage.time,
-    };
-
-    setSelectedChat({
-      ...selectedChat,
-      messages: [...selectedChat.messages, tempNewMessage],
-    });
+    setSelectedChat((prevChat) => ({
+      ...prevChat,
+      messages: [...(prevChat.messages || []), tempNewMessage],
+    }));
     setMessage("");
 
     try {
-      await axios.post(`${Api}/createMessage`, newMessage);
-      // Re-fetch messages to get the latest state from the server
-      const response = await axios.post(`${Api}/client/getMessages`, {
-        id: user._id,
-      });
-      const updatedChats = formatMessagesToChats(
-        response.data.messages,
-        user._id
+      let response;
+      if (selectedChat.id.startsWith("new-")) {
+        const punterId = selectedChat.id.replace("new-", "");
+        response = await axios.post(`${Api}/client/createMessage`, {
+          userId: user._id,
+          punterId,
+          message: tempNewMessage.text,
+          role: "user",
+        });
+        const newChatId = response.data.chatId;
+        setChatList((prevChatList) =>
+          prevChatList.map((chat) =>
+            chat.id === selectedChat.id ? { ...chat, id: newChatId } : chat
+          )
+        );
+      } else {
+        response = await axios.post(`${Api}/client/sendMessage`, {
+          chatId: selectedChat.id,
+          role: "user",
+          content: tempNewMessage.text,
+        });
+      }
+      fetchChats();
+      fetchChatMessages(
+        selectedChat.id.startsWith("new-")
+          ? response.data.chatId
+          : selectedChat.id
       );
-      setChatList(updatedChats);
-      setSelectedChat(updatedChats.find((chat) => chat.id === selectedChat.id));
     } catch (err) {
       console.error("Failed to send message:", err);
-      // Revert the optimistic update if it fails
       setSelectedChat((prevChat) => ({
         ...prevChat,
         messages: prevChat.messages.filter(
@@ -168,6 +220,7 @@ const ChatInterface = () => {
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       handleSendMessage();
     }
   };
@@ -196,36 +249,41 @@ const ChatInterface = () => {
     fetchSubscribedPunters();
   };
 
-  const handleSelectPunter = async (punter) => {
-    try {
-      // Find or create a chat object for this punter
-      const existingChat = chatList.find((chat) => chat.id === punter._id);
-
-      if (existingChat) {
-        setSelectedChat(existingChat);
-      } else {
-        // Create a new, empty chat for a new conversation
-        const newChat = {
-          id: punter._id,
-          name: punter.username,
-          lastMessage: "Start the conversation...",
-          timestamp: "Just now",
-          unread: 0,
-          avatar: punter.avatar,
-          messages: [],
-        };
-        setChatList((prevChats) => [...prevChats, newChat]);
-        setSelectedChat(newChat);
-      }
-      setShowPuntersModal(false);
-    } catch (err) {
-      console.error("Failed to select punter and fetch chat:", err);
+  const handleSelectPunter = (punter) => {
+    const existingChat = chatList.find((chat) => chat.punterId === punter._id);
+    if (existingChat) {
+      setSelectedChat(existingChat);
+      fetchChatMessages(existingChat.id);
+    } else {
+      const newChat = {
+        id: `new-${punter._id}`,
+        punterId: punter._id,
+        userId: user._id,
+        name: punter.username,
+        lastMessage: "Start the conversation...",
+        timestamp: "Just now",
+        unread: 0,
+        avatar: punter.avatar,
+        messages: [],
+      };
+      setChatList((prevChats) => [newChat, ...prevChats]);
+      setSelectedChat(newChat);
     }
+    setShowPuntersModal(false);
+  };
+
+  const handleSelectExistingChat = (chat) => {
+    setSelectedChat(chat);
+    fetchChatMessages(chat.id);
   };
 
   const getInitials = (username) => {
-    const fInitial = username ? username.charAt(0) : "";
-    return `${fInitial}`.toUpperCase();
+    if (!username) return "";
+    const nameParts = username.split(" ");
+    if (nameParts.length > 1) {
+      return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
+    }
+    return username.charAt(0).toUpperCase();
   };
 
   const PuntersScreenModal = () => (
@@ -315,20 +373,6 @@ const ChatInterface = () => {
     </div>
   );
 
-  if (loadingUser) {
-    return (
-      <div className="text-center p-10 text-[#efefef]">
-        Loading user data...
-      </div>
-    );
-  }
-
-  if (userError) {
-    return (
-      <div className="text-center p-10 text-[#f57cff]">Error: {userError}</div>
-    );
-  }
-
   return (
     <div className="bg-[#09100d] min-h-screen text-[#efefef]">
       {/* Chat List */}
@@ -349,7 +393,7 @@ const ChatInterface = () => {
 
         {/* Chat List */}
         <div className="bg-[#162821] rounded-xl overflow-hidden">
-          {loadingChats ? (
+          {loadingChats && chatList.length === 0 ? (
             <div className="p-8 text-center">
               <p style={{ color: "#efefef" }}>Loading messages...</p>
             </div>
@@ -361,18 +405,18 @@ const ChatInterface = () => {
             filteredChats.map((chat) => (
               <div
                 key={chat.id}
-                onClick={() => setSelectedChat(chat)}
+                onClick={() => handleSelectExistingChat(chat)}
                 className="p-4 border-b border-[#376553] cursor-pointer flex items-center transition-colors hover:bg-[#1e3029]"
               >
                 <div className="w-12 h-12 rounded-full bg-[#376553] flex items-center justify-center mr-4 text-[#efefef] text-lg font-bold">
                   {chat.avatar ? (
                     <img
                       src={chat.avatar}
-                      alt={chat.name}
+                      alt={chat.username}
                       className="w-full h-full rounded-full"
                     />
                   ) : (
-                    chat.name.charAt(0)
+                    getInitials(chat.name)
                   )}
                 </div>
 
@@ -384,12 +428,16 @@ const ChatInterface = () => {
                     </span>
                   </div>
                   <p
-                    className={`m-0 mt-1 ${
-                      chat.unread > 0
-                        ? "text-[#efefef] font-bold"
-                        : "text-[#376553]"
-                    }`}
+                    className="m-0 mt-1"
+                    style={{
+                      color: chat.isPunterLastMessage ? "#18ffc8" : "#376553",
+                    }}
                   >
+                    {chat.isPunterLastMessage && (
+                      <span className="text-xl inline-block mr-2 leading-none align-middle">
+                        •
+                      </span>
+                    )}
                     {chat.lastMessage}
                   </p>
                 </div>
@@ -429,7 +477,7 @@ const ChatInterface = () => {
                 onClick={() => setSelectedChat(null)}
                 className="bg-transparent border-none text-[#efefef] cursor-pointer mr-4"
               >
-                <FaTimes size={20} />
+                <FaArrowLeft size={20} />
               </button>
 
               <div className="w-10 h-10 rounded-full bg-[#376553] flex items-center justify-center mr-4 text-[#efefef] text-base font-bold">
@@ -440,7 +488,7 @@ const ChatInterface = () => {
                     className="w-full h-full rounded-full"
                   />
                 ) : (
-                  selectedChat.name.charAt(0)
+                  getInitials(selectedChat.name)
                 )}
               </div>
 
@@ -461,12 +509,12 @@ const ChatInterface = () => {
                 <div
                   key={msg.id}
                   className={`flex mb-4 ${
-                    msg.sender === "me" ? "justify-end" : "justify-start"
+                    msg.sender === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
                     className={`max-w-[70%] p-3 rounded-lg ${
-                      msg.sender === "me"
+                      msg.sender === "user"
                         ? "bg-[#18ffc8] text-[#09100d] rounded-br-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl"
                         : "bg-[#376553] text-[#efefef] rounded-bl-sm rounded-tr-xl rounded-tl-xl rounded-br-xl"
                     }`}
@@ -474,7 +522,7 @@ const ChatInterface = () => {
                     <p className="m-0">{msg.text}</p>
                     <div
                       className={`text-xs text-right mt-1 ${
-                        msg.sender === "me"
+                        msg.sender === "user"
                           ? "text-[#09100d]"
                           : "text-[#c4c4c4]"
                       }`}
@@ -489,6 +537,7 @@ const ChatInterface = () => {
                 <p>No messages yet. Start the conversation!</p>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Message Input */}

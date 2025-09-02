@@ -53,7 +53,7 @@ const FeedPage = () => {
           // Set the data directly without sorting
           setAllFeedData(feedResponse.data.data);
 
-          const signalIds = sortedData.map((s) => s._id);
+          const signalIds = feedResponse.data.data.map((s) => s._id);
           const reactionsResponse = await axios.post(
             `${Api}/client/getReaction`,
             {
