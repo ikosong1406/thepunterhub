@@ -129,8 +129,6 @@ const LoginScreen = ({ platformName = "PH" }) => {
         await localforage.setItem("token", token);
         await localforage.setItem("role", role);
 
-        toast.success("Login successful! Redirecting...", { duration: 2000 });
-
         setTimeout(() => {
           if (role === "user") {
             navigate("/customer/home");
@@ -140,7 +138,7 @@ const LoginScreen = ({ platformName = "PH" }) => {
             // Fallback for unknown role
             navigate("/welcome");
           }
-        }, 2000);
+        }, 1000);
       }
     } catch (error) {
       console.error("Login failed:", error);

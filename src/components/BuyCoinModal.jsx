@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import localforage from "localforage";
 import { IoMdClose } from "react-icons/io";
 import axios from "axios";
+import { usePaystackPayment } from "react-paystack";
+
+// Paystack supported countries for local NGN payments
+const NGN_COUNTRIES = ["+234"];
 
 // Coin options with prices in USD
 const coinOptions = [
@@ -21,11 +25,17 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   const [error, setError] = useState(null);
   const [exchangeRates, setExchangeRates] = useState({});
 
+  const isNgnPayment = NGN_COUNTRIES.includes(user.countryCode);
+  const PAYSTACK_PUBLIC_KEY =
+    "pk_test_c86ce251b26eb31bc55918571f477e0af8f0291b";
+
   useEffect(() => {
     const fetchRates = async () => {
       try {
         setRatesLoading(true);
-        const response = await axios.get("https://v6.exchangerate-api.com/v6/5a103662f87d0a5ac0043c95/latest/USD");
+        const response = await axios.get(
+          "https://v6.exchangerate-api.com/v6/5a103662f87d0a5ac0043c95/latest/USD"
+        );
         if (response.status !== 200) {
           throw new Error("Failed to fetch exchange rates");
         }
@@ -36,23 +46,43 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
         setRatesLoading(false);
       }
     };
-
     fetchRates();
   }, []);
 
   const getPriceAndCurrency = () => {
     let coins = 0;
     if (selectedOption === -1) {
-      // Custom input is selected
       coins = parseInt(customCoins, 10) || 0;
     } else {
       coins = coinOptions[selectedOption].coins;
     }
 
-    const priceUSD = coins * 1; // 1 coin = $0.005 USD, based on the priceUSD of the first package
-    let currencyCode = "USD"; // Default to USD
-    let price = priceUSD;
+    // Base price is always in USD, as per coinOptions
+    const basePriceUSD = coins;
 
+    // Transaction currency is always NGN
+    const transactionCurrency = "NGN";
+
+    // Calculate the final price for the transaction in NGN
+    let transactionPrice = basePriceUSD;
+    let taxRate = 0.015;
+    let flatFee = 0;
+
+    if (exchangeRates.NGN) {
+      transactionPrice = basePriceUSD * exchangeRates.NGN;
+    }
+    // NGN flat fee for transactions over ₦2500
+    flatFee = transactionPrice >= 2500 ? 100 : 0;
+
+    // Apply the transaction tax and flat fee
+    transactionPrice = transactionPrice / (1 - taxRate) + flatFee;
+
+    // Calculate the amount in kobo for Paystack
+    const amountInLowestUnit = Math.round(transactionPrice * 100);
+
+    // Calculate the display price in the user's local currency
+    let displayPrice = basePriceUSD;
+    let displayCurrency = "USD";
     const countryToCurrencyMap = {
       "+234": "NGN",
       "+233": "GHS",
@@ -82,63 +112,66 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
       "+64": "NZD",
       "+679": "FJD",
     };
-
-    const userCurrencyCode = countryToCurrencyMap[user.countryCode];
-    if (
-      userCurrencyCode &&
-      exchangeRates &&
-      exchangeRates[userCurrencyCode]
-    ) {
-      currencyCode = userCurrencyCode;
-      price = priceUSD * exchangeRates[userCurrencyCode];
+    const userCurrency = countryToCurrencyMap[user.countryCode] || "USD";
+    if (exchangeRates[userCurrency]) {
+      displayPrice = basePriceUSD * exchangeRates[userCurrency];
+      displayCurrency = userCurrency;
     }
 
-    return { price: price.toFixed(2), currency: currencyCode, coins };
+    return {
+      coins,
+      displayPrice: displayPrice.toFixed(2),
+      displayCurrency,
+      transactionPrice: transactionPrice.toFixed(2),
+      transactionCurrency,
+      amount: amountInLowestUnit,
+    };
   };
 
-  const handlePayment = async () => {
+  const {
+    coins,
+    displayPrice,
+    displayCurrency,
+    transactionPrice,
+    transactionCurrency,
+    amount,
+  } = getPriceAndCurrency();
+
+  // Create the Paystack config with hardcoded NGN
+  const config = {
+    reference: new Date().getTime().toString(),
+    email: user.email,
+    amount: amount,
+    publicKey: PAYSTACK_PUBLIC_KEY,
+    currency: 'NGN', // Hardcoded to NGN
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const onSuccess = (reference) => {
+    console.log(reference);
+    onDepositSuccess((user.balance || 0) + coins);
+    onClose();
+  };
+
+  const onClosePaystack = () => {
+    console.log("Payment modal closed");
+    setLoading(false);
+  };
+
+  const handlePayment = () => {
     if (loading || ratesLoading) return;
+    setLoading(true);
+    setError(null);
 
-    try {
-      setLoading(true);
-      setError(null);
-
-      const token = await localforage.getItem("token");
-      if (!token) throw new Error("Authentication required");
-
-      const { coins, price, currency } = getPriceAndCurrency();
-      if (coins <= 0) {
-        throw new Error("Please select or enter a valid number of coins.");
-      }
-
-      // Simulate payment processing
-      setTimeout(async () => {
-        try {
-          // In a real app, you would call your deposit endpoint here
-          // const depositResponse = await axios.post(`${Api}/client/deposit`, {
-          //   token,
-          //   amount: coins,
-          //   reference: `simulated-ref-${Date.now()}`,
-          //   price,
-          //   currency
-          // });
-
-          // Simulate successful deposit
-          const newBalance = (user.balance || 0) + coins;
-          onDepositSuccess(newBalance);
-          onClose();
-        } catch (err) {
-          setError(err.response?.data?.message || "Deposit processing failed");
-          setLoading(false);
-        }
-      }, 1500);
-    } catch (err) {
-      setError(err.message);
+    if (coins <= 0) {
+      setError("Please select or enter a valid number of coins.");
       setLoading(false);
+      return;
     }
-  };
 
-  const { price, currency, coins } = getPriceAndCurrency();
+    initializePayment(onSuccess, onClosePaystack);
+  };
 
   const getCurrencySymbol = (currencyCode) => {
     switch (currencyCode) {
@@ -252,7 +285,6 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
             <IoMdClose size={24} />
           </button>
         </div>
-
         {/* Main Content */}
         <div className="flex-1 px-6 py-4">
           {/* Coin Packages */}
@@ -263,59 +295,55 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
             >
               Select Package
             </h3>
-
             <div className="grid grid-cols-2 gap-4">
-              {coinOptions.map((option, index) => {
-                return (
-                  <div
-                    key={index}
-                    onClick={() => {
-                      setSelectedOption(index);
-                      setCustomCoins("");
-                    }}
-                    className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all ${
+              {coinOptions.map((option, index) => (
+                <div
+                  key={index}
+                  onClick={() => {
+                    setSelectedOption(index);
+                    setCustomCoins("");
+                  }}
+                  className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    selectedOption === index
+                      ? "border-orange-500 scale-105"
+                      : "border-gray-500 hover:border-blue-500"
+                  }`}
+                  style={{
+                    backgroundColor:
+                      selectedOption === index ? "#162821" : "#09100d",
+                    borderColor:
                       selectedOption === index
-                        ? "border-orange-500 scale-105"
-                        : "border-gray-500 hover:border-blue-500"
-                    }`}
-                    style={{
-                      backgroundColor:
-                        selectedOption === index ? "#162821" : "#09100d",
-                      borderColor:
-                        selectedOption === index
-                          ? "#fea92a"
-                          : "rgba(255, 255, 255, 0.1)",
-                    }}
-                  >
-                    {option.popular && (
-                      <div
-                        className="absolute -top-2 -right-2 px-2 py-1 rounded-full text-xs font-bold"
-                        style={{ backgroundColor: "#fea92a", color: "#09100d" }}
+                        ? "#fea92a"
+                        : "rgba(255, 255, 255, 0.1)",
+                  }}
+                >
+                  {option.popular && (
+                    <div
+                      className="absolute -top-2 -right-2 px-2 py-1 rounded-full text-xs font-bold"
+                      style={{ backgroundColor: "#fea92a", color: "#09100d" }}
+                    >
+                      POPULAR
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-end mb-2">
+                      <span
+                        className="text-2xl font-bold mr-1"
+                        style={{ color: "#efefef" }}
                       >
-                        POPULAR
-                      </div>
-                    )}
-
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-end mb-2">
-                        <span
-                          className="text-2xl font-bold mr-1"
-                          style={{ color: "#efefef" }}
-                        >
-                          {option.coins}
-                        </span>
-                        <span className="text-sm" style={{ color: "#18ffc8" }}>
-                          coins
-                        </span>
-                      </div>
-                      <span className="text-xs" style={{ color: "#999" }}>
-                        ({getCurrencySymbol("USD")}
-                        {option.priceUSD})
+                        {option.coins}
+                      </span>
+                      <span className="text-sm" style={{ color: "#18ffc8" }}>
+                        coins
                       </span>
                     </div>
+                    <span className="text-xs" style={{ color: "#999" }}>
+                      ({getCurrencySymbol("USD")}
+                      {option.priceUSD})
+                    </span>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
           <p className="text-center text-gray-400 my-4">OR</p>
@@ -354,8 +382,6 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
               />
             </div>
           </div>
-
-          {/* Selected Package Details */}
           <div
             className="mb-8 p-4 rounded-lg"
             style={{ backgroundColor: "#162821" }}
@@ -366,25 +392,24 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
             >
               Summary
             </h4>
-
             <div className="flex justify-between items-center mb-2">
               <span style={{ color: "#efefef" }}>Coins:</span>
               <span className="font-bold" style={{ color: "#18ffc8" }}>
                 {coins}
               </span>
             </div>
-
             <div className="flex justify-between items-center">
               <span style={{ color: "#efefef" }}>Price:</span>
               <span className="font-bold" style={{ color: "#18ffc8" }}>
-                {getCurrencySymbol(currency)}
-                {price}
+                {getCurrencySymbol(displayCurrency)} {displayPrice} {displayCurrency}
               </span>
             </div>
+            <p className="text-xs text-center mt-2 text-gray-400">
+              You will be charged {getCurrencySymbol(transactionCurrency)}{" "}
+              {transactionPrice} {transactionCurrency}.
+            </p>
           </div>
         </div>
-
-        {/* Footer */}
         <div className="px-6 py-4 border-t" style={{ borderColor: "#376553" }}>
           {error && (
             <div
@@ -397,7 +422,6 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
               {error}
             </div>
           )}
-
           <button
             onClick={handlePayment}
             disabled={loading || ratesLoading || coins <= 0}
@@ -433,7 +457,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                 Processing...
               </>
             ) : (
-              "BUY NOW"
+              `BUY NOW FOR ${getCurrencySymbol(transactionCurrency)}${transactionPrice}`
             )}
           </button>
         </div>
