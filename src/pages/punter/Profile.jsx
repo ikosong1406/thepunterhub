@@ -21,7 +21,8 @@ import HelpCenterModal from "../../components/HelpCenterModal";
 import ContactUsModal from "../../components/ContactUsModal";
 import PricesModal from "../../components/PricesModal";
 import LeaderboardModal from "../../components/LeaderboardModal";
-import VerificationModal from "../../components/VerificationModal"
+import VerificationModal from "../../components/VerificationModal";
+import BuyCoinModal from "../../components/BuyCoinModal"; // Import the new modal
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -164,14 +165,25 @@ const ProfilePage = () => {
             <span className="text-2xl font-bold" style={{ color: "#efefef" }}>
               {user.balance?.toFixed(2) || "0.00"}
             </span>
-            <button
-              className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium"
-              style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-              onClick={() => setActiveModal("withdraw")}
-            >
-              <IoMdAdd className="text-sm" />
-              <span>Withdraw</span>
-            </button>
+            {/* Add Deposit and Withdraw buttons */}
+            <div className="flex space-x-2">
+              <button
+                className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium"
+                style={{ backgroundColor: "#18ffc8", color: "#09100d" }}
+                onClick={() => setActiveModal("deposit")} // Open the deposit modal
+              >
+                <IoMdAdd className="text-sm" />
+                <span>Deposit</span>
+              </button>
+              <button
+                className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium"
+                style={{ backgroundColor: "#fea92a", color: "#09100d" }}
+                onClick={() => setActiveModal("withdraw")}
+              >
+                <IoMdAdd className="text-sm" />
+                <span>Withdraw</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -248,6 +260,7 @@ const ProfilePage = () => {
       </div>
 
       {/* Modals */}
+      {activeModal === "deposit" && <BuyCoinModal user={user} onClose={closeModal} />}
       {activeModal === "withdraw" && (
         <WithdrawModal
           user={user}
@@ -273,9 +286,7 @@ const ProfilePage = () => {
       {activeModal === "verification" && (
         <VerificationModal user={user} onClose={closeModal} />
       )}
-      {activeModal === "help-center" && (
-        <HelpCenterModal onClose={closeModal} />
-      )}
+      {activeModal === "help-center" && <HelpCenterModal onClose={closeModal} />}
       {activeModal === "contact-us" && <ContactUsModal onClose={closeModal} />}
 
       {/* Logout Confirmation */}

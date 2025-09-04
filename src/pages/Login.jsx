@@ -1,12 +1,61 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaSearch } from "react-icons/fa";
 import axios from "axios";
 import localforage from "localforage";
 import toast, { Toaster } from "react-hot-toast";
 import Api from "../components/Api";
 import "../styles/Splash.css";
 import logoImage from "../assets/logo2.png";
+
+// Define a Colors object to manage styling
+const Colors = {
+  gray: "#162821",
+  orange: "#fea92a",
+  white: "#ffffff",
+  black: "#09100d",
+  lightGray: "#333",
+  purple: "#855391",
+};
+
+const PHONE_CODES = [
+  // Africa
+  { value: "+234", label: "🇳🇬 +234" },
+  { value: "+233", label: "🇬🇭 +233" },
+  { value: "+27", label: "🇿🇦 +27" },
+  { value: "+254", label: "🇰🇪 +254" },
+  { value: "+20", label: "🇪🇬 +20" },
+  // North America
+  { value: "+1", label: "🇺🇸 +1" },
+  { value: "+1", label: "🇨🇦 +1" },
+  { value: "+52", label: "🇲🇽 +52" },
+  { value: "+501", label: "🇧🇿 +501" },
+  { value: "+506", label: "🇨🇷 +506" },
+  // South America
+  { value: "+55", label: "🇧🇷 +55" },
+  { value: "+54", label: "🇦🇷 +54" },
+  { value: "+57", label: "🇨🇴 +57" },
+  { value: "+51", label: "🇵🇪 +51" },
+  { value: "+56", label: "🇨🇱 +56" },
+  // Europe
+  { value: "+44", label: "🇬🇧 +44" },
+  { value: "+33", label: "🇫🇷 +33" },
+  { value: "+49", label: "🇩🇪 +49" },
+  { value: "+39", label: "🇮🇹 +39" },
+  { value: "+34", label: "🇪🇸 +34" },
+  // Asia
+  { value: "+86", label: "🇨🇳 +86" },
+  { value: "+91", label: "🇮🇳 +91" },
+  { value: "+81", label: "🇯🇵 +81" },
+  { value: "+65", label: "🇸🇬 +65" },
+  { value: "+971", label: "🇦🇪 +971" },
+  // Australia/Oceania
+  { value: "+61", label: "🇦🇺 +61" },
+  { value: "+64", label: "🇳🇿 +64" },
+  { value: "+679", label: "🇫🇯 +679" },
+  { value: "+675", label: "🇵🇬 +675" },
+  { value: "+685", label: "🇼🇸 +685" },
+];
 
 const LoginScreen = ({ platformName = "PH" }) => {
   const navigate = useNavigate();
@@ -18,6 +67,14 @@ const LoginScreen = ({ platformName = "PH" }) => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handlePhoneCodeChange = (code) => {
+    setFormData((prev) => ({ ...prev, phoneCode: code }));
+    setSearchTerm(""); // Clear search term after selection
+    setIsDropdownOpen(false); // Close dropdown
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -99,6 +156,10 @@ const LoginScreen = ({ platformName = "PH" }) => {
       setLoading(false);
     }
   };
+
+  const filteredPhoneCodes = PHONE_CODES.filter((code) =>
+    code.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-[#09100d] text-white flex">
@@ -262,16 +323,64 @@ const LoginScreen = ({ platformName = "PH" }) => {
                 <label className="block text-sm font-medium text-gray-400 mb-1">
                   Phone Number
                 </label>
-                <div className="flex gap-3">
-                  <select
-                    name="phoneCode"
-                    value={formData.phoneCode}
-                    onChange={handleChange}
-                    className="w-1/3 p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
-                  >
-                    <option value="+234">🇳🇬 +234</option>
-                    <option value="+233">🇬🇭 +233</option>
-                  </select>
+                <div className="flex gap-3 relative">
+                  <div className="relative w-1/3">
+                    <button
+                      type="button"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="w-full p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8] text-left flex items-center justify-between"
+                    >
+                      <span>
+                        {PHONE_CODES.find(
+                          (code) => code.value === formData.phoneCode
+                        )?.label || "Select Code"}
+                      </span>
+                      <svg
+                        className={`h-5 w-5 transition-transform duration-200 ${
+                          isDropdownOpen ? "rotate-180" : ""
+                        }`}
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.27a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                    {isDropdownOpen && (
+                      <div
+                        className="absolute z-10 w-full mt-1 rounded-md shadow-lg"
+                        style={{ backgroundColor: Colors.gray }}
+                      >
+                        <div className="p-2 border-b border-gray-600">
+                          <div className="relative">
+                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                              type="text"
+                              placeholder="Search countries..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="w-full pl-10 pr-4 py-2 bg-[#09100d] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
+                            />
+                          </div>
+                        </div>
+                        <ul className="max-h-60 overflow-y-auto custom-scrollbar">
+                          {filteredPhoneCodes.map((code) => (
+                            <li
+                              key={code.value + code.label}
+                              className="p-2 hover:bg-[#162821] cursor-pointer"
+                              onClick={() => handlePhoneCodeChange(code.value)}
+                            >
+                              {code.label}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     name="phoneNumber"
