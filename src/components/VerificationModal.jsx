@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { FaTimes, FaUpload, FaCheck, FaInfoCircle, FaIdCard, FaGlobe } from 'react-icons/fa';
+import  Api from './Api'; // import your base URL
 
 const VerificationModal = ({ user, onClose }) => {
   const [selectedIdType, setSelectedIdType] = useState('');
@@ -17,25 +19,22 @@ const VerificationModal = ({ user, onClose }) => {
       '+44': 'United Kingdom',
       '+91': 'India',
       '+61': 'Australia',
-      '+1': 'Canada',
       '+27': 'South Africa',
       '+233': 'Ghana',
       '+254': 'Kenya',
-      // Add more country codes as needed
     };
-    
     return countryMap[countryCode] || 'your country';
   };
 
   // ID options based on country
   const getIdOptions = (countryCode) => {
     const country = getCountryFromCode(countryCode);
-    
+
     const commonOptions = [
       { value: 'passport', label: 'International Passport', requiresBack: false },
       { value: 'driver_license', label: "Driver's License", requiresBack: true },
     ];
-    
+
     const countrySpecific = {
       'Nigeria': [
         { value: 'nin', label: 'National Identity Number (NIN)', requiresBack: false },
@@ -60,10 +59,7 @@ const VerificationModal = ({ user, onClose }) => {
       ],
     };
 
-    return [
-      ...commonOptions,
-      ...(countrySpecific[country] || [])
-    ];
+    return [...commonOptions, ...(countrySpecific[country] || [])];
   };
 
   const idOptions = getIdOptions(user.countryCode);
@@ -77,7 +73,6 @@ const VerificationModal = ({ user, onClose }) => {
         alert('File size must be less than 5MB');
         return;
       }
-
       if (side === 'front') {
         setIdFront(file);
       } else {
@@ -94,33 +89,46 @@ const VerificationModal = ({ user, onClose }) => {
     }
   };
 
-  const simulateUpload = () => {
-    setIsUploading(true);
-    setUploadProgress(0);
-    
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          setUploadComplete(true);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
-  };
-
-  const handleSubmit = (e) => {
+  // 🚀 Handle submit
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    simulateUpload();
-    // In a real app, you would upload to your backend here
+    if (!idFront) return;
+
+    const formData = new FormData();
+    formData.append('userId', user._id);
+    formData.append('userFullname', `${user.firstname} ${user.lastname}`);
+    formData.append('idPhotoFront', idFront);
+    if (idBack) {
+      formData.append('idPhotoBack', idBack);
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      await axios.post(`${Api}/client/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        },
+      });
+
+      setIsUploading(false);
+      setUploadComplete(true);
+    } catch (error) {
+      console.error('Upload error:', error);
+      setIsUploading(false);
+      alert('Upload failed. Please try again.');
+    }
   };
 
   const isFormComplete = () => {
     if (!selectedIdType) return false;
     if (!idFront) return false;
-    if (selectedOption.requiresBack && !idBack) return false;
+    if (selectedOption?.requiresBack && !idBack) return false;
     return true;
   };
 
