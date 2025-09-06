@@ -35,17 +35,21 @@ const ProfilePage = () => {
         if (!token) {
           throw new Error("No authentication token found.");
         }
-
         const response = await axios.post(`${Api}/client/getUser`, { token });
         setUser(response.data.data);
-        setLoading(false);
       } catch (err) {
         setError(err.message);
+      } finally {
+        // Setting loading to false only after the first fetch
         setLoading(false);
       }
-    };
+    }; // Initial fetch when the component mounts
 
-    fetchUserData();
+    fetchUserData(); // Set up the interval to fetch data every 60 seconds (1 minute)
+
+    const intervalId = setInterval(fetchUserData, 60000); // Cleanup function to clear the interval when the component unmounts
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleSignOut = async () => {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import axios from "axios";
+import {toast, Toaster} from "react-hot-toast";
 import Api from "../components/Api";
 
 // Define the bank options for each country
@@ -241,6 +242,7 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
         setConversionRates(response.data.conversion_rates);
       } catch (err) {
         console.error("Failed to fetch conversion rates:", err);
+        toast.error("Could not fetch conversion rates.");
         setError("Could not fetch conversion rates.");
       } finally {
         setIsFetchingRates(false);
@@ -275,12 +277,20 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
   };
 
   const handleWithdraw = async () => {
+    // Check if user is verified before proceeding
+    if (!user.isVerified) {
+      toast.error("Please verify your account to be able to withdraw.");
+      return;
+    }
+
     if (!amount || !bankCode || !accountNumber || !accountName) {
+      toast.error("Please fill all fields.");
       setError("Please fill all fields.");
       return;
     }
 
     if (parseFloat(amount) > user.balance) {
+      toast.error("Insufficient balance.");
       setError("Insufficient balance.");
       return;
     }
@@ -310,14 +320,16 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
 
       setIsSuccess(true);
       onWithdrawSuccess(response.data.newBalance);
+      toast.success("Withdrawal successful! The modal will close shortly.");
 
       setTimeout(() => {
         onClose();
       }, 3000);
     } catch (err) {
-      setError(
-        err.response?.data?.error || "Withdrawal failed. Please try again."
-      );
+      const errorMessage =
+        err.response?.data?.error || "Withdrawal failed. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -328,6 +340,7 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
       className="fixed inset-0 z-50 overflow-y-auto"
       style={{ backgroundColor: "#09100d" }}
     >
+      <Toaster/>
       <div className="min-h-screen flex flex-col">
         {/* Header */}
         <div

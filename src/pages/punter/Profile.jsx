@@ -34,22 +34,25 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = await localforage.getItem("token"); // or wherever you store your auth token
+        const token = await localforage.getItem("token");
         if (!token) {
           throw new Error("No authentication token found.");
         }
-
         const response = await axios.post(`${Api}/client/getUser`, { token });
-
         setUser(response.data.data);
-        setLoading(false);
       } catch (err) {
         setError(err.message);
+      } finally {
+        // Setting loading to false only after the first fetch
         setLoading(false);
       }
-    };
+    }; // Initial fetch when the component mounts
 
-    fetchUserData();
+    fetchUserData(); // Set up the interval to fetch data every 60 seconds (1 minute)
+
+    const intervalId = setInterval(fetchUserData, 60000); // Cleanup function to clear the interval when the component unmounts
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleSignOut = async () => {
@@ -260,7 +263,9 @@ const ProfilePage = () => {
       </div>
 
       {/* Modals */}
-      {activeModal === "deposit" && <BuyCoinModal user={user} onClose={closeModal} />}
+      {activeModal === "deposit" && (
+        <BuyCoinModal user={user} onClose={closeModal} />
+      )}
       {activeModal === "withdraw" && (
         <WithdrawModal
           user={user}
@@ -286,7 +291,9 @@ const ProfilePage = () => {
       {activeModal === "verification" && (
         <VerificationModal user={user} onClose={closeModal} />
       )}
-      {activeModal === "help-center" && <HelpCenterModal onClose={closeModal} />}
+      {activeModal === "help-center" && (
+        <HelpCenterModal onClose={closeModal} />
+      )}
       {activeModal === "contact-us" && <ContactUsModal onClose={closeModal} />}
 
       {/* Logout Confirmation */}

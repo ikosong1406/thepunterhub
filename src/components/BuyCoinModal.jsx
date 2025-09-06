@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import localforage from "localforage";
+import { useState, useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
 import axios from "axios";
 import { usePaystackPayment } from "react-paystack";
+import { toast, Toaster } from "react-hot-toast"; // Import toast for notifications
+import Api from "../components/Api";
 
 // Paystack supported countries for local NGN payments
 const NGN_COUNTRIES = ["+234"];
@@ -28,6 +29,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   const isNgnPayment = NGN_COUNTRIES.includes(user.countryCode);
   const PAYSTACK_PUBLIC_KEY =
     "pk_test_c86ce251b26eb31bc55918571f477e0af8f0291b";
+  // Define your API endpoint here
 
   useEffect(() => {
     const fetchRates = async () => {
@@ -137,21 +139,42 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
     amount,
   } = getPriceAndCurrency();
 
-  // Create the Paystack config with hardcoded NGN
+  // 1. Move the config outside the handler
   const config = {
     reference: new Date().getTime().toString(),
     email: user.email,
     amount: amount,
     publicKey: PAYSTACK_PUBLIC_KEY,
-    currency: 'NGN', // Hardcoded to NGN
+    currency: "NGN", // Hardcoded to NGN
   };
 
   const initializePayment = usePaystackPayment(config);
 
-  const onSuccess = (reference) => {
-    console.log(reference);
-    onDepositSuccess((user.balance || 0) + coins);
-    onClose();
+  const onSuccess = async (reference) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = {
+        userId: user._id,
+        amount: Number(coins),
+      };
+      await axios.post(`${Api}/client/deposit`, data);
+
+      toast.success("Deposit successful! Your coins have been added.");
+      onDepositSuccess(coins);
+
+      setTimeout(() => {
+        onClose();
+      }, 3000);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to update balance. Please contact support.";
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onClosePaystack = () => {
@@ -169,8 +192,16 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
       setLoading(false);
       return;
     }
+    if (coins < 2) {
+      toast.error("Minimum deposit is 2 coins.");
+      setLoading(false);
+      return;
+    }
 
-    initializePayment(onSuccess, onClosePaystack);
+    initializePayment({
+      onSuccess,
+      onClose: onClosePaystack,
+    });
   };
 
   const getCurrencySymbol = (currencyCode) => {
@@ -268,6 +299,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
       className="fixed inset-0 z-50 overflow-y-auto"
       style={{ backgroundColor: "#09100d" }}
     >
+      <Toaster />
       <div className="min-h-screen flex flex-col">
         {/* Header */}
         <div
@@ -401,7 +433,8 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
             <div className="flex justify-between items-center">
               <span style={{ color: "#efefef" }}>Price:</span>
               <span className="font-bold" style={{ color: "#18ffc8" }}>
-                {getCurrencySymbol(displayCurrency)} {displayPrice} {displayCurrency}
+                {getCurrencySymbol(displayCurrency)} {displayPrice}{" "}
+                {displayCurrency}
               </span>
             </div>
             <p className="text-xs text-center mt-2 text-gray-400">
@@ -457,7 +490,9 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                 Processing...
               </>
             ) : (
-              `BUY NOW FOR ${getCurrencySymbol(transactionCurrency)}${transactionPrice}`
+              `BUY NOW FOR ${getCurrencySymbol(
+                transactionCurrency
+              )}${transactionPrice}`
             )}
           </button>
         </div>
