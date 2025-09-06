@@ -70,42 +70,42 @@ const PunterDetailsPage = () => {
       return;
     }
 
-    const newSignals = signals.map(s => {
+    const newSignals = signals.map((s) => {
       if (s._id === signalId) {
-        if (type === 'up') {
+        if (type === "up") {
           if (likedSignals[signalId]) {
             s.thumbsUpCount -= 1;
-            setLikedSignals(prev => {
+            setLikedSignals((prev) => {
               const newState = { ...prev };
               delete newState[signalId];
               return newState;
             });
           } else {
             s.thumbsUpCount += 1;
-            setLikedSignals(prev => ({ ...prev, [signalId]: true }));
+            setLikedSignals((prev) => ({ ...prev, [signalId]: true }));
             if (dislikedSignals[signalId]) {
               s.thumbsDownCount -= 1;
-              setDislikedSignals(prev => {
+              setDislikedSignals((prev) => {
                 const newState = { ...prev };
                 delete newState[signalId];
                 return newState;
               });
             }
           }
-        } else if (type === 'down') {
+        } else if (type === "down") {
           if (dislikedSignals[signalId]) {
             s.thumbsDownCount -= 1;
-            setDislikedSignals(prev => {
+            setDislikedSignals((prev) => {
               const newState = { ...prev };
               delete newState[signalId];
               return newState;
             });
           } else {
             s.thumbsDownCount += 1;
-            setDislikedSignals(prev => ({ ...prev, [signalId]: true }));
+            setDislikedSignals((prev) => ({ ...prev, [signalId]: true }));
             if (likedSignals[signalId]) {
               s.thumbsUpCount -= 1;
-              setLikedSignals(prev => {
+              setLikedSignals((prev) => {
                 const newState = { ...prev };
                 delete newState[signalId];
                 return newState;
@@ -129,14 +129,14 @@ const PunterDetailsPage = () => {
     } catch (err) {
       console.error("Failed to update signal reaction:", err);
       setSignals(signals);
-      setLikedSignals(prev => {
+      setLikedSignals((prev) => {
         const newState = { ...prev };
-        if (type === 'up') delete newState[signalId];
+        if (type === "up") delete newState[signalId];
         return newState;
       });
-      setDislikedSignals(prev => {
+      setDislikedSignals((prev) => {
         const newState = { ...prev };
-        if (type === 'down') delete newState[signalId];
+        if (type === "down") delete newState[signalId];
         return newState;
       });
       toast.error("Failed to update reaction.");
@@ -155,7 +155,15 @@ const PunterDetailsPage = () => {
       return;
     }
 
-    const subscriptionToastId = toast.loading("Processing your subscription...");
+    const totalBalance = (user.balance || 0) + (user.promoBalance || 0);
+    if (totalBalance < selectedPlan.price) {
+      toast.error("Insufficient balance. Please top up your account.");
+      return;
+    }
+
+    const subscriptionToastId = toast.loading(
+      "Processing your subscription..."
+    );
     setProcessingSubscription(true);
 
     try {
@@ -168,24 +176,29 @@ const PunterDetailsPage = () => {
         userId,
         punterId,
         plan,
-        price
+        price,
       });
 
       if (response.status === 200) {
         setIsSubscribed(true);
         const subDate = new Date(response.data.subscription.subscriptionDate);
         setExpiryDate(addDays(subDate, 7));
-        setUser(prevUser => ({
+        setUser((prevUser) => ({
           ...prevUser,
-          balance: response.data.newBalance
+          balance: response.data.newBalance,
         }));
         toast.success(response.data.message, { id: subscriptionToastId });
       } else {
-        toast.error("Subscription failed. Please try again.", { id: subscriptionToastId });
+        toast.error("Subscription failed. Please try again.", {
+          id: subscriptionToastId,
+        });
       }
     } catch (err) {
       console.error("Subscription error:", err);
-      toast.error(err.response?.data?.message || "An error occurred during subscription.", { id: subscriptionToastId });
+      toast.error(
+        err.response?.data?.message || "An error occurred during subscription.",
+        { id: subscriptionToastId }
+      );
     } finally {
       setProcessingSubscription(false);
     }
@@ -217,11 +230,16 @@ const PunterDetailsPage = () => {
           punterId: punterId,
         };
 
-        const subResponse = await axios.post(`${Api}/client/isSubscribed`, data);
+        const subResponse = await axios.post(
+          `${Api}/client/isSubscribed`,
+          data
+        );
         setIsSubscribed(subResponse.data.isSubscribed);
 
         if (subResponse.data.isSubscribed) {
-          const subDate = new Date(subResponse.data.subscription.subscriptionDate);
+          const subDate = new Date(
+            subResponse.data.subscription.subscriptionDate
+          );
           setExpiryDate(addDays(subDate, 7));
         }
 
@@ -232,35 +250,43 @@ const PunterDetailsPage = () => {
         setWins(wins);
         setLosses(losses);
         setWinRate(
-          wins + losses > 0 ?
-          `${((wins / (wins + losses)) * 100).toFixed(0)}%` :
-          "0%"
+          wins + losses > 0
+            ? `${((wins / (wins + losses)) * 100).toFixed(0)}%`
+            : "0%"
         );
 
-        const punterResponse = await axios.post(`${Api}/client/getPunterdetails`, {
-          punterId,
-        });
+        const punterResponse = await axios.post(
+          `${Api}/client/getPunterdetails`,
+          {
+            punterId,
+          }
+        );
         setPunter(punterResponse.data.data.punter);
         setSignals(punterResponse.data.data.signals);
 
-        const reactionsResponse = await axios.post(`${Api}/client/getReaction`, {
-          userId: userData._id,
-          signalIds: punterResponse.data.data.signals.map(s => s._id)
-        });
+        const reactionsResponse = await axios.post(
+          `${Api}/client/getReaction`,
+          {
+            userId: userData._id,
+            signalIds: punterResponse.data.data.signals.map((s) => s._id),
+          }
+        );
         setLikedSignals(reactionsResponse.data.likedSignals);
         setDislikedSignals(reactionsResponse.data.dislikedSignals);
 
         if (punterResponse.data.data.punter.pricingPlans?.silver) {
           setSelectedPlan({
-            name: 'silver',
+            name: "silver",
             ...punterResponse.data.data.punter.pricingPlans.silver,
           });
         }
-        
+
         setLoading(false);
       } catch (err) {
         console.error("Failed to fetch data:", err);
-        setError(err.message || "An error occurred while fetching punter data.");
+        setError(
+          err.message || "An error occurred while fetching punter data."
+        );
         setLoading(false);
       }
     };
@@ -324,7 +350,11 @@ const PunterDetailsPage = () => {
               <div className="flex items-center">
                 <h3 className="font-medium mr-2">{signal.pair}</h3>
                 {signal.direction && (
-                  <span className={`px-2 py-0.5 rounded text-xs ${getDirectionColor(signal.direction)}`}>
+                  <span
+                    className={`px-2 py-0.5 rounded text-xs ${getDirectionColor(
+                      signal.direction
+                    )}`}
+                  >
                     {signal.direction.toUpperCase()}
                   </span>
                 )}
@@ -335,7 +365,10 @@ const PunterDetailsPage = () => {
             </p>
           </div>
           <span
-            className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(signal.status, signal.result)}`}
+            className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(
+              signal.status,
+              signal.result
+            )}`}
           >
             {signal.result || signal.status}
           </span>
@@ -387,11 +420,11 @@ const PunterDetailsPage = () => {
           <div className="w-full bg-[#376553]/30 h-2 rounded-full overflow-hidden">
             <div
               className={`h-full ${
-                signal.confidenceLevel >= 80 ?
-                "bg-[#18ffc8]" :
-                signal.confidenceLevel >= 60 ?
-                "bg-[#fea92a]" :
-                "bg-[#f57cff]"
+                signal.confidenceLevel >= 80
+                  ? "bg-[#18ffc8]"
+                  : signal.confidenceLevel >= 60
+                  ? "bg-[#fea92a]"
+                  : "bg-[#f57cff]"
               }`}
               style={{ width: `${signal.confidenceLevel}%` }}
             ></div>
@@ -400,8 +433,10 @@ const PunterDetailsPage = () => {
         <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-between space-x-4">
           <div className="flex space-x-4">
             <button
-              onClick={() => handleThumbsClick(signal._id, 'up')}
-              className={`flex items-center space-x-1 ${isLiked ? "text-green-400" : "text-gray-500"}`}
+              onClick={() => handleThumbsClick(signal._id, "up")}
+              className={`flex items-center space-x-1 ${
+                isLiked ? "text-green-400" : "text-gray-500"
+              }`}
               disabled={!user}
             >
               <FiThumbsUp size={16} />
@@ -409,8 +444,10 @@ const PunterDetailsPage = () => {
             </button>
 
             <button
-              onClick={() => handleThumbsClick(signal._id, 'down')}
-              className={`flex items-center space-x-1 ${isDisliked ? "text-red-400" : "text-gray-500"}`}
+              onClick={() => handleThumbsClick(signal._id, "down")}
+              className={`flex items-center space-x-1 ${
+                isDisliked ? "text-red-400" : "text-gray-500"
+              }`}
               disabled={!user}
             >
               <FiThumbsDown size={16} />
@@ -446,9 +483,7 @@ const PunterDetailsPage = () => {
               </div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold">
-                {punter.username}
-              </h2>
+              <h2 className="text-2xl font-bold">{punter.username}</h2>
               <p className="text-[#18ffc8]">
                 {punter.primaryCategory} - {punter.secondaryCategory}
               </p>
@@ -458,21 +493,15 @@ const PunterDetailsPage = () => {
 
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-[#162821] p-3 rounded-lg text-center">
-            <div className="text-green-400 font-bold text-xl">
-              {wins}
-            </div>
+            <div className="text-green-400 font-bold text-xl">{wins}</div>
             <div className="text-xs text-gray-400">Wins</div>
           </div>
           <div className="bg-[#162821] p-3 rounded-lg text-center">
-            <div className="text-red-400 font-bold text-xl">
-              {losses}
-            </div>
+            <div className="text-red-400 font-bold text-xl">{losses}</div>
             <div className="text-xs text-gray-400">Losses</div>
           </div>
           <div className="bg-[#162821] p-3 rounded-lg text-center">
-            <div className="text-[#18ffc8] font-bold text-xl">
-              {winRate}
-            </div>
+            <div className="text-[#18ffc8] font-bold text-xl">{winRate}</div>
             <div className="text-xs text-gray-400">Win Rate</div>
           </div>
         </div>
@@ -496,7 +525,8 @@ const PunterDetailsPage = () => {
             <>
               {expiryDate && (
                 <div className="text-center text-sm text-[#fea92a] mb-4">
-                  Subscription expires {formatDistanceToNow(expiryDate, { addSuffix: true })}.
+                  Subscription expires{" "}
+                  {formatDistanceToNow(expiryDate, { addSuffix: true })}.
                 </div>
               )}
               <h3 className="text-lg font-bold mb-2 flex items-center">
@@ -521,12 +551,16 @@ const PunterDetailsPage = () => {
                 {Object.entries(pricingPlans).map(([planName, planDetails]) => (
                   <button
                     key={planName}
-                    onClick={() => setSelectedPlan({
-                      name: planName,
-                      ...planDetails
-                    })}
+                    onClick={() =>
+                      setSelectedPlan({
+                        name: planName,
+                        ...planDetails,
+                      })
+                    }
                     className={`flex-1 py-3 px-2 rounded-lg capitalize font-medium ${
-                      selectedPlan?.name === planName ? "bg-[#f57cff] text-black" : "bg-[#162821] text-gray-300"
+                      selectedPlan?.name === planName
+                        ? "bg-[#f57cff] text-black"
+                        : "bg-[#162821] text-gray-300"
                     }`}
                   >
                     {planName}
@@ -557,7 +591,7 @@ const PunterDetailsPage = () => {
                     className="w-full bg-[#f57cff] text-black font-bold py-3 rounded-lg flex items-center justify-center"
                   >
                     {processingSubscription ? (
-                      'Processing...'
+                      "Processing..."
                     ) : (
                       <>
                         <FaMoneyBillWave className="mr-2" />
