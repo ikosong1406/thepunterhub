@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import { MdLeaderboard } from "react-icons/md";
 import { IoMdAdd } from "react-icons/io";
+import { FaMoneyBillWave, FaUserPlus } from "react-icons/fa6";
 
 // Import modal components
 import BuyCoinModal from "../../components/BuyCoinModal";
@@ -20,6 +21,7 @@ import TransactionHistoryModal from "../../components/TransactionHistoryModal";
 import LeaderboardModal from "../../components/LeaderboardModal";
 import HelpCenterModal from "../../components/HelpCenterModal";
 import ContactUsModal from "../../components/ContactUsModal";
+import InviteModal from "../../components/InviteModal";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -151,28 +153,51 @@ const ProfilePage = () => {
           )}
         </div>
 
-        {/* Balance Card */}
+        {/* Redesigned Balance Card */}
         <div
-          className="mb-6 p-4 rounded-lg"
+          className="mb-6 p-4 rounded-lg flex flex-col items-start"
           style={{ backgroundColor: "#09100d" }}
         >
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm" style={{ color: "#f57cff" }}>
-              Main Balance
-            </span>
+          <div className="flex justify-between items-center w-full mb-3">
+            <div className="flex flex-col">
+              <span
+                className="text-sm font-semibold"
+                style={{ color: "#f57cff" }}
+              >
+                Main Balance
+              </span>
+              <div className="flex items-center space-x-2">
+                <FaWallet style={{ color: "#efefef", fontSize: "1.2rem" }} />
+                <span
+                  className="text-2xl font-bold"
+                  style={{ color: "#efefef" }}
+                >
+                  {user.balance?.toFixed(2) || "0.00"}
+                </span>
+              </div>
+            </div>
+            {/* Action Buttons */}
+            <div className="flex space-x-2">
+              <button
+                className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium transition-transform transform hover:scale-105"
+                style={{ backgroundColor: "#fea92a", color: "#09100d" }}
+                onClick={() => setActiveModal("deposit")}
+              >
+                <IoMdAdd className="text-sm" />
+                <span>Deposit</span>
+              </button>
+            </div>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-2xl font-bold" style={{ color: "#efefef" }}>
-              {user.balance?.toFixed(2) || "0.00"}
+
+          {/* Promo Balance Row */}
+          <div className="flex items-center space-x-2 mt-2 w-full">
+            <FaMoneyBillWave style={{ color: "#f57cff", fontSize: "1rem" }} />
+            <span className="text-sm font-medium" style={{ color: "#f57cff" }}>
+              Promo Balance:
             </span>
-            <button
-              onClick={() => setActiveModal("buy-coin")}
-              className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium"
-              style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-            >
-              <IoMdAdd className="text-sm" />
-              <span>Buy Coin</span>
-            </button>
+            <span className="text-lg font-bold" style={{ color: "#efefef" }}>
+              {user.promoBalance?.toFixed(2) || "0.00"}
+            </span>
           </div>
         </div>
       </div>
@@ -201,6 +226,11 @@ const ProfilePage = () => {
               icon={<MdLeaderboard />}
               title="Leaderboard"
               onClick={() => setActiveModal("leaderboard")}
+            />
+            <MenuItem
+              icon={<FaUserPlus />}
+              title="Invite Friends"
+              onClick={() => setActiveModal("invite")}
             />
           </div>
         </div>
@@ -239,7 +269,7 @@ const ProfilePage = () => {
       </div>
 
       {/* Modals */}
-      {activeModal === "buy-coin" && (
+      {activeModal === "deposit" && (
         <BuyCoinModal
           user={user}
           onClose={closeModal}
@@ -262,6 +292,9 @@ const ProfilePage = () => {
         <HelpCenterModal onClose={closeModal} />
       )}
       {activeModal === "contact-us" && <ContactUsModal onClose={closeModal} />}
+      {activeModal === "invite" && (
+        <InviteModal user={user} onClose={closeModal} />
+      )}
 
       {/* Logout Confirmation */}
       {showLogoutConfirm && (

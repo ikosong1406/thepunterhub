@@ -10,9 +10,10 @@ import {
   FaQuestionCircle,
   FaSignOutAlt,
 } from "react-icons/fa";
-import { IoMdAdd } from "react-icons/io";
+import { IoMdAdd, IoIosStats } from "react-icons/io";
 import { MdPriceChange, MdLeaderboard } from "react-icons/md";
 import { HiIdentification } from "react-icons/hi2";
+import { FaMoneyBillWave, FaUserPlus } from "react-icons/fa6"; // New icon for "Invite"
 
 import WithdrawModal from "../../components/WithdrawModal";
 import PersonalInfoModal from "../../components/PersonalInfoModal";
@@ -22,7 +23,8 @@ import ContactUsModal from "../../components/ContactUsModal";
 import PricesModal from "../../components/PricesModal";
 import LeaderboardModal from "../../components/LeaderboardModal";
 import VerificationModal from "../../components/VerificationModal";
-import BuyCoinModal from "../../components/BuyCoinModal"; // Import the new modal
+import BuyCoinModal from "../../components/BuyCoinModal";
+import InviteModal from "../../components/InviteModal"; // New import for the InviteModal
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -43,15 +45,12 @@ const ProfilePage = () => {
       } catch (err) {
         setError(err.message);
       } finally {
-        // Setting loading to false only after the first fetch
         setLoading(false);
       }
-    }; // Initial fetch when the component mounts
+    };
 
-    fetchUserData(); // Set up the interval to fetch data every 60 seconds (1 minute)
-
-    const intervalId = setInterval(fetchUserData, 60000); // Cleanup function to clear the interval when the component unmounts
-
+    fetchUserData();
+    const intervalId = setInterval(fetchUserData, 60000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -97,9 +96,6 @@ const ProfilePage = () => {
     );
   }
 
-  const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
-
-  // Get first name and last name initials
   const initials = (
     user.firstname && user.lastname
       ? `${user.firstname.charAt(0)}${user.lastname.charAt(0)}`
@@ -154,39 +150,53 @@ const ProfilePage = () => {
           )}
         </div>
 
-        {/* Balance Card */}
+        {/* Redesigned Balance Card */}
         <div
-          className="mb-6 p-4 rounded-lg"
+          className="mb-6 p-4 rounded-lg flex flex-col items-start"
           style={{ backgroundColor: "#09100d" }}
         >
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm" style={{ color: "#f57cff" }}>
-              Main Balance
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-2xl font-bold" style={{ color: "#efefef" }}>
-              {user.balance?.toFixed(2) || "0.00"}
-            </span>
-            {/* Add Deposit and Withdraw buttons */}
+          <div className="flex justify-between items-center w-full mb-3">
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold" style={{ color: "#f57cff" }}>
+                Main Balance
+              </span>
+              <div className="flex items-center space-x-2">
+                <FaWallet style={{ color: "#efefef", fontSize: "1.2rem" }} />
+                <span className="text-2xl font-bold" style={{ color: "#efefef" }}>
+                  {user.balance?.toFixed(2) || "0.00"}
+                </span>
+              </div>
+            </div>
+            {/* Action Buttons */}
             <div className="flex space-x-2">
               <button
-                className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium"
+                className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium transition-transform transform hover:scale-105"
                 style={{ backgroundColor: "#18ffc8", color: "#09100d" }}
-                onClick={() => setActiveModal("deposit")} // Open the deposit modal
+                onClick={() => setActiveModal("deposit")}
               >
                 <IoMdAdd className="text-sm" />
                 <span>Deposit</span>
               </button>
               <button
-                className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium"
+                className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium transition-transform transform hover:scale-105"
                 style={{ backgroundColor: "#fea92a", color: "#09100d" }}
                 onClick={() => setActiveModal("withdraw")}
               >
-                <IoMdAdd className="text-sm" />
+                <IoIosStats className="text-sm" />
                 <span>Withdraw</span>
               </button>
             </div>
+          </div>
+
+          {/* Promo Balance Row */}
+          <div className="flex items-center space-x-2 mt-2 w-full">
+            <FaMoneyBillWave style={{ color: "#f57cff", fontSize: "1rem" }} />
+            <span className="text-sm font-medium" style={{ color: "#f57cff" }}>
+              Promo Balance:
+            </span>
+            <span className="text-lg font-bold" style={{ color: "#efefef" }}>
+              {user.promoBalance?.toFixed(2) || "0.00"}
+            </span>
           </div>
         </div>
       </div>
@@ -226,6 +236,12 @@ const ProfilePage = () => {
               title="Verification"
               onClick={() => setActiveModal("verification")}
             />
+            {/* New Invite Menu Item */}
+            <MenuItem
+              icon={<FaUserPlus />}
+              title="Invite Friends"
+              onClick={() => setActiveModal("invite")}
+            />
           </div>
         </div>
 
@@ -253,7 +269,7 @@ const ProfilePage = () => {
         <div className="mt-8">
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center space-x-2 py-3 rounded-lg font-medium"
+            className="w-full flex items-center justify-center space-x-2 py-3 rounded-lg font-medium transition-transform transform hover:scale-105"
             style={{ backgroundColor: "#376553", color: "#efefef" }}
           >
             <FaSignOutAlt />
@@ -295,6 +311,10 @@ const ProfilePage = () => {
         <HelpCenterModal onClose={closeModal} />
       )}
       {activeModal === "contact-us" && <ContactUsModal onClose={closeModal} />}
+      {/* New Invite Modal */}
+      {activeModal === "invite" && (
+        <InviteModal user={user} onClose={closeModal} />
+      )}
 
       {/* Logout Confirmation */}
       {showLogoutConfirm && (
@@ -338,7 +358,7 @@ const ProfilePage = () => {
 // Reusable menu item component
 const MenuItem = ({ icon, title, onClick }) => (
   <div
-    className="flex items-center justify-between p-3 rounded-lg cursor-pointer"
+    className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-transform transform hover:scale-105"
     style={{ backgroundColor: "#162821" }}
     onClick={onClick}
   >
