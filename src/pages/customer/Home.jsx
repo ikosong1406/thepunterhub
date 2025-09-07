@@ -17,6 +17,7 @@ import {
 } from "react-icons/fa";
 import { IoMdFootball } from "react-icons/io";
 import { GiTennisBall, GiMetalDisc } from "react-icons/gi";
+import { Banner } from "../../components/banner";
 
 // ---------------------- TRADINGVIEW TICKER ----------------------
 const forexSymbols = [
@@ -99,57 +100,6 @@ const TradingViewTicker = memo(({ tradingType }) => {
     </div>
   );
 });
-
-// ---------------------- LIVE SCORE TICKER ----------------------
-const LiveScoreTicker = () => {
-  useEffect(() => {
-    const container = document.createElement("div");
-    container.id = "DOM_element_id_in_your_website_1755209641568";
-    document.getElementById("broadage-ticker-container").appendChild(container);
-
-    const script = document.createElement("script");
-    script.innerHTML = `
-      (function(b, s, p, o, r, t) {
-        b["broadage"] = b["broadage"] || [];
-        if (!b["broadage"].length) {
-          r = document.createElement(s);
-          t = document.getElementsByTagName(s)[0];
-          r.async = true;
-          r.src = p;
-          t.parentNode.insertBefore(r, t);
-        }
-        b["broadage"].push({ 
-          "bundleId": ["all-lst"],
-          "accountId": "a46d031d-cf9c-4b8f-8649-4aa1c1b93f4a",
-          "widgets": {
-            "liveScoreTicker": [{
-              "element": "DOM_element_id_in_your_website_1755209641568",
-              "coverageId": "6bf0cf44-e13a-44e1-8008-ff17ba6c2128",
-              "options": { "theme": "black" }
-            }]
-          }
-        });
-      })(window, "script", "//cdn-saas.broadage.com/widgets/loader/loader.js");
-    `;
-    document.body.appendChild(script);
-
-    return () => {
-      const container = document.getElementById(
-        "DOM_element_id_in_your_website_1755209641568"
-      );
-      if (container) container.remove();
-      const scripts = document.querySelectorAll('script[src*="broadage.com"]');
-      scripts.forEach((script) => script.remove());
-    };
-  }, []);
-
-  return (
-    <div
-      id="broadage-ticker-container"
-      className="w-full min-h-[50px] bg-[#0a120e] border border-[#2a3a34] rounded-lg overflow-hidden"
-    />
-  );
-};
 
 // ---------------------- CATEGORIES ----------------------
 const primaryCategories = [
@@ -372,7 +322,7 @@ const Home = () => {
         </div>
 
         {/* SECONDARY CATEGORY SELECTION */}
-        <div className="flex overflow-x-auto gap-3 mb-8 pb-3 scrollbar-hide">
+        <div className="flex overflow-x-auto gap-3 pb-3 scrollbar-hide">
           {activePrimary === "sports"
             ? sportCategories.map((category) => (
                 <button
@@ -409,10 +359,10 @@ const Home = () => {
           {activePrimary === "sports" ? (
             <>
               <h2 className="text-xl font-bold mb-4 lg:text-2xl">
-                Live Scores
+                Whats New
               </h2>
-              <div className="p-3 border border-[#2a3a34] rounded-xl overflow-hidden bg-[#0f1f1a]">
-                <LiveScoreTicker />
+              <div>
+                <Banner />
               </div>
             </>
           ) : (

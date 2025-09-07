@@ -223,10 +223,10 @@ const PricingPlansModal = ({ onClose, user }) => {
               {selectedPlanPrice && (
                 <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "#162821", border: "1px solid #376553" }}>
                   <p className="text-sm mb-2" style={{ color: "#efefef" }}>
-                    <span className="font-bold">Company's Take (20%):</span> ${earnings.companyTake}
+                    <span className="font-bold">Service Fee (20%):</span> ${earnings.companyTake}
                   </p>
                   <p className="text-sm" style={{ color: "#efefef" }}>
-                    <span className="font-bold">Your Share:</span> ${earnings.yourShare}
+                    <span className="font-bold">Net Earning:</span> ${earnings.yourShare}
                   </p>
                 </div>
               )}

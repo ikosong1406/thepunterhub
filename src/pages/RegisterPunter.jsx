@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaSearch, FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import Api from "../components/Api";
@@ -97,6 +97,8 @@ const RegisterScreen = () => {
   const [usernameStatus, setUsernameStatus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -168,7 +170,7 @@ const RegisterScreen = () => {
       acceptTerms,
       username,
       primaryCategory,
-      secondaryCategory
+      secondaryCategory,
     } = formData;
 
     if (
@@ -221,7 +223,7 @@ const RegisterScreen = () => {
       promoCode: formData.promoCode,
       username: formData.username,
       primaryCategory: formData.primaryCategory,
-      secondaryCategory: formData.secondaryCategory
+      secondaryCategory: formData.secondaryCategory,
     };
 
     try {
@@ -492,41 +494,56 @@ const RegisterScreen = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-400 mb-1"
-                  >
-                    Password
-                  </label>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-400"
+                >
+                  Password
+                </label>
+                <div className="relative">
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
                     placeholder="Create password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
+                    className="w-full p-4 pr-12 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
                     required
                   />
-                </div>
-                <div>
-                  <label
-                    htmlFor="confirmPassword"
-                    className="block text-sm font-medium text-gray-400 mb-1"
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 mt-2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                   >
-                    Confirm Password
-                  </label>
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-400"
+                >
+                  Confirm Password
+                </label>
+                <div className="relative">
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
                     name="confirmPassword"
                     placeholder="Confirm password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
+                    className="w-full p-4 pr-12 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 mt-2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
                 </div>
               </div>
 
