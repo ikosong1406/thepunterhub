@@ -147,8 +147,9 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [selectedChat?.messages]);
 
-  const filteredChats = chatList.filter((chat) =>
-    chat.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredChats = chatList.filter(
+    (chat) =>
+      chat.name && chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSendMessage = async () => {
