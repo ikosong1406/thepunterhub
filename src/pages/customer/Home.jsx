@@ -358,18 +358,12 @@ const Home = () => {
         <div className="mb-8">
           {activePrimary === "sports" ? (
             <>
-              <h2 className="text-xl font-bold mb-4 lg:text-2xl">
-                Whats New
-              </h2>
               <div>
                 <Banner />
               </div>
             </>
           ) : (
             <>
-              <h2 className="text-xl font-bold mb-4 lg:text-2xl">
-                Current {activeTrading} Market
-              </h2>
               <div className="p-3 border border-[#2a3a34] rounded-xl overflow-hidden bg-[#0f1f1a]">
                 <TradingViewTicker tradingType={activeTrading} />
               </div>
@@ -383,8 +377,8 @@ const Home = () => {
             <FaStar className="mr-2 text-[#fea92a]" />
             Top{" "}
             {activePrimary === "sports"
-              ? "Punters"
-              : `Traders (${activeTrading})`}
+              ? "Sport strategist"
+              : "Trading strategist"}
           </h2>
           {loading ? (
             <div className="flex justify-center items-center py-12">
