@@ -157,12 +157,18 @@ const ProfilePage = () => {
         >
           <div className="flex justify-between items-center w-full mb-3">
             <div className="flex flex-col">
-              <span className="text-sm font-semibold" style={{ color: "#f57cff" }}>
+              <span
+                className="text-sm font-semibold"
+                style={{ color: "#f57cff" }}
+              >
                 Main Balance
               </span>
               <div className="flex items-center space-x-2">
                 <FaWallet style={{ color: "#efefef", fontSize: "1.2rem" }} />
-                <span className="text-2xl font-bold" style={{ color: "#efefef" }}>
+                <span
+                  className="text-2xl font-bold"
+                  style={{ color: "#efefef" }}
+                >
                   {user.balance?.toFixed(2) || "0.00"}
                 </span>
               </div>
@@ -231,11 +237,13 @@ const ProfilePage = () => {
               title="Leaderboard"
               onClick={() => setActiveModal("leaderboard")}
             />
-            <MenuItem
-              icon={<HiIdentification />}
-              title="Verification"
-              onClick={() => setActiveModal("verification")}
-            />
+            {!user.isVerified && (
+              <MenuItem
+                icon={<HiIdentification />}
+                title="Verification"
+                onClick={() => setActiveModal("verification")}
+              />
+            )}
             {/* New Invite Menu Item */}
             <MenuItem
               icon={<FaUserPlus />}
