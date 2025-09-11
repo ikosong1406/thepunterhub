@@ -4,9 +4,10 @@ import "../styles/Splash.css";
 import logoImage from "../assets/logo2.png";
 import Api from "../components/Api";
 import toast, { Toaster } from "react-hot-toast";
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from "react-router-dom";
 
 const ForgetScreen = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState(["", "", "", ""]);
@@ -79,13 +80,14 @@ const ForgetScreen = () => {
       return;
     }
 
+    const data = {
+      email,
+      password,
+    };
+
     try {
-      const navigate = useNavigate();
       // Send email and new password to the backend to finalize the reset
-      await axios.post(`${Api}/client/newPassword`, {
-        email,
-        password,
-      });
+      await axios.post(`${Api}/client/newpassword`, data);
 
       toast.success("Password reset successfully! Redirecting to login...");
 
@@ -125,7 +127,7 @@ const ForgetScreen = () => {
       className="min-h-screen flex-1 items-center justify-center p-4"
       style={{ backgroundColor: "#09100d" }}
     >
-          <Toaster position="top-center" reverseOrder={false} />
+      <Toaster position="top-center" reverseOrder={false} />
       {/* Logo for mobile only */}
       <div className="lg:hidden flex justify-center mb-10 mt-10">
         <div className="relative w-40 h-40 flex items-center justify-center">

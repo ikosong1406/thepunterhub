@@ -139,7 +139,7 @@ const BecomePunter = () => {
         userId: user._id,
         username,
         primaryCategory,
-        secondaryCategory
+        secondaryCategory,
       };
 
       const response = await axios.post(`${Api}/client/becomePunter`, data);
@@ -574,7 +574,6 @@ const BecomePunter = () => {
                     usernameStatus !== "available" ||
                     !primaryCategory ||
                     !secondaryCategory ||
-                    !pricePerWeek || // Add price validation
                     isSubmitting
                       ? 0.5
                       : 1,
@@ -584,7 +583,6 @@ const BecomePunter = () => {
                   usernameStatus !== "available" ||
                   !primaryCategory ||
                   !secondaryCategory ||
-                  !pricePerWeek || // Add price validation
                   isSubmitting
                 }
               >

@@ -27,9 +27,9 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   const [exchangeRates, setExchangeRates] = useState({});
 
   const isNgnPayment = NGN_COUNTRIES.includes(user.countryCode);
+  // const PAYSTACK_PUBLIC_KEY ="pk_test_c86ce251b26eb31bc55918571f477e0af8f0291b";
   const PAYSTACK_PUBLIC_KEY =
-    "pk_test_c86ce251b26eb31bc55918571f477e0af8f0291b";
-  // Define your API endpoint here
+    "pk_live_04623bbf23c1166fe91148b8e142b272f56f9d9a";
 
   useEffect(() => {
     const fetchRates = async () => {
