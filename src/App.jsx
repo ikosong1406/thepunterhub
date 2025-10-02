@@ -25,6 +25,7 @@ import CustomerProfile from "./pages/customer/Profile";
 import CustomerPunters from "./pages/customer/Punters";
 import CustomerSearch from "./pages/customer/Search";
 import CustomerBecome from "./pages/customer/Become";
+import CustomerDaily from "./pages/customer/Daily";
 import PunterLayout from "./pages/punter/PunterLayout";
 import PunterHome from "./pages/punter/Home";
 import PunterHistory from "./pages/punter/History";
@@ -156,6 +157,7 @@ const App = () => {
           <Route path="search" element={<CustomerSearch />} />
           <Route path="become" element={<CustomerBecome />} />
           <Route path="chat" element={<CustomerChat />} />
+          <Route path="daily" element={<CustomerDaily />} />
         </Route>
         <Route
           path="/punter/*"
