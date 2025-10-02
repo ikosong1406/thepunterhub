@@ -589,7 +589,7 @@ const PunterDetailsPage = () => {
                     {selectedPlan.name} Plan
                   </h4>
                   <p className="text-xl font-bold mb-4 text-[#18ffc8]">
-                    ${selectedPlan.price}
+                    {selectedPlan.price}
                     <span className="text-sm text-gray-400">/week</span>
                   </p>
                   <ul className="list-disc list-inside space-y-2 mb-4 text-gray-300">
@@ -611,7 +611,7 @@ const PunterDetailsPage = () => {
                     ) : (
                       <>
                         <FaMoneyBillWave className="mr-2" />
-                        Subscribe for ${selectedPlan.price}/week
+                        Subscribe for {selectedPlan.price}/week
                       </>
                     )}
                   </button>

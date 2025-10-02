@@ -1,6 +1,6 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { FiHome } from "react-icons/fi";
-import { FaHistory, FaUser, FaFire } from "react-icons/fa";
+import { MdDashboard } from "react-icons/md";
+import { FaHistory, FaUser } from "react-icons/fa";
 import { IoChatbubblesSharp } from "react-icons/io5";
 import { PiBroadcastFill } from "react-icons/pi";
 import { useState, useEffect } from "react";
@@ -19,7 +19,7 @@ export default function PunterLayout() {
   }, []);
 
   const tabs = [
-    { path: "/punter/home", name: "Top", icon: <FaFire size={20} /> },
+    { path: "/punter/home", name: "Dashboard", icon: <MdDashboard size={20} /> },
     {
       path: "/punter/history",
       name: "History",

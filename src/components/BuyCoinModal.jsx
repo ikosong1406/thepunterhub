@@ -29,7 +29,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   const isNgnPayment = NGN_COUNTRIES.includes(user.countryCode);
   // const PAYSTACK_PUBLIC_KEY ="pk_test_c86ce251b26eb31bc55918571f477e0af8f0291b";
   const PAYSTACK_PUBLIC_KEY =
-    "pk_live_04623bbf23c1166fe91148b8e142b272f56f9d9a";
+    "pk_live_8cae50cbecfc7b94bb6d0fa77b5fb5ce2c5b5ad2";
 
   useEffect(() => {
     const fetchRates = async () => {
@@ -192,7 +192,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
       setLoading(false);
       return;
     }
-    if (coins < 2) {
+    if (coins < 1) {
       toast.error("Minimum deposit is 2 coins.");
       setLoading(false);
       return;
@@ -369,10 +369,6 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                         coins
                       </span>
                     </div>
-                    <span className="text-xs" style={{ color: "#999" }}>
-                      ({getCurrencySymbol("USD")}
-                      {option.priceUSD})
-                    </span>
                   </div>
                 </div>
               ))}
@@ -437,10 +433,6 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                 {displayCurrency}
               </span>
             </div>
-            <p className="text-xs text-center mt-2 text-gray-400">
-              You will be charged {getCurrencySymbol(transactionCurrency)}{" "}
-              {transactionPrice} {transactionCurrency}.
-            </p>
           </div>
         </div>
         <div className="px-6 py-4 border-t" style={{ borderColor: "#376553" }}>
@@ -490,9 +482,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                 Processing...
               </>
             ) : (
-              `BUY NOW FOR ${getCurrencySymbol(
-                transactionCurrency
-              )}${transactionPrice}`
+              `BUY NOW`
             )}
           </button>
         </div>

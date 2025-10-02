@@ -14,6 +14,7 @@ import {
   FaChartBar,
   FaStar,
   FaMoneyBillWave,
+  FaSearch,
 } from "react-icons/fa";
 import { IoMdFootball } from "react-icons/io";
 import { GiTennisBall, GiMetalDisc } from "react-icons/gi";
@@ -296,10 +297,23 @@ const Home = () => {
     (punter) => punter.primaryCategory?.toLowerCase() === activePrimary
   );
 
+  const handleClick = () => {
+    navigate("/customer/search");
+  };
+
   return (
     <div className="bg-[#0a120e] min-h-screen text-white">
       <div className="p-4">
         <Header />
+      </div>
+      <div className="flex px-4 lg:px-8">
+        <button
+          onClick={handleClick}
+          className="flex gap-2 px-4 py-2 bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] shadow hover:bg-blue-700 transition w-[100%]"
+        >
+          <FaSearch size={20} />
+          <span>Search</span>
+        </button>
       </div>
 
       <div className="container mx-auto px-4 py-2 lg:px-8 lg:py-8">

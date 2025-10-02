@@ -1,5 +1,6 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { FaUser, FaSearch, FaFire, FaNewspaper} from "react-icons/fa";
+import { FaUser, FaSearch, FaFire} from "react-icons/fa";
+import { MdTipsAndUpdates } from "react-icons/md";
 import { PiBroadcastFill } from "react-icons/pi";
 import { IoChatbubblesSharp } from "react-icons/io5";
 import { useState, useEffect } from "react";
@@ -20,19 +21,14 @@ export default function CustomerLayout() {
   const tabs = [
     { path: "/customer/home", name: "Top", icon: <FaFire size={20} /> },
         {
-      path: "/customer/search",
-      name: "Explore",
-      icon: <FaSearch size={20} />,
-    },
-        {
       path: "/customer/live",
       name: "Live",
       icon: <PiBroadcastFill size={20} />,
     },
     {
       path: "/customer/feed",
-      name: "Feed",
-      icon: <FaNewspaper size={20} />,
+      name: "Tips",
+      icon: <MdTipsAndUpdates size={20} />,
     },
     {
       path: "/customer/chat",

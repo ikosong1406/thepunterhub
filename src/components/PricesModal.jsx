@@ -197,7 +197,6 @@ const PricingPlansModal = ({ onClose, user }) => {
                   className="block text-sm mb-2 flex items-center"
                   style={{ color: "#f57cff" }}
                 >
-                  <span className="mr-2"><FaDollarSign /></span>
                   Price for {selectedPlan} plan / week
                 </label>
                 <div className="relative">
@@ -211,22 +210,16 @@ const PricingPlansModal = ({ onClose, user }) => {
                     min="0"
                     step="0.01"
                   />
-                  <span 
-                    className="absolute left-3 top-3"
-                    style={{ color: "#efefef" }}
-                  >
-                    $
-                  </span>
                 </div>
               </div>
               
               {selectedPlanPrice && (
                 <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "#162821", border: "1px solid #376553" }}>
                   <p className="text-sm mb-2" style={{ color: "#efefef" }}>
-                    <span className="font-bold">Service Fee (20%):</span> ${earnings.companyTake}
+                    <span className="font-bold">Service Fee (20%):</span> {earnings.companyTake}
                   </p>
                   <p className="text-sm" style={{ color: "#efefef" }}>
-                    <span className="font-bold">Net Earning:</span> ${earnings.yourShare}
+                    <span className="font-bold">Net Earning:</span> {earnings.yourShare}
                   </p>
                 </div>
               )}

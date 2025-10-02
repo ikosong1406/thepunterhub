@@ -6,7 +6,7 @@ import {
   FiChevronRight,
   FiThumbsUp,
   FiThumbsDown,
-  FiStar,
+  FiPlus,
 } from "react-icons/fi";
 import { MdPushPin } from "react-icons/md";
 import { useState, useEffect } from "react";
@@ -423,6 +423,13 @@ const TipsHistoryMobile = () => {
       <div className="h-16"></div>
       {isDeleteModalOpen && <DeleteConfirmationModal />}
       {isEditModalOpen && <EditStatusModal />}
+            <button 
+        className="fixed bottom-30 right-8 h-16 rounded-full bg-gradient-to-br from-[#fea92a] to-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5"
+        onClick={() => {navigate('/punter/create')}}
+      >
+        <FiPlus className="text-2xl group-hover:rotate-90 transition-transform" />
+        <span className="ml-2">Create New Tip</span>
+      </button>
     </div>
   );
 };

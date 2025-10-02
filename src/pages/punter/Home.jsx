@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiUsers, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
+import { FiUsers, FiDollarSign, FiBarChart2 } from 'react-icons/fi';
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import Header from "./Header";
 import axios from "axios";
@@ -185,12 +185,6 @@ const PunterDashboard = () => {
           </div>
         </div>
       </div>
-      <button 
-        className="fixed bottom-30 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#fea92a] to-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group"
-        onClick={() => {navigate('/punter/create')}}
-      >
-        <FiPlus className="text-2xl text-[#09100d] group-hover:rotate-90 transition-transform" />
-      </button>
     </div>
   )
 }
