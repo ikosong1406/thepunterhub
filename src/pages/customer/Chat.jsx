@@ -462,10 +462,11 @@ const ChatInterface = () => {
 
       {/* Floating Action Button */}
       <button
-        className="fixed bottom-30 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#fea92a] to-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group z-40"
+        className="fixed bottom-30 right-8 h-16 rounded-full bg-gradient-to-br from-[#fea92a] to-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5"
         onClick={handleOpenPuntersModal}
       >
-        <FiPlus className="text-2xl text-[#09100d] group-hover:rotate-90 transition-transform" />
+        <FiPlus className="text-2xl group-hover:rotate-90 transition-transform" />
+        <span className="ml-2">New chat</span>
       </button>
 
       {/* Chat Modal */}

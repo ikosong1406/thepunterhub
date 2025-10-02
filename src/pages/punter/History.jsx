@@ -8,6 +8,7 @@ import {
   FiThumbsDown,
   FiPlus,
 } from "react-icons/fi";
+import { useNavigate } from 'react-router-dom';
 import { MdPushPin } from "react-icons/md";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -16,6 +17,7 @@ import localforage from "localforage";
 import Header from "./Header";
 
 const TipsHistoryMobile = () => {
+    const navigate = useNavigate();
   const [tips, setTips] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
