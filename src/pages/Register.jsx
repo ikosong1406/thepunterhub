@@ -18,40 +18,40 @@ const Colors = {
 const PHONE_CODES = [
   // Africa
   { value: "+234", label: "🇳🇬 +234" },
-  { value: "+233", label: "🇬🇭 +233" },
-  { value: "+27", label: "🇿🇦 +27" },
-  { value: "+254", label: "🇰🇪 +254" },
-  { value: "+20", label: "🇪🇬 +20" },
-  // North America
-  { value: "+1", label: "🇺🇸 +1" },
-  { value: "+1", label: "🇨🇦 +1" },
-  { value: "+52", label: "🇲🇽 +52" },
-  { value: "+501", label: "🇧🇿 +501" },
-  { value: "+506", label: "🇨🇷 +506" },
-  // South America
-  { value: "+55", label: "🇧🇷 +55" },
-  { value: "+54", label: "🇦🇷 +54" },
-  { value: "+57", label: "🇨🇴 +57" },
-  { value: "+51", label: "🇵🇪 +51" },
-  { value: "+56", label: "🇨🇱 +56" },
-  // Europe
-  { value: "+44", label: "🇬🇧 +44" },
-  { value: "+33", label: "🇫🇷 +33" },
-  { value: "+49", label: "🇩🇪 +49" },
-  { value: "+39", label: "🇮🇹 +39" },
-  { value: "+34", label: "🇪🇸 +34" },
-  // Asia
-  { value: "+86", label: "🇨🇳 +86" },
-  { value: "+91", label: "🇮🇳 +91" },
-  { value: "+81", label: "🇯🇵 +81" },
-  { value: "+65", label: "🇸🇬 +65" },
-  { value: "+971", label: "🇦🇪 +971" },
-  // Australia/Oceania
-  { value: "+61", label: "🇦🇺 +61" },
-  { value: "+64", label: "🇳🇿 +64" },
-  { value: "+679", label: "🇫🇯 +679" },
-  { value: "+675", label: "🇵🇬 +675" },
-  { value: "+685", label: "🇼🇸 +685" },
+  // { value: "+233", label: "🇬🇭 +233" },
+  // { value: "+27", label: "🇿🇦 +27" },
+  // { value: "+254", label: "🇰🇪 +254" },
+  // { value: "+20", label: "🇪🇬 +20" },
+  // // North America
+  // { value: "+1", label: "🇺🇸 +1" },
+  // { value: "+1", label: "🇨🇦 +1" },
+  // { value: "+52", label: "🇲🇽 +52" },
+  // { value: "+501", label: "🇧🇿 +501" },
+  // { value: "+506", label: "🇨🇷 +506" },
+  // // South America
+  // { value: "+55", label: "🇧🇷 +55" },
+  // { value: "+54", label: "🇦🇷 +54" },
+  // { value: "+57", label: "🇨🇴 +57" },
+  // { value: "+51", label: "🇵🇪 +51" },
+  // { value: "+56", label: "🇨🇱 +56" },
+  // // Europe
+  // { value: "+44", label: "🇬🇧 +44" },
+  // { value: "+33", label: "🇫🇷 +33" },
+  // { value: "+49", label: "🇩🇪 +49" },
+  // { value: "+39", label: "🇮🇹 +39" },
+  // { value: "+34", label: "🇪🇸 +34" },
+  // // Asia
+  // { value: "+86", label: "🇨🇳 +86" },
+  // { value: "+91", label: "🇮🇳 +91" },
+  // { value: "+81", label: "🇯🇵 +81" },
+  // { value: "+65", label: "🇸🇬 +65" },
+  // { value: "+971", label: "🇦🇪 +971" },
+  // // Australia/Oceania
+  // { value: "+61", label: "🇦🇺 +61" },
+  // { value: "+64", label: "🇳🇿 +64" },
+  // { value: "+679", label: "🇫🇯 +679" },
+  // { value: "+675", label: "🇵🇬 +675" },
+  // { value: "+685", label: "🇼🇸 +685" },
 ];
 
 const RegisterScreen = () => {

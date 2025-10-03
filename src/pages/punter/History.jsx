@@ -7,6 +7,7 @@ import {
   FiThumbsUp,
   FiThumbsDown,
   FiPlus,
+  FiMessageSquare,
 } from "react-icons/fi";
 import { useNavigate } from 'react-router-dom';
 import { MdPushPin } from "react-icons/md";
@@ -17,7 +18,7 @@ import localforage from "localforage";
 import Header from "./Header";
 
 const TipsHistoryMobile = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [tips, setTips] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,11 +41,32 @@ const TipsHistoryMobile = () => {
       const userData = userResponse.data.data;
       setUser(userData);
       const userId = userData._id;
+
       const signalsResponse = await axios.post(`${Api}/client/getSignal`, {
         userId,
       });
-      const sortedSignals = signalsResponse.data.signals.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+
+      const signalsWithComments = signalsResponse.data.signals.map(signal => {
+        // Assuming signal.comments is an array of comment objects
+        const totalComments = signal.comments ? signal.comments.length : 0;
+        // Get the latest comment as the top comment
+        const topComment = totalComments > 0 ? signal.comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] : null;
+
+        return {
+          ...signal,
+          totalComments,
+          topComment,
+        };
+      });
+
+      const sortedSignals = signalsWithComments.sort(
+        (a, b) => {
+          // Keep pinned tips at the top
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          // Then sort by creation date
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        }
       );
       setTips(sortedSignals);
     } catch (err) {
@@ -75,16 +97,14 @@ const TipsHistoryMobile = () => {
     setSelectedTip(null);
   };
 
-  // New function to handle pin/unpin
   const handlePinUnpin = async (tipId, isCurrentlyPinned) => {
     try {
       const response = await axios.post(`${Api}/client/pinSignal`, {
         signalId: tipId,
-        isPinned: !isCurrentlyPinned, // Toggle the pin status
+        isPinned: !isCurrentlyPinned,
       });
 
       if (response.data.status === "ok") {
-        // Refetch tips to get the updated, sorted list
         await fetchData();
       } else {
         throw new Error(
@@ -96,7 +116,6 @@ const TipsHistoryMobile = () => {
     }
   };
 
-  // Inside handleDelete
   const handleDelete = async () => {
     if (!selectedTip) return;
     try {
@@ -104,7 +123,6 @@ const TipsHistoryMobile = () => {
         signalId: selectedTip._id,
       });
       if (response.data.status === "ok") {
-        // Instead of setTips, just refetch all tips
         await fetchData();
       } else {
         throw new Error(response.data.message || "Failed to delete tip.");
@@ -116,7 +134,6 @@ const TipsHistoryMobile = () => {
     }
   };
 
-  // Inside handleUpdateStatus
   const handleUpdateStatus = async () => {
     if (!selectedTip || !newStatus) return;
     try {
@@ -125,7 +142,6 @@ const TipsHistoryMobile = () => {
         status: newStatus,
       });
       if (response.data.status === "ok") {
-        // Instead of setTips, just refetch all tips
         await fetchData();
       } else {
         throw new Error(
@@ -137,6 +153,14 @@ const TipsHistoryMobile = () => {
     } finally {
       closeModals();
     }
+  };
+
+  /**
+   * UPDATED: Navigates to tip details passing the tip ID as a state object.
+   * @param {string} tipId The ID of the tip to view.
+   */
+  const navigateToTipDetails = (tipId) => {
+    navigate('/punter/tip', { state: { tipId: tipId } });
   };
 
   const filteredTips = tips.filter((tip) => {
@@ -288,7 +312,13 @@ const TipsHistoryMobile = () => {
               key={tip._id}
               className="relative rounded-xl bg-[#162821] border border-[#376553]/30 p-4"
             >
-              {/* Tip Card Content */}
+              {/* Pin Indicator */}
+              {tip.isPinned && (
+                <div className="absolute top-0 right-0 p-2 text-yellow-400">
+                  <MdPushPin size={20} />
+                </div>
+              )}
+              {/* Tip Card Content (omitted for brevity) */}
               <div className="flex justify-between items-start">
                 <div>
                   {tip.primaryCategory === "sports" ? (
@@ -322,41 +352,42 @@ const TipsHistoryMobile = () => {
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2">
-                {tip.primaryCategory !== "sports" ? (
-                  <>
-                    <div className="text-sm">
-                      <p className="text-[#efefef]/70">Entry</p>
-                      <p>{tip.entryPrice}</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-[#efefef]/70">Take Profit</p>
-                      <p className="text-[#18ffc8]">{tip.takeProfit}</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-[#efefef]/70">Stop Loss</p>
-                      <p className="text-[#f57cff]">{tip.stopLoss}</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-[#efefef]/70">Time Frame</p>
-                      <p>{tip.timeFrame}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-sm">
-                      <p className="text-[#efefef]/70">Site</p>
-                      <p>{tip.bettingSite}</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-[#efefef]/70">Code</p>
-                      <p>{tip.bettingCode}</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-[#efefef]/70">Total Odd</p>
-                      <p>{tip.totalOdd}</p>
-                    </div>
-                  </>
-                )}
+                  {/* Details (omitted for brevity) */}
+                  {tip.primaryCategory !== "sports" ? (
+                    <>
+                      <div className="text-sm">
+                        <p className="text-[#efefef]/70">Entry</p>
+                        <p>{tip.entryPrice}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-[#efefef]/70">Take Profit</p>
+                        <p className="text-[#18ffc8]">{tip.takeProfit}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-[#efefef]/70">Stop Loss</p>
+                        <p className="text-[#f57cff]">{tip.stopLoss}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-[#efefef]/70">Time Frame</p>
+                        <p>{tip.timeFrame}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-sm">
+                        <p className="text-[#efefef]/70">Site</p>
+                        <p>{tip.bettingSite}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-[#efefef]/70">Code</p>
+                        <p>{tip.bettingCode}</p>
+                      </div>
+                      <div className="text-sm">
+                        <p className="text-[#efefef]/70">Total Odd</p>
+                        <p>{tip.totalOdd}</p>
+                      </div>
+                    </>
+                  )}
               </div>
 
               <div className="mt-3">
@@ -379,7 +410,7 @@ const TipsHistoryMobile = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-between space-x-4">
+              <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-between items-center">
                 <div className="flex space-x-4">
                   <div className="flex items-center space-x-1 text-green-400">
                     <FiThumbsUp size={16} />
@@ -391,11 +422,18 @@ const TipsHistoryMobile = () => {
                     <span className="text-sm">{tip.thumbsDown || 0}</span>
                   </div>
                 </div>
-                <div className="flex space-x-4">
+                <div className="flex space-x-3">
+                  {/* Comment Count Icon */}
+                  <div className="flex items-center space-x-1 text-[#efefef]/70">
+                    <FiMessageSquare size={16} />
+                    <span className="text-sm">{tip.totalComments || 0}</span>
+                  </div>
+
                   {/* Pin Icon */}
                   <button
                     onClick={() => handlePinUnpin(tip._id, tip.isPinned)}
                     className="p-1 rounded-full text-white/50 hover:text-white transition"
+                    title={tip.isPinned ? "Unpin Tip" : "Pin Tip"}
                   >
                     {tip.isPinned ? (
                       <MdPushPin size={20} className="text-yellow-400" />
@@ -406,17 +444,69 @@ const TipsHistoryMobile = () => {
 
                   <button
                     onClick={() => openEditModal(tip)}
-                    className="p-2 rounded-full bg-[#fea92a]/20 text-[#fea92a] hover:bg-[#fea92a] hover:text-[#09100d]"
+                    className="p-2 rounded-full bg-[#fea92a]/20 text-[#fea92a] hover:bg-[#fea92a] hover:text-[#09100d] transition"
+                    title="Edit Status"
                   >
                     <FiEdit size={18} />
                   </button>
                   <button
                     onClick={() => openDeleteModal(tip)}
-                    className="p-2 rounded-full bg-[#f57cff]/20 text-[#f57cff] hover:bg-[#f57cff] hover:text-[#09100d]"
+                    className="p-2 rounded-full bg-[#f57cff]/20 text-[#f57cff] hover:bg-[#f57cff] hover:text-[#09100d] transition"
+                    title="Delete Tip"
                   >
                     <FiTrash2 size={18} />
                   </button>
                 </div>
+              </div>
+
+              {/* Comment Section Preview - UPDATED LOGIC */}
+              <div className="mt-4 pt-4 border-t border-[#376553]/30">
+                {tip.topComment ? (
+                  <>
+                    <div className="text-sm mb-2 p-2 bg-[#376553]/20 rounded-lg">
+                      <p className="font-bold text-[#fea92a] text-xs">
+                        {tip.topComment.user || "User"}
+                      </p>
+                      <p className="text-[#efefef]/90 line-clamp-2">
+                        {tip.topComment.comment}
+                      </p>
+                    </div>
+                    {/* Button to see the remaining comments (only if more than 1) */}
+                    {tip.totalComments > 1 && (
+                      <button
+                        onClick={() => navigateToTipDetails(tip._id)}
+                        className="text-xs font-medium text-[#18ffc8] hover:text-[#18ffc8]/80 flex items-center transition"
+                      >
+                        {`See ${tip.totalComments - 1} more comment${tip.totalComments - 1 !== 1 ? 's' : ''}`}
+                        <FiChevronRight size={14} className="ml-1" />
+                      </button>
+                    )}
+                    {/* If there is 1 comment (the top one), and no "see more" link, show a prompt to view details */}
+                    {tip.totalComments === 1 && (
+                        <button
+                         onClick={() => navigateToTipDetails(tip._id)}
+                         className="text-xs font-medium text-[#18ffc8] hover:text-[#18ffc8]/80 flex items-center transition"
+                       >
+                         View Tip Details
+                         <FiChevronRight size={14} className="ml-1" />
+                       </button>
+                    )}
+                  </>
+                ) : (
+                  // No comments exist: Show the input field compelling the user to drop a comment
+                  <div className="flex flex-col items-start space-y-2">
+                    <p className="text-sm text-[#efefef]/70">
+                        Be the first to comment on this tip!
+                    </p>
+                    <button
+                      onClick={() => navigateToTipDetails(tip._id)}
+                      className="w-full p-2 text-sm font-medium rounded-md bg-[#376553]/50 text-[#efefef] hover:bg-[#376553] flex justify-between items-center transition"
+                    >
+                      Drop a comment...
+                      <FiChevronRight size={18} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))
@@ -425,7 +515,7 @@ const TipsHistoryMobile = () => {
       <div className="h-16"></div>
       {isDeleteModalOpen && <DeleteConfirmationModal />}
       {isEditModalOpen && <EditStatusModal />}
-            <button 
+      <button
         className="fixed bottom-30 right-8 h-16 rounded-full bg-gradient-to-br from-[#fea92a] to-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5"
         onClick={() => {navigate('/punter/create')}}
       >

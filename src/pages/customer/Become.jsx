@@ -256,7 +256,7 @@ const BecomePunter = () => {
                         Competitive Commission
                       </h3>
                       <p className="text-sm" style={{ color: Colors.white }}>
-                        Keep 95% of your earnings with only a 5% platform fee.
+                        Keep 80% of your earnings with only a 20% platform fee.
                       </p>
                     </div>
                   </li>

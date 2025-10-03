@@ -1,321 +1,143 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FaTimes } from "react-icons/fa";
 import axios from "axios";
-import {toast, Toaster} from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 import Api from "../components/Api";
+import { banks } from "./banks.json";
 
-// Define the bank options for each country
-const bankOptions = {
-  // Africa
-  "+234": [
-    // Nigeria 🇳🇬
-    { code: "044", name: "Access Bank" },
-    { code: "063", name: "Ecobank Nigeria" },
-    { code: "070", name: "Fidelity Bank" },
-    { code: "011", name: "First Bank of Nigeria" },
-    { code: "214", name: "First City Monument Bank" },
-    { code: "058", name: "Guaranty Trust Bank" },
-    { code: "232", name: "Sterling Bank" },
-    { code: "033", name: "United Bank for Africa (UBA)" },
-    { code: "057", name: "Zenith Bank" },
-    { code: "MTN", name: "MTN MoMo (Mobile Money)" },
-    { code: "AIRTEL", name: "Airtel Money (Mobile Money)" },
-    { code: "OPAY", name: "OPay" },
-  ],
-  "+233": [
-    // Ghana 🇬🇭
-    { code: "101", name: "Absa Bank" },
-    { code: "102", name: "Ecobank Ghana" },
-    { code: "103", name: "Fidelity Bank Ghana" },
-    { code: "105", name: "Ghana Commercial Bank (GCB)" },
-    { code: "106", name: "Stanbic Bank Ghana" },
-    { code: "107", name: "United Bank for Africa (UBA) Ghana" },
-    { code: "MTN", name: "MTN MoMo (Mobile Money)" },
-    { code: "VODAFONE", name: "Vodafone Cash (Mobile Money)" },
-    { code: "AIRTELTIGO", name: "AirtelTigo Money (Mobile Money)" },
-  ],
-  "+27": [
-    // South Africa 🇿🇦
-    { code: "S_BANK", name: "Standard Bank Group" },
-    { code: "F_RAND", name: "FirstRand Bank" },
-    { code: "ABSA", name: "Absa Bank" },
-    { code: "CAPITEC", name: "Capitec Bank" },
-    { code: "NEDBANK", name: "Nedbank" },
-    { code: "MTN", name: "MTN MoMo (Mobile Money)" },
-    { code: "VODACOM", name: "Vodacom (VodaPay)" },
-  ],
-  "+254": [
-    // Kenya 🇰🇪
-    { code: "EQUITY", name: "Equity Bank" },
-    { code: "KCB", name: "KCB Bank Kenya" },
-    { code: "COOP", name: "Co-operative Bank of Kenya" },
-    { code: "MPESA", name: "M-Pesa (Mobile Money)" },
-    { code: "AIRTEL", name: "Airtel Money (Mobile Money)" },
-  ],
+// --- NIGERIAN BANK LIST (Comprehensive list based on NIBSS/Paystack codes) ---
+const NIGERIAN_BANKS = banks;
 
-  // North America
-  "+1": [
-    // United States 🇺🇸 & Canada 🇨🇦
-    { code: "CHASE", name: "JPMorgan Chase (Chase Bank)" },
-    { code: "BOA", name: "Bank of America" },
-    { code: "WELLS_FARGO", name: "Wells Fargo" },
-    { code: "CITI", name: "Citibank" },
-    { code: "USBANK", name: "U.S. Bank" },
-    { code: "RBC", name: "Royal Bank of Canada" },
-    { code: "TD", name: "TD Bank Group" },
-    { code: "VENMO", name: "Venmo" },
-    { code: "CASHAPP", name: "Cash App" },
-    { code: "PAYPAL", name: "PayPal" },
-  ],
-  "+52": [
-    // Mexico 🇲🇽
-    { code: "BANORTE", name: "Banorte" },
-    { code: "BBVA", name: "BBVA México" },
-    { code: "SANTANDER", name: "Santander México" },
-    { code: "BANAMEX", name: "Citibanamex" },
-    { code: "HSBC", name: "HSBC México" },
-  ],
-
-  // South America
-  "+55": [
-    // Brazil 🇧🇷
-    { code: "ITAÚ", name: "Itaú Unibanco" },
-    { code: "BDOB", name: "Banco do Brasil" },
-    { code: "BRADESCO", name: "Banco Bradesco" },
-    { code: "BTG", name: "BTG Pactual" },
-    { code: "CAIXA", name: "Caixa Econômica Federal" },
-  ],
-  "+54": [
-    // Argentina 🇦🇷
-    { code: "GALICIA", name: "Grupo Financiero Galicia" },
-    { code: "NACION", name: "Banco de la Nación Argentina" },
-    { code: "PROVINCIA", name: "Banco Provincia" },
-    { code: "SANTANDER", name: "Banco Santander Río" },
-  ],
-  "+57": [
-    // Colombia 🇨🇴
-    { code: "BANCOLOMBIA", name: "Bancolombia" },
-    { code: "DAVIVIENDA", name: "Davivienda" },
-    { code: "BBVA", name: "BBVA Colombia" },
-    { code: "CORPBANCA", name: "CorpBanca" },
-    { code: "AVAL", name: "Grupo Aval" },
-  ],
-
-  // Europe
-  "+44": [
-    // United Kingdom 🇬🇧
-    { code: "BARCLAYS", name: "Barclays" },
-    { code: "LLOYDS", name: "Lloyds Bank" },
-    { code: "NATWEST", name: "NatWest" },
-    { code: "SANTANDER", name: "Santander UK" },
-    { code: "HSBC", name: "HSBC" },
-    { code: "REVOLUT", name: "Revolut" },
-    { code: "MONZO", name: "Monzo" },
-  ],
-  "+33": [
-    // France 🇫🇷
-    { code: "BNP", name: "BNP Paribas" },
-    { code: "CA", name: "Crédit Agricole" },
-    { code: "SG", name: "Société Générale" },
-    { code: "BPCE", name: "Groupe BPCE" },
-    { code: "CREDIT_MUTUEL", name: "Crédit Mutuel" },
-  ],
-  "+49": [
-    // Germany 🇩🇪
-    { code: "DB", name: "Deutsche Bank" },
-    { code: "COM", name: "Commerzbank" },
-    { code: "N26", name: "N26 (Digital Bank)" },
-  ],
-
-  // Asia
-  "+91": [
-    // India 🇮🇳
-    { code: "SBI", name: "State Bank of India" },
-    { code: "HDFC", name: "HDFC Bank" },
-    { code: "ICICI", name: "ICICI Bank" },
-    { code: "PAYTM", name: "Paytm Payments Bank" },
-    { code: "PHONEPE", name: "PhonePe" },
-    { code: "GPAY", name: "Google Pay" },
-  ],
-  "+86": [
-    // China 🇨🇳
-    { code: "ICBC", name: "Industrial and Commercial Bank of China (ICBC)" },
-    { code: "ABC", name: "Agricultural Bank of China" },
-    { code: "CCB", name: "China Construction Bank" },
-    { code: "BOC", name: "Bank of China" },
-    { code: "ALIPAY", name: "Alipay" },
-    { code: "WECHAT", name: "WeChat Pay" },
-  ],
-  "+81": [
-    // Japan 🇯🇵
-    { code: "MUFG", name: "Mitsubishi UFJ Financial Group (MUFG)" },
-    { code: "SMBC", name: "Sumitomo Mitsui Banking Corporation" },
-    { code: "MIZUHO", name: "Mizuho Financial Group" },
-    { code: "JAPANPOST", name: "Japan Post Bank" },
-  ],
-
-  // Australia & Oceania
-  "+61": [
-    // Australia 🇦🇺
-    { code: "CBA", name: "Commonwealth Bank of Australia (CBA)" },
-    { code: "NAB", name: "National Australia Bank (NAB)" },
-    { code: "WESTPAC", name: "Westpac" },
-    { code: "ANZ", name: "Australia and New Zealand Banking Group (ANZ)" },
-    { code: "MACQUARIE", name: "Macquarie Bank" },
-  ],
-  "+64": [
-    // New Zealand 🇳🇿
-    { code: "ANZ", name: "ANZ New Zealand" },
-    { code: "ASB", name: "ASB Bank" },
-    { code: "BNZ", name: "Bank of New Zealand (BNZ)" },
-    { code: "KIWIBANK", name: "Kiwibank" },
-  ],
-};
-
-const currencyCodeMapping = {
-  // Africa
-  "+234": "NGN", // Nigeria
-  "+233": "GHS", // Ghana
-  "+27": "ZAR", // South Africa
-  "+254": "KES", // Kenya
-
-  // North America
-  "+1": "USD", // United States & Canada (assuming USD for simplicity)
-  "+52": "MXN", // Mexico
-
-  // South America
-  "+55": "BRL", // Brazil
-  "+54": "ARS", // Argentina
-  "+57": "COP", // Colombia
-
-  // Europe
-  "+44": "GBP", // United Kingdom
-  "+33": "EUR", // France
-  "+49": "EUR", // Germany
-
-  // Asia
-  "+91": "INR", // India
-  "+86": "CNY", // China
-  "+81": "JPY", // Japan
-
-  // Australia & Oceania
-  "+61": "AUD", // Australia
-  "+64": "NZD", // New Zealand
-};
-
-const currencySymbolMapping = {
-  "NGN": "₦",
-  "GHS": "GH₵",
-  "ZAR": "R",
-  "KES": "KSh",
-  "USD": "$",
-  "MXN": "Mex$",
-  "BRL": "R$",
-  "ARS": "ARS$",
-  "COP": "Col$",
-  "GBP": "£",
-  "EUR": "€",
-  "INR": "₹",
-  "CNY": "¥",
-  "JPY": "¥",
-  "AUD": "A$",
-  "NZD": "NZ$",
-};
+// --- CONSTANTS ---
+const COIN_TO_NAIRA_RATE = 100;
+const CURRENCY_CODE = "NGN";
+const CURRENCY_SYMBOL = "₦";
 
 const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
+  const isNigerianUser = user.countryCode === "+234";
+
   const [amount, setAmount] = useState("");
   const [bankCode, setBankCode] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-  const [accountName, setAccountName] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [resolvedAccountName, setResolvedAccountName] = useState(""); // Stores the name from Paystack
+  const [isLoading, setIsLoading] = useState(false); // For withdrawal
+  const [isVerifying, setIsVerifying] = useState(false); // For account resolution
   const [error, setError] = useState(null);
-  const [conversionRates, setConversionRates] = useState(null);
-  const [isFetchingRates, setIsFetchingRates] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Disable the component if the user is not Nigerian
   useEffect(() => {
-    const fetchRates = async () => {
-      try {
-        const response = await axios.get(
-          "https://v6.exchangerate-api.com/v6/5a103662f87d0a5ac0043c95/latest/USD"
-        );
-        setConversionRates(response.data.conversion_rates);
-      } catch (err) {
-        console.error("Failed to fetch conversion rates:", err);
-        toast.error("Could not fetch conversion rates.");
-        setError("Could not fetch conversion rates.");
-      } finally {
-        setIsFetchingRates(false);
-      }
-    };
+    if (!isNigerianUser) {
+      toast.error("Withdrawal is currently limited to the Nigerian market.");
+      onClose();
+    }
+  }, [isNigerianUser, onClose]);
 
-    fetchRates();
-  }, []);
-
-  const calculateEquivalent = () => {
-    if (!amount || !conversionRates || isNaN(parseFloat(amount))) {
+  // --- Coin to Naira Conversion Logic ---
+  const calculateEquivalent = useCallback(() => {
+    if (!amount || isNaN(parseFloat(amount))) {
       return "0.00";
     }
-
     const numericAmount = parseFloat(amount);
-    const targetCurrencyCode = currencyCodeMapping[user.countryCode] || "USD";
-    const rate = conversionRates[targetCurrencyCode];
-    const currencySymbol = currencySymbolMapping[targetCurrencyCode];
+    const equivalent = numericAmount * COIN_TO_NAIRA_RATE;
+    return `${CURRENCY_SYMBOL}${equivalent.toFixed(2)}`;
+  }, [amount]);
 
-    if (!rate) {
-      return "N/A";
+  // --- Paystack Account Verification (via Secure Backend Endpoint) ---
+  const verifyAccountName = async () => {
+    setError(null);
+    setResolvedAccountName(""); // Clear before verification attempt
+
+    if (!bankCode || !accountNumber || accountNumber.length !== 10) {
+      toast.error(
+        "Please select a bank and enter a valid 10-digit account number."
+      );
+      return;
     }
 
-    // You need to define a base rate for "coins" to USD.
-    // Let's assume 1 coin = $0.007 as a placeholder from your old logic.
-    const coinToUsdRate = 1;
+    setIsVerifying(true);
 
-    const usdAmount = numericAmount * coinToUsdRate;
-    const equivalent = usdAmount * rate;
+    try {
+      // **CALL YOUR BACKEND ENDPOINT HERE**
+      const response = await axios.post(`${Api}/client/resolve`, {
+        bankCode,
+        accountNumber,
+      });
 
-    return `${currencySymbol}${equivalent.toFixed(2)}`;
+      const resolvedName = response.data?.data?.account_name;
+
+      if (resolvedName) {
+        setResolvedAccountName(resolvedName);
+      } else {
+        throw new Error(
+          "Could not resolve account name. Check details or try another bank."
+        );
+      }
+    } catch (err) {
+      console.error("Account verification failed:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Verification failed. Check account number and bank.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setResolvedAccountName(""); // Ensure it's cleared on failure
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
+  // --- Handle Withdrawal ---
   const handleWithdraw = async () => {
-    // Check if user is verified before proceeding
+    // 1. Validation (omitted for brevity, as this section was correct)
     if (!user.isVerified) {
       toast.error("Please verify your account to be able to withdraw.");
       return;
     }
 
-    if (!amount || !bankCode || !accountNumber || !accountName) {
-      toast.error("Please fill all fields.");
-      setError("Please fill all fields.");
+    const numericAmount = parseFloat(amount);
+    if (!numericAmount || !bankCode || !accountNumber || !resolvedAccountName) {
+      toast.error(
+        "Please enter an amount, fill all fields, and verify the account number."
+      );
+      setError("Please verify the account number.");
       return;
     }
 
-    if (parseFloat(amount) > user.balance) {
+    if (numericAmount < 10) {
+      toast.error("Minimum withdrawal amount is 10 coins.");
+      return;
+    }
+
+    if (numericAmount > user.balance) {
       toast.error("Insufficient balance.");
       setError("Insufficient balance.");
       return;
     }
+    // ... (rest of validation) ...
 
+    // 2. Withdrawal Request
     setIsLoading(true);
     setError(null);
 
-    const selectedBank = bankOptions[user.countryCode]?.find(
+    const selectedBank = NIGERIAN_BANKS.find(
       (option) => option.code === bankCode
     );
-    const bankName = selectedBank ? selectedBank.name : "";
 
-    const userName = `${user.firstname} ${user.lastname}`;
-
+    // Prepare data for the backend
     const data = {
       userId: user._id,
-      amount: parseFloat(amount),
-      userName,
+      amount: numericAmount, // Sending the coin amount
       bankCode,
-      bankName,
+      bankName: selectedBank ? selectedBank.name : "Unknown Bank",
       accountNumber,
-      accountName,
+      accountName: resolvedAccountName, // Use the verified name
+      currency: CURRENCY_CODE,
+      conversionRate: COIN_TO_NAIRA_RATE,
     };
 
     try {
+      // Assuming your backend handles the coin-to-Naira conversion and Paystack Transfer
       const response = await axios.post(`${Api}/client/withdrawal`, data);
 
       setIsSuccess(true);
@@ -335,14 +157,19 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
     }
   };
 
+  const showVerificationButton =
+    bankCode && accountNumber.length === 10 && !resolvedAccountName;
+  const isAccountDetailsValid = bankCode && accountNumber.length === 10;
+
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto"
       style={{ backgroundColor: "#09100d" }}
     >
-      <Toaster/>
+      <Toaster />
       <div className="min-h-screen flex flex-col">
-        {/* Header */}
+        {/* Header (omitted for brevity) */}
+        {/* ... */}
         <div
           className="px-6 py-4 flex justify-between items-center border-b"
           style={{ borderColor: "#376553" }}
@@ -361,7 +188,7 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
 
         {/* Main Content */}
         <div className="flex-1 px-6 py-4 overflow-y-auto">
-          {/* Amount Input */}
+          {/* Amount Input (omitted for brevity) */}
           <div className="mb-6">
             <label className="block text-sm mb-2" style={{ color: "#f57cff" }}>
               Amount to Withdraw (coins)
@@ -386,15 +213,9 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
               </div>
             </div>
             <div className="mt-2 text-right">
-              {isFetchingRates ? (
-                <p className="text-xs" style={{ color: "#376553" }}>
-                  Fetching rates...
-                </p>
-              ) : (
-                <p className="text-xs" style={{ color: "#376553" }}>
-                  ≈ {calculateEquivalent()}
-                </p>
-              )}
+              <p className="text-xs" style={{ color: "#376553" }}>
+                ≈ {calculateEquivalent()} {CURRENCY_CODE}
+              </p>
             </div>
           </div>
 
@@ -409,12 +230,17 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
             >
               <select
                 value={bankCode}
-                onChange={(e) => setBankCode(e.target.value)}
+                // <--- FIX APPLIED HERE --->
+                onChange={(e) => {
+                  setBankCode(e.target.value);
+                  setResolvedAccountName(""); // Clear resolved name on bank change
+                }}
+                // <--- END FIX --->
                 className="w-full py-3 px-4 pr-10 focus:outline-none appearance-none"
                 style={{ backgroundColor: "#162821", color: "#efefef" }}
               >
-                <option value="">Select your option</option>
-                {bankOptions[user.countryCode]?.map((option) => (
+                <option value="">Select Bank</option>
+                {NIGERIAN_BANKS.map((option) => (
                   <option key={option.code} value={option.code}>
                     {option.name}
                   </option>
@@ -423,27 +249,86 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
             </div>
           </div>
 
-          {/* Account Number/Mobile Number */}
+          {/* Account Number */}
           <div className="mb-6">
             <label className="block text-sm mb-2" style={{ color: "#f57cff" }}>
-              Account Number / Mobile Number
+              Account Number
             </label>
             <div
               className="relative rounded-lg overflow-hidden"
               style={{ backgroundColor: "#162821" }}
             >
               <input
-                type="text"
+                type="tel" // Use tel for better mobile input experience for numbers
                 value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                placeholder="Enter number"
+                // <--- FIX APPLIED HERE --->
+                onChange={(e) => {
+                  setAccountNumber(e.target.value);
+                  if (resolvedAccountName) {
+                    setResolvedAccountName(""); // Clear resolved name on account number change
+                  }
+                }}
+                // <--- END FIX --->
+                placeholder="Enter 10-digit NUBAN account number"
+                maxLength={10}
                 className="w-full py-3 px-4 pr-10 focus:outline-none"
                 style={{ backgroundColor: "#162821", color: "#efefef" }}
               />
             </div>
           </div>
 
-          {/* Account Name */}
+          {/* Account Verification Button/Status (Code here is fine) */}
+          <div className="mb-6">
+            {showVerificationButton ? (
+              <button
+                onClick={verifyAccountName}
+                disabled={isVerifying}
+                className={`w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center ${
+                  isVerifying
+                    ? "opacity-70 cursor-not-allowed"
+                    : "hover:opacity-90"
+                }`}
+                style={{ backgroundColor: "#18ffc8", color: "#09100d" }}
+              >
+                {isVerifying ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Verifying...
+                  </>
+                ) : (
+                  "Verify Account Name"
+                )}
+              </button>
+            ) : (
+              <div
+                className="p-3 rounded-lg text-xs"
+                style={{
+                  backgroundColor: "rgba(255, 178, 102, 0.1)",
+                  color: "#FFB266",
+                }}
+              >
+                Enter Bank and a 10-digit Account Number, then click **Verify**
+                to confirm the account name.
+              </div>
+            )}
+          </div>
           <div className="mb-6">
             <label className="block text-sm mb-2" style={{ color: "#f57cff" }}>
               Account Name
@@ -454,16 +339,19 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
             >
               <input
                 type="text"
-                value={accountName}
-                onChange={(e) => setAccountName(e.target.value)}
-                placeholder="Enter account name"
-                className="w-full py-3 px-4 pr-10 focus:outline-none"
+                value={
+                  resolvedAccountName ||
+                  (isAccountDetailsValid && isVerifying ? "Verifying..." : "")
+                }
+                readOnly
+                placeholder="Verified name will appear here"
+                className="w-full py-3 px-4 pr-10 focus:outline-none opacity-80 cursor-default"
                 style={{ backgroundColor: "#162821", color: "#efefef" }}
               />
             </div>
           </div>
 
-          {/* Warning and Notification Messages */}
+          {/* Warning and Notification Messages (omitted for brevity) */}
           {isSuccess ? (
             <div
               className="mb-4 p-3 rounded-lg text-center text-sm"
@@ -483,8 +371,9 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
                   color: "#FFB266",
                 }}
               >
-                ⚠️ Please ensure the account name matches the name on your bank
-                account to avoid withdrawal delays or failures.
+                ⚠️ Withdrawal is only possible to a **verified Nigerian bank
+                account or mobile money wallet** matching your details. Ensure
+                you verify the account number.
               </div>
               {error && (
                 <div
@@ -501,13 +390,24 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer (omitted for brevity) */}
+        {/* ... */}
         <div className="px-6 py-4 border-t" style={{ borderColor: "#376553" }}>
           <button
             onClick={handleWithdraw}
-            disabled={isLoading || isSuccess}
+            disabled={
+              isLoading ||
+              isSuccess ||
+              !resolvedAccountName ||
+              parseFloat(amount) <= 0
+            }
             className={`w-full py-3 rounded-lg font-bold flex items-center justify-center ${
-              isLoading || isSuccess ? "opacity-70" : "hover:opacity-90"
+              isLoading ||
+              isSuccess ||
+              !resolvedAccountName ||
+              parseFloat(amount) <= 0
+                ? "opacity-70"
+                : "hover:opacity-90"
             }`}
             style={{ backgroundColor: "#fea92a", color: "#09100d" }}
           >
@@ -533,12 +433,12 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Processing Withdrawal...
+                Processing Transfer...
               </>
             ) : isSuccess ? (
               "Success!"
             ) : (
-              "Confirm Withdrawal"
+              `Withdraw ${calculateEquivalent()}`
             )}
           </button>
         </div>

@@ -11,7 +11,7 @@ import {
   FaHistory,
   FaMoneyBillWave,
 } from "react-icons/fa";
-import { FiThumbsUp, FiThumbsDown } from "react-icons/fi";
+import { FiThumbsUp, FiThumbsDown, FiChevronRight } from "react-icons/fi";
 import { AiOutlineMessage } from "react-icons/ai";
 import Api from "../../components/Api";
 import { formatDistanceToNow, addDays } from "date-fns";
@@ -54,7 +54,7 @@ const PunterDetailsPage = () => {
   };
 
   const getDirectionColor = (direction) => {
-    return direction.toLowerCase() === "buy"
+    return direction?.toLowerCase() === "buy"
       ? "bg-green-900/20 text-green-400"
       : "bg-red-900/20 text-red-400";
   };
@@ -81,10 +81,10 @@ const PunterDetailsPage = () => {
               return newState;
             });
           } else {
-            s.thumbsUpCount += 1;
+            s.thumbsUpCount = (s.thumbsUpCount || s.thumbsUp) + 1;
             setLikedSignals((prev) => ({ ...prev, [signalId]: true }));
             if (dislikedSignals[signalId]) {
-              s.thumbsDownCount -= 1;
+              s.thumbsDownCount = (s.thumbsDownCount || s.thumbsDown) - 1;
               setDislikedSignals((prev) => {
                 const newState = { ...prev };
                 delete newState[signalId];
@@ -94,17 +94,17 @@ const PunterDetailsPage = () => {
           }
         } else if (type === "down") {
           if (dislikedSignals[signalId]) {
-            s.thumbsDownCount -= 1;
+            s.thumbsDownCount = (s.thumbsDownCount || s.thumbsDown) - 1;
             setDislikedSignals((prev) => {
               const newState = { ...prev };
               delete newState[signalId];
               return newState;
             });
           } else {
-            s.thumbsDownCount += 1;
+            s.thumbsDownCount = (s.thumbsDownCount || s.thumbsDown) + 1;
             setDislikedSignals((prev) => ({ ...prev, [signalId]: true }));
             if (likedSignals[signalId]) {
-              s.thumbsUpCount -= 1;
+              s.thumbsUpCount = (s.thumbsUpCount || s.thumbsUp) - 1;
               setLikedSignals((prev) => {
                 const newState = { ...prev };
                 delete newState[signalId];
@@ -120,7 +120,6 @@ const PunterDetailsPage = () => {
 
     try {
       const userId = user._id;
-
       await axios.post(`${Api}/client/updateReaction`, {
         signalId,
         userId,
@@ -128,17 +127,6 @@ const PunterDetailsPage = () => {
       });
     } catch (err) {
       console.error("Failed to update signal reaction:", err);
-      setSignals(signals);
-      setLikedSignals((prev) => {
-        const newState = { ...prev };
-        if (type === "up") delete newState[signalId];
-        return newState;
-      });
-      setDislikedSignals((prev) => {
-        const newState = { ...prev };
-        if (type === "down") delete newState[signalId];
-        return newState;
-      });
       toast.error("Failed to update reaction.");
     }
   };
@@ -204,6 +192,10 @@ const PunterDetailsPage = () => {
     }
   };
 
+  const navigateToTipDetails = (tipId) => {
+    navigate("/customer/tip", { state: { tipId } });
+  };
+
   useEffect(() => {
     const fetchAllData = async () => {
       if (!punterId) {
@@ -215,34 +207,28 @@ const PunterDetailsPage = () => {
       try {
         setLoading(true);
         const token = await localforage.getItem("token");
-        if (!token) {
-          throw new Error("Authentication token not found.");
+        let userResponse = null;
+        let userData = null;
+
+        if (token) {
+          userResponse = await axios.post(`${Api}/client/getUser`, {
+            token,
+          });
+          userData = userResponse.data.data;
+          setUser(userData);
+          const subResponse = await axios.post(`${Api}/client/isSubscribed`, {
+            userId: userData._id,
+            punterId: punterId,
+          });
+          setIsSubscribed(subResponse.data.isSubscribed);
+
+          if (subResponse.data.isSubscribed) {
+            const subDate = new Date(
+              subResponse.data.subscription.subscriptionDate
+            );
+            setExpiryDate(addDays(subDate, 7));
+          }
         }
-
-        const userResponse = await axios.post(`${Api}/client/getUser`, {
-          token,
-        });
-        const userData = userResponse.data.data;
-        setUser(userData);
-
-        const data = {
-          userId: userData._id,
-          punterId: punterId,
-        };
-
-        const subResponse = await axios.post(
-          `${Api}/client/isSubscribed`,
-          data
-        );
-        setIsSubscribed(subResponse.data.isSubscribed);
-
-        if (subResponse.data.isSubscribed) {
-          const subDate = new Date(
-            subResponse.data.subscription.subscriptionDate
-          );
-          setExpiryDate(addDays(subDate, 7));
-        }
-
         const statsResponse = await axios.post(`${Api}/client/winloss`, {
           punterId,
         });
@@ -257,22 +243,45 @@ const PunterDetailsPage = () => {
 
         const punterResponse = await axios.post(
           `${Api}/client/getPunterdetails`,
-          {
-            punterId,
-          }
+          { punterId }
         );
-        setPunter(punterResponse.data.data.punter);
-        setSignals(punterResponse.data.data.signals);
+        const fetchedSignals = punterResponse.data.data.signals.map((s) => {
+          const totalComments = s.comments?.length || 0;
+          const topComment =
+            totalComments > 0
+              ? {
+                  user:
+                    s.comments[0].user?.username ||
+                    s.comments[0].user ||
+                    "User",
+                  comment: s.comments[0].comment,
+                }
+              : null;
 
-        const reactionsResponse = await axios.post(
-          `${Api}/client/getReaction`,
-          {
-            userId: userData._id,
-            signalIds: punterResponse.data.data.signals.map((s) => s._id),
-          }
-        );
-        setLikedSignals(reactionsResponse.data.likedSignals);
-        setDislikedSignals(reactionsResponse.data.dislikedSignals);
+          return {
+            ...s,
+            commentCount: totalComments,
+            totalComments: totalComments,
+            topComment: topComment,
+            thumbsUpCount: s.thumbsUp || 0,
+            thumbsDownCount: s.thumbsDown || 0,
+          };
+        });
+
+        setPunter(punterResponse.data.data.punter);
+        setSignals(fetchedSignals);
+
+        if (userData?._id) {
+          const reactionsResponse = await axios.post(
+            `${Api}/client/getReaction`,
+            {
+              userId: userData._id,
+              signalIds: fetchedSignals.map((s) => s._id),
+            }
+          );
+          setLikedSignals(reactionsResponse.data.likedSignals);
+          setDislikedSignals(reactionsResponse.data.dislikedSignals);
+        }
 
         if (punterResponse.data.data.punter.pricingPlans?.silver) {
           setSelectedPlan({
@@ -342,118 +351,184 @@ const PunterDetailsPage = () => {
         key={signal._id}
         className="relative rounded-xl bg-[#162821] border border-[#376553]/30 p-4"
       >
-        <div className="flex justify-between items-start">
-          <div>
-            {signal.primaryCategory === "sports" ? (
-              <h3 className="font-medium">{signal.bettingSite}</h3>
+        <div
+          onClick={() => navigateToTipDetails(signal._id)}
+          className="cursor-pointer"
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              {signal.primaryCategory === "sports" ? (
+                <h3 className="font-medium">{signal.bettingSite}</h3>
+              ) : (
+                <div className="flex items-center">
+                  <h3 className="font-medium mr-2">{signal.pair}</h3>
+                  {signal.direction && (
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs ${getDirectionColor(
+                        signal.direction
+                      )}`}
+                    >
+                      {signal.direction.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              )}
+              <p className="text-sm text-[#efefef]/70 mt-1">
+                {formatPostedAt(signal.createdAt)}
+              </p>
+            </div>
+            <span
+              className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(
+                signal.status,
+                signal.result
+              )}`}
+            >
+              {signal.result || signal.status}
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {signal.primaryCategory !== "sports" ? (
+              <>
+                <div className="text-sm">
+                  <p className="text-[#efefef]/70">Entry</p>
+                  <p>{signal.entryPrice}</p>
+                </div>
+                <div className="text-sm">
+                  <p className="text-[#efefef]/70">Take Profit</p>
+                  <p className="text-[#18ffc8]">{signal.takeProfit}</p>
+                </div>
+                <div className="text-sm">
+                  <p className="text-[#efefef]/70">Stop Loss</p>
+                  <p className="text-[#f57cff]">{signal.stopLoss}</p>
+                </div>
+                <div className="text-sm">
+                  <p className="text-[#efefef]/70">Time Frame</p>
+                  <p>{signal.timeFrame}</p>
+                </div>
+              </>
             ) : (
-              <div className="flex items-center">
-                <h3 className="font-medium mr-2">{signal.pair}</h3>
-                {signal.direction && (
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs ${getDirectionColor(
-                      signal.direction
-                    )}`}
-                  >
-                    {signal.direction.toUpperCase()}
-                  </span>
-                )}
-              </div>
+              <>
+                <div className="text-sm">
+                  <p className="text-[#efefef]/70">Site</p>
+                  <p>{signal.bettingSite}</p>
+                </div>
+                <div className="text-sm">
+                  <p className="text-[#efefef]/70">Code</p>
+                  <p>{signal.bettingCode}</p>
+                </div>
+                <div className="text-sm">
+                  <p className="text-[#efefef]/70">Total Odd</p>
+                  <p>{signal.totalOdd}</p>
+                </div>
+              </>
             )}
-            <p className="text-sm text-[#efefef]/70 mt-1">
-              {formatPostedAt(signal.createdAt)}
-            </p>
           </div>
-          <span
-            className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(
-              signal.status,
-              signal.result
-            )}`}
-          >
-            {signal.result || signal.status}
-          </span>
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {signal.primaryCategory !== "sports" ? (
-            <>
-              <div className="text-sm">
-                <p className="text-[#efefef]/70">Entry</p>
-                <p>{signal.entryPrice}</p>
-              </div>
-              <div className="text-sm">
-                <p className="text-[#efefef]/70">Take Profit</p>
-                <p className="text-[#18ffc8]">{signal.takeProfit}</p>
-              </div>
-              <div className="text-sm">
-                <p className="text-[#efefef]/70">Stop Loss</p>
-                <p className="text-[#f57cff]">{signal.stopLoss}</p>
-              </div>
-              <div className="text-sm">
-                <p className="text-[#efefef]/70">Time Frame</p>
-                <p>{signal.timeFrame}</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-sm">
-                <p className="text-[#efefef]/70">Site</p>
-                <p>{signal.bettingSite}</p>
-              </div>
-              <div className="text-sm">
-                <p className="text-[#efefef]/70">Code</p>
-                <p>{signal.bettingCode}</p>
-              </div>
-              <div className="text-sm">
-                <p className="text-[#efefef]/70">Total Odd</p>
-                <p>{signal.totalOdd}</p>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="mt-3">
-          <div className="flex justify-between text-xs mb-1">
-            <span>Confidence Level</span>
-            <span>{signal.confidenceLevel}%</span>
-          </div>
-          <div className="w-full bg-[#376553]/30 h-2 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${
-                signal.confidenceLevel >= 80
-                  ? "bg-[#18ffc8]"
-                  : signal.confidenceLevel >= 60
-                  ? "bg-[#fea92a]"
-                  : "bg-[#f57cff]"
-              }`}
-              style={{ width: `${signal.confidenceLevel}%` }}
-            ></div>
+          <div className="mt-3">
+            <div className="flex justify-between text-xs mb-1">
+              <span>Confidence Level</span>
+              <span>{signal.confidenceLevel}%</span>
+            </div>
+            <div className="w-full bg-[#376553]/30 h-2 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${
+                  signal.confidenceLevel >= 80
+                    ? "bg-[#18ffc8]"
+                    : signal.confidenceLevel >= 60
+                    ? "bg-[#fea92a]"
+                    : "bg-[#f57cff]"
+                }`}
+                style={{ width: `${signal.confidenceLevel}%` }}
+              ></div>
+            </div>
           </div>
         </div>
         <div className="mt-4 pt-4 border-t border-[#376553]/30 flex justify-between space-x-4">
           <div className="flex space-x-4">
             <button
-              onClick={() => handleThumbsClick(signal._id, "up")}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleThumbsClick(signal._id, "up");
+              }}
               className={`flex items-center space-x-1 ${
                 isLiked ? "text-green-400" : "text-gray-500"
               }`}
               disabled={!user}
             >
               <FiThumbsUp size={16} />
-              <span className="text-sm">{signal.thumbsUp || 0}</span>
+              <span className="text-sm">
+                {signal.thumbsUpCount || signal.thumbsUp || 0}
+              </span>
             </button>
-
             <button
-              onClick={() => handleThumbsClick(signal._id, "down")}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleThumbsClick(signal._id, "down");
+              }}
               className={`flex items-center space-x-1 ${
                 isDisliked ? "text-red-400" : "text-gray-500"
               }`}
               disabled={!user}
             >
               <FiThumbsDown size={16} />
-              <span className="text-sm">{signal.thumbsDown || 0}</span>
+              <span className="text-sm">
+                {signal.thumbsDownCount || signal.thumbsDown || 0}
+              </span>
             </button>
           </div>
+          <div
+            className="flex items-center space-x-1 text-[#fea92a] cursor-pointer"
+            onClick={() => navigateToTipDetails(signal._id)}
+          >
+            <AiOutlineMessage size={16} />
+            <span className="text-sm">{signal.totalComments || 0}</span>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t border-[#376553]/30">
+          {signal.topComment ? (
+            <>
+              <div className="text-sm mb-2 p-2 bg-[#376553]/20 rounded-lg">
+                <p className="font-bold text-[#fea92a] text-xs">
+                  {signal.topComment.user}
+                </p>
+                <p className="text-[#efefef]/90 line-clamp-2">
+                  {signal.topComment.comment}
+                </p>
+              </div>
+              {signal.totalComments > 1 && (
+                <button
+                  onClick={() => navigateToTipDetails(signal._id)}
+                  className="text-xs font-medium text-[#18ffc8] hover:text-[#18ffc8]/80 flex items-center transition"
+                >
+                  {`See ${signal.totalComments - 1} more comment${
+                    signal.totalComments - 1 !== 1 ? "s" : ""
+                  }`}
+                  <FiChevronRight size={14} className="ml-1" />
+                </button>
+              )}
+              {signal.totalComments === 1 && (
+                <button
+                  onClick={() => navigateToTipDetails(signal._id)}
+                  className="text-xs font-medium text-[#18ffc8] hover:text-[#18ffc8]/80 flex items-center transition"
+                >
+                  View Tip Details
+                  <FiChevronRight size={14} className="ml-1" />
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-start space-y-2">
+              <p className="text-sm text-[#efefef]/70">
+                Be the first to comment on this tip!
+              </p>
+              <button
+                onClick={() => navigateToTipDetails(signal._id)}
+                className="w-full p-2 text-sm font-medium rounded-md bg-[#376553]/50 text-[#efefef] hover:bg-[#376553] flex justify-between items-center transition"
+              >
+                Drop a comment...
+                <FiChevronRight size={18} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -473,7 +548,6 @@ const PunterDetailsPage = () => {
         </button>
         <h1 className="text-xl font-bold">Punter Details</h1>
       </div>
-
       <div className="p-6">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center">
@@ -506,7 +580,6 @@ const PunterDetailsPage = () => {
             </div>
           </div>
         </div>
-
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-[#162821] p-3 rounded-lg text-center">
             <div className="text-green-400 font-bold text-xl">{wins}</div>
@@ -521,7 +594,6 @@ const PunterDetailsPage = () => {
             <div className="text-xs text-gray-400">Win Rate</div>
           </div>
         </div>
-
         {pinnedSignals.length > 0 && (
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-4 flex items-center">
@@ -530,19 +602,19 @@ const PunterDetailsPage = () => {
             </h3>
             <Slider {...sliderSettings} className="px-4 -mx-4">
               {pinnedSignals.map((signal) => (
-                <div key={signal._id}>{renderSignalCard(signal)}</div>
+                <div key={signal._id} className="p-1">
+                  {renderSignalCard(signal)}
+                </div>
               ))}
             </Slider>
           </div>
         )}
-
         <div className="mb-6">
           {isSubscribed ? (
             <>
               {expiryDate && (
                 <div className="text-center text-sm text-[#fea92a] mb-4">
-                  Subscription expires{" "}
-                  {formatDistanceToNow(expiryDate, { addSuffix: true })}.
+                  Subscription expires {formatDistanceToNow(expiryDate, { addSuffix: true })}.
                 </div>
               )}
               <h3 className="text-lg font-bold mb-2 flex items-center">

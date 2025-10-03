@@ -26,6 +26,7 @@ import CustomerPunters from "./pages/customer/Punters";
 import CustomerSearch from "./pages/customer/Search";
 import CustomerBecome from "./pages/customer/Become";
 import CustomerDaily from "./pages/customer/Daily";
+import CustomerTip from "./pages/customer/TipDetails"
 import PunterLayout from "./pages/punter/PunterLayout";
 import PunterHome from "./pages/punter/Home";
 import PunterHistory from "./pages/punter/History";
@@ -33,6 +34,7 @@ import PunterLive from "./pages/punter/Live";
 import PunterProfile from "./pages/punter/Profile";
 import PunterCreate from "./pages/punter/Create";
 import PunterChat from "./pages/punter/Chat"
+import PunterTip from "./pages/punter/TipDetails"
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   // This component's logic is correct and handles subsequent route protection.
@@ -158,6 +160,7 @@ const App = () => {
           <Route path="become" element={<CustomerBecome />} />
           <Route path="chat" element={<CustomerChat />} />
           <Route path="daily" element={<CustomerDaily />} />
+          <Route path="tip" element={<CustomerTip />} />
         </Route>
         <Route
           path="/punter/*"
@@ -174,6 +177,7 @@ const App = () => {
           <Route path="live" element={<PunterLive />} />
           <Route path="create" element={<PunterCreate />} />
           <Route path="chat" element={<PunterChat />} />
+          <Route path="tip" element={<PunterTip />} />
         </Route>
       </Routes>
     </Router>

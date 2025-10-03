@@ -1,128 +1,74 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import axios from "axios";
 import { usePaystackPayment } from "react-paystack";
-import { toast, Toaster } from "react-hot-toast"; // Import toast for notifications
+import { toast, Toaster } from "react-hot-toast";
 import Api from "../components/Api";
 
-// Paystack supported countries for local NGN payments
-const NGN_COUNTRIES = ["+234"];
+// --- UPDATED: Base Price is 1 Coin = 100 NGN (₦100) ---
+const COIN_TO_NGN_RATE = 100;
 
-// Coin options with prices in USD
 const coinOptions = [
-  { coins: 100, priceUSD: 100, popular: false },
-  { coins: 300, priceUSD: 300, popular: false },
-  { coins: 500, priceUSD: 500, popular: true },
-  { coins: 1000, priceUSD: 1000, popular: false },
-  { coins: 2000, priceUSD: 2000, popular: false },
-  { coins: 5000, priceUSD: 5000, popular: true },
+  { coins: 10, priceNGN: 10 * COIN_TO_NGN_RATE, popular: false }, // ₦1,000
+  { coins: 20, priceNGN: 20 * COIN_TO_NGN_RATE, popular: false }, // ₦2,000
+  { coins: 50, priceNGN: 50 * COIN_TO_NGN_RATE, popular: true }, // ₦5,000 (sweet spot)
+  { coins: 100, priceNGN: 100 * COIN_TO_NGN_RATE, popular: true }, // ₦10,000
+  { coins: 250, priceNGN: 250 * COIN_TO_NGN_RATE, popular: false }, // ₦25,000
+  { coins: 500, priceNGN: 500 * COIN_TO_NGN_RATE, popular: true }, // ₦50,000 (premium popular)
+  { coins: 1000, priceNGN: 1000 * COIN_TO_NGN_RATE, popular: false }, // ₦100,000
+  { coins: 2000, priceNGN: 2000 * COIN_TO_NGN_RATE, popular: false }, // ₦200,000 (whale package)
 ];
 
 const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
-  const [selectedOption, setSelectedOption] = useState(2);
+  // Set default selection to the first "POPULAR" package (index 1)
+  const [selectedOption, setSelectedOption] = useState(1);
   const [customCoins, setCustomCoins] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ratesLoading, setRatesLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [exchangeRates, setExchangeRates] = useState({});
 
-  const isNgnPayment = NGN_COUNTRIES.includes(user.countryCode);
-  // const PAYSTACK_PUBLIC_KEY ="pk_test_c86ce251b26eb31bc55918571f477e0af8f0291b";
   const PAYSTACK_PUBLIC_KEY =
     "pk_live_8cae50cbecfc7b94bb6d0fa77b5fb5ce2c5b5ad2";
 
-  useEffect(() => {
-    const fetchRates = async () => {
-      try {
-        setRatesLoading(true);
-        const response = await axios.get(
-          "https://v6.exchangerate-api.com/v6/5a103662f87d0a5ac0043c95/latest/USD"
-        );
-        if (response.status !== 200) {
-          throw new Error("Failed to fetch exchange rates");
-        }
-        setExchangeRates(response.data.conversion_rates);
-        setRatesLoading(false);
-      } catch (err) {
-        setError("Error fetching exchange rates. Please try again later.");
-        setRatesLoading(false);
-      }
-    };
-    fetchRates();
-  }, []);
-
+  // --- UPDATED: Pricing and Tax Logic (Simplified for NGN only) ---
   const getPriceAndCurrency = () => {
-    let coins = 0;
+    let baseCoins = 0;
+    let basePriceNGN = 0;
+    let bonusCoins = 0;
+
     if (selectedOption === -1) {
-      coins = parseInt(customCoins, 10) || 0;
+      baseCoins = parseInt(customCoins, 10) || 0;
+      basePriceNGN = baseCoins * COIN_TO_NGN_RATE;
+      bonusCoins = 0;
     } else {
-      coins = coinOptions[selectedOption].coins;
+      const option = coinOptions[selectedOption];
+      baseCoins = option.coins;
+      basePriceNGN = option.priceNGN;
+      bonusCoins = option.bonus;
     }
 
-    // Base price is always in USD, as per coinOptions
-    const basePriceUSD = coins;
+    const totalCoins = baseCoins + bonusCoins;
 
-    // Transaction currency is always NGN
     const transactionCurrency = "NGN";
+    const displayCurrency = "NGN";
 
-    // Calculate the final price for the transaction in NGN
-    let transactionPrice = basePriceUSD;
-    let taxRate = 0.015;
+    // --- Transaction Fee Logic (2% Tax + ₦100 flat fee for high value) ---
+    const taxRate = 0.02; // 2% tax
     let flatFee = 0;
 
-    if (exchangeRates.NGN) {
-      transactionPrice = basePriceUSD * exchangeRates.NGN;
-    }
-    // NGN flat fee for transactions over ₦2500
-    flatFee = transactionPrice >= 2500 ? 100 : 0;
+    // NGN flat fee for base prices over ₦2500
+    flatFee = basePriceNGN >= 2500 ? 50 : 0;
 
-    // Apply the transaction tax and flat fee
-    transactionPrice = transactionPrice / (1 - taxRate) + flatFee;
+    // Price = (Base NGN Price + FlatFee) / (1 - TaxRate)
+    const transactionPrice = (basePriceNGN + flatFee) / (1 - taxRate);
 
-    // Calculate the amount in kobo for Paystack
+    // Amount in kobo for Paystack
     const amountInLowestUnit = Math.round(transactionPrice * 100);
 
-    // Calculate the display price in the user's local currency
-    let displayPrice = basePriceUSD;
-    let displayCurrency = "USD";
-    const countryToCurrencyMap = {
-      "+234": "NGN",
-      "+233": "GHS",
-      "+27": "ZAR",
-      "+254": "KES",
-      "+20": "EGP",
-      "+1": "USD",
-      "+52": "MXN",
-      "+501": "BZD",
-      "+506": "CRC",
-      "+55": "BRL",
-      "+54": "ARS",
-      "+57": "COP",
-      "+51": "PEN",
-      "+56": "CLP",
-      "+44": "GBP",
-      "+33": "EUR",
-      "+49": "EUR",
-      "+39": "EUR",
-      "+34": "EUR",
-      "+91": "INR",
-      "+86": "CNY",
-      "+81": "JPY",
-      "+65": "SGD",
-      "+971": "AED",
-      "+61": "AUD",
-      "+64": "NZD",
-      "+679": "FJD",
-    };
-    const userCurrency = countryToCurrencyMap[user.countryCode] || "USD";
-    if (exchangeRates[userCurrency]) {
-      displayPrice = basePriceUSD * exchangeRates[userCurrency];
-      displayCurrency = userCurrency;
-    }
-
     return {
-      coins,
-      displayPrice: displayPrice.toFixed(2),
+      coins: totalCoins, // The total coins the user receives (Base + Bonus)
+      baseCoins: baseCoins, // The actual number of coins purchased (for display)
+      bonusCoins: bonusCoins,
+      displayPrice: basePriceNGN.toFixed(2), // Base NGN price for clean display
       displayCurrency,
       transactionPrice: transactionPrice.toFixed(2),
       transactionCurrency,
@@ -132,20 +78,20 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
 
   const {
     coins,
+    baseCoins,
+    bonusCoins,
     displayPrice,
-    displayCurrency,
     transactionPrice,
     transactionCurrency,
     amount,
   } = getPriceAndCurrency();
 
-  // 1. Move the config outside the handler
   const config = {
     reference: new Date().getTime().toString(),
     email: user.email,
     amount: amount,
     publicKey: PAYSTACK_PUBLIC_KEY,
-    currency: "NGN", // Hardcoded to NGN
+    currency: "NGN",
   };
 
   const initializePayment = usePaystackPayment(config);
@@ -155,6 +101,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
     setError(null);
 
     try {
+      // Send the TOTAL coins (base + bonus) to the backend for updating the user's balance
       const data = {
         userId: user._id,
         amount: Number(coins),
@@ -172,6 +119,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
         err.response?.data?.error ||
         err.message ||
         "Failed to update balance. Please contact support.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -183,17 +131,26 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   };
 
   const handlePayment = () => {
-    if (loading || ratesLoading) return;
+    if (loading) return;
     setLoading(true);
     setError(null);
 
-    if (coins <= 0) {
+    // Minimum coin purchase (base coins)
+    if (baseCoins < 5 && selectedOption === -1) {
+      // Adjusted minimum to 50 for custom
+      toast.error("Minimum deposit is 5 coins.");
+      setLoading(false);
+      return;
+    }
+    if (baseCoins <= 0) {
       setError("Please select or enter a valid number of coins.");
       setLoading(false);
       return;
     }
-    if (coins < 1) {
-      toast.error("Minimum deposit is 2 coins.");
+    if (amount <= 0) {
+      setError(
+        "Calculated transaction amount is zero or less. Please select a larger coin amount."
+      );
       setLoading(false);
       return;
     }
@@ -205,94 +162,8 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   };
 
   const getCurrencySymbol = (currencyCode) => {
-    switch (currencyCode) {
-      case "NGN":
-        return "₦";
-      case "GHS":
-        return "GH₵";
-      case "ZAR":
-        return "R";
-      case "KES":
-        return "KSh";
-      case "EGP":
-        return "E£";
-      case "USD":
-        return "$";
-      case "CAD":
-        return "C$";
-      case "MXN":
-        return "Mex$";
-      case "BZD":
-        return "BZ$";
-      case "CRC":
-        return "₡";
-      case "BRL":
-        return "R$";
-      case "ARS":
-        return "ARS$";
-      case "COP":
-        return "Col$";
-      case "PEN":
-        return "S/";
-      case "CLP":
-        return "CLP$";
-      case "GBP":
-        return "£";
-      case "EUR":
-        return "€";
-      case "AUD":
-        return "A$";
-      case "NZD":
-        return "NZ$";
-      case "FJD":
-        return "FJ$";
-      case "INR":
-        return "₹";
-      case "CNY":
-        return "¥";
-      case "JPY":
-        return "¥";
-      case "SGD":
-        return "S$";
-      case "AED":
-        return "د.إ";
-      default:
-        return "$";
-    }
+    return "₦";
   };
-
-  if (ratesLoading) {
-    return (
-      <div
-        className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center"
-        style={{ backgroundColor: "#09100d" }}
-      >
-        <div className="flex flex-col items-center">
-          <svg
-            className="animate-spin h-8 w-8 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          <span className="mt-4 text-white">Loading rates...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -325,7 +196,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
               className="text-lg font-semibold mb-4"
               style={{ color: "#efefef" }}
             >
-              Select Package
+              Select Package (1 Coin = ₦100)
             </h3>
             <div className="grid grid-cols-2 gap-4">
               {coinOptions.map((option, index) => (
@@ -354,11 +225,11 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                       className="absolute -top-2 -right-2 px-2 py-1 rounded-full text-xs font-bold"
                       style={{ backgroundColor: "#fea92a", color: "#09100d" }}
                     >
-                      POPULAR
+                      BEST VALUE
                     </div>
                   )}
                   <div className="flex flex-col items-center">
-                    <div className="flex items-end mb-2">
+                    <div className="flex items-end mb-1">
                       <span
                         className="text-2xl font-bold mr-1"
                         style={{ color: "#efefef" }}
@@ -381,7 +252,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
               className="text-lg font-semibold mb-4"
               style={{ color: "#efefef" }}
             >
-              Enter Custom Amount
+              Enter Custom Amount (Min 5)
             </h3>
             <div
               className={`p-4 rounded-xl border-2 transition-all ${
@@ -407,6 +278,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                 placeholder="Enter number of coins"
                 className="w-full text-center text-white bg-transparent outline-none border-none text-xl placeholder-gray-500"
                 style={{ color: "#efefef" }}
+                min="5"
               />
             </div>
           </div>
@@ -414,25 +286,26 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
             className="mb-8 p-4 rounded-lg"
             style={{ backgroundColor: "#162821" }}
           >
-            <h4
-              className="text-sm font-semibold mb-3"
-              style={{ color: "#f57cff" }}
-            >
-              Summary
-            </h4>
             <div className="flex justify-between items-center mb-2">
-              <span style={{ color: "#efefef" }}>Coins:</span>
+              <span style={{ color: "#efefef" }}>Coins Purchased:</span>
               <span className="font-bold" style={{ color: "#18ffc8" }}>
-                {coins}
+                {baseCoins}
               </span>
             </div>
-            <div className="flex justify-between items-center">
+            <div
+              className="border-t my-2"
+              style={{ borderColor: "#376553" }}
+            ></div>
+            <div className="flex justify-between items-center mb-2">
               <span style={{ color: "#efefef" }}>Price:</span>
-              <span className="font-bold" style={{ color: "#18ffc8" }}>
-                {getCurrencySymbol(displayCurrency)} {displayPrice}{" "}
-                {displayCurrency}
+              <span className="font-bold" style={{ color: "#efefef" }}>
+                {getCurrencySymbol("NGN")} {displayPrice} NGN
               </span>
             </div>
+            <p className="text-xs mt-2 text-gray-400">
+              Final amount includes 2% processing fee and ₦50 flat fee for base
+              prices over ₦2500.
+            </p>
           </div>
         </div>
         <div className="px-6 py-4 border-t" style={{ borderColor: "#376553" }}>
@@ -449,9 +322,9 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
           )}
           <button
             onClick={handlePayment}
-            disabled={loading || ratesLoading || coins <= 0}
+            disabled={loading || baseCoins <= 0 || amount <= 0}
             className={`w-full py-4 rounded-xl font-bold flex items-center justify-center transition-all ${
-              loading || ratesLoading || coins <= 0
+              loading || baseCoins <= 0 || amount <= 0
                 ? "opacity-70 cursor-not-allowed"
                 : "hover:opacity-90"
             }`}
@@ -482,7 +355,9 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                 Processing...
               </>
             ) : (
-              `BUY NOW`
+              `PAY ${getCurrencySymbol(
+                transactionCurrency
+              )} ${transactionPrice}`
             )}
           </button>
         </div>
