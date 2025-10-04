@@ -18,7 +18,7 @@ const Colors = {
 
 const PHONE_CODES = [
   // Africa
-  { value: "+234", label: "🇳🇬 +234" }
+  { value: "+234", label: "🇳🇬 +234" },
 ];
 
 const PRIMARY_CATEGORIES = [
@@ -668,13 +668,13 @@ const RegisterScreen = () => {
                 />
                 <span>
                   I confirm I am over 21 years old and accept the{" "}
-                  <button
+                  <a
                     type="button"
-                    onClick={() => navigate("/terms")}
+                    href="https://thepunterhub.com/terms"
                     className="text-[#855391] hover:text-[#fea92a] underline transition"
                   >
                     Terms & Conditions
-                  </button>
+                  </a>
                 </span>
               </label>
 
