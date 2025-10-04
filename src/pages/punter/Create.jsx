@@ -4,12 +4,10 @@ import {
   FiX,
   FiTrendingUp,
   FiTrendingDown,
-  FiPhone,
-  FiCalendar,
   FiClock,
   FiDollarSign,
 } from "react-icons/fi";
-import { FaFutbol, FaChartLine, FaExchangeAlt } from "react-icons/fa";
+import { FaFutbol, FaChartLine } from "react-icons/fa";
 import axios from "axios";
 import Api from "../../components/Api";
 import localforage from "localforage";
@@ -22,6 +20,10 @@ const CreateTipPage = () => {
     { key: "sports", name: "Sports Betting", icon: <FaFutbol /> },
     { key: "trading", name: "Trading Signal", icon: <FaChartLine /> },
   ];
+  
+  // NEW STATE: Tip Type (silver, gold, diamond)
+  const [tipType, setTipType] = useState("silver"); 
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -109,7 +111,7 @@ const CreateTipPage = () => {
         setIsSubmitting(false);
         return; // Stop the function execution
       }
-      // This is the updated code block
+      
       let signalData = {};
 
       if (activeCategory === "sports") {
@@ -123,6 +125,7 @@ const CreateTipPage = () => {
           userId: user._id,
           primaryCategory: "sports",
           secondaryCategory: sportsForm.sport,
+          tipType: tipType, // <-- UPDATED: Added tipType
           bettingSite: sportsForm.site,
           bettingCode: sportsForm.code,
           startTime: sportsForm.startTime
@@ -137,6 +140,7 @@ const CreateTipPage = () => {
           userId: user._id,
           primaryCategory: "trading",
           secondaryCategory: tradingForm.type,
+          tipType: tipType, // <-- UPDATED: Added tipType
           pair: tradingForm.pair,
           direction: tradingForm.direction,
           entryPrice: parseFloat(tradingForm.entryPrice), // Ensure entryPrice is a number
@@ -176,6 +180,8 @@ const CreateTipPage = () => {
           type: "forex",
         });
       }
+      
+      setTipType("silver"); // Clear the selected tip type to default
 
       // Show success message
       toast.success("Tip published successfully!");
@@ -600,6 +606,35 @@ const CreateTipPage = () => {
             </div>
           </div>
         )}
+        
+        {/* TIP TYPE SELECTION: Silver, Gold, Diamond (New Section) */}
+        <div className="mt-6">
+          <label className="block text-sm mb-2 text-[#efefef]/70">
+            Tip Type
+          </label>
+          <div className="flex space-x-4">
+            {["silver", "gold", "diamond"].map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setTipType(type)}
+                className={`flex-1 py-2 capitalize font-semibold rounded-lg transition-colors border-2 
+                  ${
+                    tipType === type
+                      ? type === "silver"
+                        ? "bg-[#efefef] text-[#09100d] border-[#efefef]"
+                        : type === "gold"
+                        ? "bg-[#fea92a] text-[#09100d] border-[#fea92a]"
+                        : "bg-[#18ffc8] text-[#09100d] border-[#18ffc8]"
+                      : "bg-[#162821] text-[#efefef]/70 border-[#376553]"
+                  }
+                `}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Submit Button */}
         <button

@@ -3,6 +3,7 @@ import { MdDashboard } from "react-icons/md";
 import { FaHistory, FaUser } from "react-icons/fa";
 import { IoChatbubblesSharp } from "react-icons/io5";
 import { PiBroadcastFill } from "react-icons/pi";
+import { IoAlarm } from "react-icons/io5";
 import { useState, useEffect } from "react";
 
 export default function PunterLayout() {
@@ -19,21 +20,30 @@ export default function PunterLayout() {
   }, []);
 
   const tabs = [
-    { path: "/punter/home", name: "Dashboard", icon: <MdDashboard size={20} /> },
+    {
+      path: "/punter/home",
+      name: "Dashboard",
+      icon: <MdDashboard size={20} />,
+    },
     {
       path: "/punter/history",
       name: "History",
       icon: <FaHistory size={20} />,
     },
     {
-      path: "/punter/live",
-      name: "Live",
-      icon: <PiBroadcastFill size={20} />,
+      path: "/punter/daily",
+      name: "Daily",
+      icon: <IoAlarm size={20} />,
     },
     {
       path: "/punter/chat",
       name: "Chat",
       icon: <IoChatbubblesSharp size={20} />,
+    },
+    {
+      path: "/punter/live",
+      name: "Live",
+      icon: <PiBroadcastFill size={20} />,
     },
     {
       path: "/punter/profile",

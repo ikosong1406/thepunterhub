@@ -35,6 +35,7 @@ import PunterProfile from "./pages/punter/Profile";
 import PunterCreate from "./pages/punter/Create";
 import PunterChat from "./pages/punter/Chat"
 import PunterTip from "./pages/punter/TipDetails"
+import PunterDaily from "./pages/punter/Daily"
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   // This component's logic is correct and handles subsequent route protection.
@@ -178,6 +179,7 @@ const App = () => {
           <Route path="create" element={<PunterCreate />} />
           <Route path="chat" element={<PunterChat />} />
           <Route path="tip" element={<PunterTip />} />
+          <Route path="daily" element={<PunterDaily />} />
         </Route>
       </Routes>
     </Router>
