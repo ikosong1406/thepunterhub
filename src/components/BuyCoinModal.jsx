@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { IoMdClose } from "react-icons/io";
 import axios from "axios";
 import { usePaystackPayment } from "react-paystack";
@@ -9,87 +9,91 @@ import Api from "../components/Api";
 const COIN_TO_NGN_RATE = 100;
 
 const coinOptions = [
-  { coins: 10, priceNGN: 10 * COIN_TO_NGN_RATE, popular: false }, // ₦1,000
-  { coins: 20, priceNGN: 20 * COIN_TO_NGN_RATE, popular: false }, // ₦2,000
-  { coins: 50, priceNGN: 50 * COIN_TO_NGN_RATE, popular: true }, // ₦5,000 (sweet spot)
-  { coins: 100, priceNGN: 100 * COIN_TO_NGN_RATE, popular: true }, // ₦10,000
-  { coins: 250, priceNGN: 250 * COIN_TO_NGN_RATE, popular: false }, // ₦25,000
-  { coins: 500, priceNGN: 500 * COIN_TO_NGN_RATE, popular: true }, // ₦50,000 (premium popular)
-  { coins: 1000, priceNGN: 1000 * COIN_TO_NGN_RATE, popular: false }, // ₦100,000
-  { coins: 2000, priceNGN: 2000 * COIN_TO_NGN_RATE, popular: false }, // ₦200,000 (whale package)
+  { coins: 10, priceNGN: 10 * COIN_TO_NGN_RATE, popular: false, bonus: 0 },
+  { coins: 20, priceNGN: 20 * COIN_TO_NGN_RATE, popular: false, bonus: 0 },
+  { coins: 50, priceNGN: 50 * COIN_TO_NGN_RATE, popular: true, bonus: 0 },
+  { coins: 100, priceNGN: 100 * COIN_TO_NGN_RATE, popular: true, bonus: 0 },
+  { coins: 250, priceNGN: 250 * COIN_TO_NGN_RATE, popular: false, bonus: 0 },
+  { coins: 500, priceNGN: 500 * COIN_TO_NGN_RATE, popular: true, bonus: 0 },
+  { coins: 1000, priceNGN: 1000 * COIN_TO_NGN_RATE, popular: false, bonus: 0 },
+  { coins: 2000, priceNGN: 2000 * COIN_TO_NGN_RATE, popular: false, bonus: 0 },
 ];
 
+// 🔑 CORE FIX: Define the calculation logic outside the component
+// to ensure it can be called reliably with any given state.
+const calculatePricing = (selectedOption, customCoins) => {
+  let baseCoins = 0;
+  let basePriceNGN = 0;
+  let bonusCoins = 0;
+
+  if (selectedOption === -1) {
+    baseCoins = parseInt(customCoins, 10) || 0;
+    basePriceNGN = baseCoins * COIN_TO_NGN_RATE;
+  } else if (selectedOption >= 0 && selectedOption < coinOptions.length) {
+    const option = coinOptions[selectedOption];
+    baseCoins = option.coins;
+    basePriceNGN = option.priceNGN;
+    bonusCoins = option.bonus || 0; // Ensure bonus is 0 if not set
+  }
+
+  const totalCoins = baseCoins + bonusCoins;
+
+  // --- Transaction Fee Logic (2% Tax + ₦50 flat fee for high value) ---
+  const taxRate = 0.02; // 2% tax
+  let flatFee = basePriceNGN >= 2500 ? 50 : 0; // NGN flat fee for base prices over ₦2500
+
+  // Price = (Base NGN Price + FlatFee) / (1 - TaxRate)
+  // This formula accounts for a fee that is paid out of the base price.
+  // Assuming transactionPrice is the final price the user pays, and basePriceNGN
+  // is the amount the seller *should* receive before fees.
+  // Based on your original formula: transactionPrice includes the fees.
+  const transactionPrice = (basePriceNGN + flatFee) / (1 - taxRate);
+
+  // Amount in kobo for Paystack
+  const amountInLowestUnit = Math.round(transactionPrice * 100);
+
+  return {
+    coins: totalCoins,
+    baseCoins: baseCoins,
+    bonusCoins: bonusCoins,
+    displayPrice: basePriceNGN.toFixed(2),
+    transactionPrice: transactionPrice.toFixed(2),
+    transactionCurrency: "NGN",
+    amount: amountInLowestUnit,
+  };
+};
+
 const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
-  // Set default selection to the first "POPULAR" package (index 1)
-  const [selectedOption, setSelectedOption] = useState(1);
+  // Set default selection to the first "POPULAR" package (index 2: 50 coins)
+  const defaultPopularIndex = coinOptions.findIndex(opt => opt.popular);
+  const [selectedOption, setSelectedOption] = useState(defaultPopularIndex !== -1 ? defaultPopularIndex : 0);
   const [customCoins, setCustomCoins] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const PAYSTACK_PUBLIC_KEY =
-    "pk_live_8cae50cbecfc7b94bb6d0fa77b5fb5ce2c5b5ad2";
+  // const PAYSTACK_PUBLIC_KEY = "pk_test_c42384ba4484dd9a4be899cbd29120e0811d9494";
+  const PAYSTACK_PUBLIC_KEY = "pk_live_8cae50cbecfc7b94bb6d0fa77b5fb5ce2c5b5ad2";
 
-  // --- UPDATED: Pricing and Tax Logic (Simplified for NGN only) ---
-  const getPriceAndCurrency = () => {
-    let baseCoins = 0;
-    let basePriceNGN = 0;
-    let bonusCoins = 0;
+  // 🔑 FIX: Use useMemo to ensure pricing recalculates ONLY when state changes
+  const pricing = useMemo(() => {
+    return calculatePricing(selectedOption, customCoins);
+  }, [selectedOption, customCoins]);
 
-    if (selectedOption === -1) {
-      baseCoins = parseInt(customCoins, 10) || 0;
-      basePriceNGN = baseCoins * COIN_TO_NGN_RATE;
-      bonusCoins = 0;
-    } else {
-      const option = coinOptions[selectedOption];
-      baseCoins = option.coins;
-      basePriceNGN = option.priceNGN;
-      bonusCoins = option.bonus;
-    }
-
-    const totalCoins = baseCoins + bonusCoins;
-
-    const transactionCurrency = "NGN";
-    const displayCurrency = "NGN";
-
-    // --- Transaction Fee Logic (2% Tax + ₦100 flat fee for high value) ---
-    const taxRate = 0.02; // 2% tax
-    let flatFee = 0;
-
-    // NGN flat fee for base prices over ₦2500
-    flatFee = basePriceNGN >= 2500 ? 50 : 0;
-
-    // Price = (Base NGN Price + FlatFee) / (1 - TaxRate)
-    const transactionPrice = (basePriceNGN + flatFee) / (1 - taxRate);
-
-    // Amount in kobo for Paystack
-    const amountInLowestUnit = Math.round(transactionPrice * 100);
-
-    return {
-      coins: totalCoins, // The total coins the user receives (Base + Bonus)
-      baseCoins: baseCoins, // The actual number of coins purchased (for display)
-      bonusCoins: bonusCoins,
-      displayPrice: basePriceNGN.toFixed(2), // Base NGN price for clean display
-      displayCurrency,
-      transactionPrice: transactionPrice.toFixed(2),
-      transactionCurrency,
-      amount: amountInLowestUnit,
-    };
-  };
-
+  // Destructure the memoized pricing for use in the UI and config
   const {
     coins,
     baseCoins,
-    bonusCoins,
     displayPrice,
     transactionPrice,
     transactionCurrency,
     amount,
-  } = getPriceAndCurrency();
+  } = pricing;
 
+  // 🔑 FIX: The config is stable now because 'amount' is memoized
   const config = {
     reference: new Date().getTime().toString(),
     email: user.email,
-    amount: amount,
+    amount: amount, // Uses the fresh memoized amount
     publicKey: PAYSTACK_PUBLIC_KEY,
     currency: "NGN",
   };
@@ -99,17 +103,29 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   const onSuccess = async (reference) => {
     setLoading(true);
     setError(null);
+    
+    // 🔑 FINAL FAILSAFE: Re-calculate the current amount just before sending
+    // to ensure no stale closure issues from the Paystack hook.
+    const currentPricing = calculatePricing(selectedOption, customCoins);
 
     try {
-      // Send the TOTAL coins (base + bonus) to the backend for updating the user's balance
+      // Send the TOTAL coins (currentPricing.coins) to the backend
       const data = {
         userId: user._id,
-        amount: Number(coins),
+        // Use the freshest calculated value for the deposit amount
+        amount: Number(currentPricing.coins), 
       };
+      console.log("Deposit data:", data);
+      
+      // Check for valid amount before sending
+      if (isNaN(data.amount) || data.amount <= 0) {
+           throw new Error("Invalid deposit amount calculated (0 or less).");
+      }
+
       await axios.post(`${Api}/client/deposit`, data);
 
       toast.success("Deposit successful! Your coins have been added.");
-      onDepositSuccess(coins);
+      onDepositSuccess(currentPricing.coins);
 
       setTimeout(() => {
         onClose();
@@ -137,8 +153,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
 
     // Minimum coin purchase (base coins)
     if (baseCoins < 5 && selectedOption === -1) {
-      // Adjusted minimum to 50 for custom
-      toast.error("Minimum deposit is 5 coins.");
+      toast.error("Minimum custom deposit is 5 coins.");
       setLoading(false);
       return;
     }
@@ -147,7 +162,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
       setLoading(false);
       return;
     }
-    if (amount <= 0) {
+    if (amount <= 0 || isNaN(amount)) {
       setError(
         "Calculated transaction amount is zero or less. Please select a larger coin amount."
       );
@@ -322,9 +337,9 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
           )}
           <button
             onClick={handlePayment}
-            disabled={loading || baseCoins <= 0 || amount <= 0}
+            disabled={loading || baseCoins <= 0 || amount <= 0 || isNaN(amount)}
             className={`w-full py-4 rounded-xl font-bold flex items-center justify-center transition-all ${
-              loading || baseCoins <= 0 || amount <= 0
+              loading || baseCoins <= 0 || amount <= 0 || isNaN(amount)
                 ? "opacity-70 cursor-not-allowed"
                 : "hover:opacity-90"
             }`}

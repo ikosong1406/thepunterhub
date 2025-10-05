@@ -26,6 +26,7 @@ const PunterDetailsPage = () => {
   const [punter, setPunter] = useState(null);
   const [signals, setSignals] = useState([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [activePlanName, setActivePlanName] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [winRate, setWinRate] = useState("0%");
@@ -169,6 +170,7 @@ const PunterDetailsPage = () => {
 
       if (response.status === 200) {
         setIsSubscribed(true);
+        setActivePlanName(response.data.subscription.plan);
         const subDate = new Date(response.data.subscription.subscriptionDate);
         setExpiryDate(addDays(subDate, 7));
         setUser((prevUser) => ({
@@ -209,6 +211,7 @@ const PunterDetailsPage = () => {
         const token = await localforage.getItem("token");
         let userResponse = null;
         let userData = null;
+        let planToSend = null; // Initialize plan holder
 
         if (token) {
           userResponse = await axios.post(`${Api}/client/getUser`, {
@@ -216,19 +219,35 @@ const PunterDetailsPage = () => {
           });
           userData = userResponse.data.data;
           setUser(userData);
+
           const subResponse = await axios.post(`${Api}/client/isSubscribed`, {
             userId: userData._id,
             punterId: punterId,
           });
+
           setIsSubscribed(subResponse.data.isSubscribed);
 
           if (subResponse.data.isSubscribed) {
+            planToSend = subResponse.data.plan; // Get the active plan
+            setActivePlanName(planToSend);
+
             const subDate = new Date(
               subResponse.data.subscription.subscriptionDate
             );
             setExpiryDate(addDays(subDate, 7));
           }
         }
+
+        // --- 🔑 KEY UPDATE: Pass planToSend to getPunterdetails ---
+        const punterResponse = await axios.post(
+          `${Api}/client/getPunterdetails`,
+          {
+            punterId,
+            plan: planToSend, // Send the active plan name (will be null if not subscribed)
+          }
+        );
+        // -----------------------------------------------------------
+
         const statsResponse = await axios.post(`${Api}/client/winloss`, {
           punterId,
         });
@@ -241,10 +260,6 @@ const PunterDetailsPage = () => {
             : "0%"
         );
 
-        const punterResponse = await axios.post(
-          `${Api}/client/getPunterdetails`,
-          { punterId }
-        );
         const fetchedSignals = punterResponse.data.data.signals.map((s) => {
           const totalComments = s.comments?.length || 0;
           const topComment =
@@ -349,7 +364,7 @@ const PunterDetailsPage = () => {
     return (
       <div
         key={signal._id}
-        className="relative rounded-xl bg-[#162821] border border-[#376553]/30 p-4"
+        className="relative rounded-xl bg-[#162821] border border-[#376553]/30 p-2"
       >
         <div
           onClick={() => navigateToTipDetails(signal._id)}
@@ -614,7 +629,8 @@ const PunterDetailsPage = () => {
             <>
               {expiryDate && (
                 <div className="text-center text-sm text-[#fea92a] mb-4">
-                  Subscription expires {formatDistanceToNow(expiryDate, { addSuffix: true })}.
+                  Subscription expires{" "}
+                  {formatDistanceToNow(expiryDate, { addSuffix: true })}.
                 </div>
               )}
               <h3 className="text-lg font-bold mb-2 flex items-center">

@@ -44,6 +44,23 @@ const formatPostedAt = (dateString) => {
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
+// --- NEW Utility Function for tipType Design ---
+const getTipTypeDesign = (tipType) => {
+  const type = tipType?.toLowerCase();
+  switch (type) {
+    case "free":
+      return "bg-[#376553] text-[#18ffc8] border border-[#18ffc8] font-semibold";
+    case "premium":
+      // Lock icon for premium to indicate exclusivity
+      return "bg-[#fea92a]/30 text-[#fea92a] border border-[#fea92a] font-semibold flex items-center";
+    case "vip":
+      // A more intense style for VIP
+      return "bg-[#f57cff]/30 text-[#f57cff] border border-[#f57cff] font-extrabold flex items-center";
+    default:
+      return "bg-[#376553]/20 text-[#efefef]/70 border border-[#376553]";
+  }
+};
+
 // --- Tip Details Component ---
 
 const TipDetails = () => {
@@ -57,6 +74,26 @@ const TipDetails = () => {
   const [newComment, setNewComment] = useState("");
   const [user, setUser] = useState(null);
 
+  // Define fetchTipDetails outside of useEffect for re-use
+  const fetchTipDetails = async (tipId, token) => {
+    try {
+      const response = await axios.post(`${Api}/client/getTip`, { tipId });
+
+      if (response.data.status === "ok") {
+        setTip(response.data.data.tip);
+      } else {
+        throw new Error(
+          response.data.message || "Failed to fetch tip details."
+        );
+      }
+    } catch (err) {
+      console.error("Error refetching tip:", err);
+      // Don't set global error here, just log or handle locally
+      throw err; // rethrow for the useEffect catch block
+    }
+  };
+
+
   useEffect(() => {
     if (!tipId) {
       setError("No Tip ID provided.");
@@ -64,7 +101,7 @@ const TipDetails = () => {
       return;
     }
 
-    const fetchTipDetails = async () => {
+    const initialFetch = async () => {
       setLoading(true);
       setError(null);
       try {
@@ -77,15 +114,7 @@ const TipDetails = () => {
         setUser(userResponse.data.data);
 
         // 2. Get Tip Details
-        const response = await axios.post(`${Api}/client/getTip`, { tipId });
-
-        if (response.data.status === "ok") {
-          setTip(response.data.data.tip);
-        } else {
-          throw new Error(
-            response.data.message || "Failed to fetch tip details."
-          );
-        }
+        await fetchTipDetails(tipId, token); // Use the defined function
       } catch (err) {
         console.error(err);
         setError(err.message || "An unexpected error occurred.");
@@ -94,7 +123,7 @@ const TipDetails = () => {
       }
     };
 
-    fetchTipDetails();
+    initialFetch();
   }, [tipId]);
 
   const handlePostComment = async () => {
@@ -116,31 +145,12 @@ const TipDetails = () => {
         // Optimistically update comments or refetch data
         setNewComment("");
         // A full re-fetch ensures all data (like comment counts) is fresh
-        // but for a smooth UX, an optimistic update is better. Let's re-fetch for accuracy.
-        await fetchTipDetails();
+        await fetchTipDetails(tipId, await localforage.getItem("token"));
       } else {
         throw new Error(response.data.message || "Failed to post comment.");
       }
     } catch (err) {
       setError(err.message);
-    }
-  };
-
-  const fetchTipDetails = async () => {
-    // This function is defined inside useEffect but is needed by handlePostComment too.
-    // Redefining it here and ensuring handlePostComment calls it.
-    try {
-      const response = await axios.post(`${Api}/client/getTip`, { tipId });
-
-      if (response.data.status === "ok") {
-        setTip(response.data.data.tip);
-      } else {
-        throw new Error(
-          response.data.message || "Failed to fetch tip details."
-        );
-      }
-    } catch (err) {
-      console.error("Error refetching tip:", err);
     }
   };
 
@@ -334,6 +344,20 @@ const TipDetails = () => {
               <FiMessageSquare size={16} />
               <span className="text-sm">{tip.comments?.length || 0}</span>
             </div>
+            {/* TIP TYPE DESIGN IMPLEMENTATION */}
+            <div
+              className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${getTipTypeDesign(
+                tip.tipType
+              )}`}
+            >
+              {/* Conditionally render icon for premium/vip */}
+              {(tip.tipType?.toLowerCase() === "premium" ||
+                tip.tipType?.toLowerCase() === "vip") && (
+                <FiLock size={12} className="mr-1" />
+              )}
+              <span className="align-middle">{tip.tipType}</span>
+            </div>
+            {/* END TIP TYPE DESIGN */}
           </div>
         </div>
       </div>
