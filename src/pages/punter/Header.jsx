@@ -69,7 +69,7 @@ const Header = () => {
         onClick={handleSwitchClick}
         className="bg-[#18ffc8] text-black font-medium px-4 py-2 rounded-lg hover:opacity-90 transition"
       >
-        Switch
+        Switch to User
       </button>
     </header>
   );

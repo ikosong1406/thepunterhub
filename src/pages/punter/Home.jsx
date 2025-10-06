@@ -68,7 +68,7 @@ const PunterDashboard = () => {
           },
           {
             title: "Total Earnings",
-            value: `$${totalEarnings}`,
+            value: `${totalEarnings}`,
             change: "+18%",
             icon: <FiDollarSign className="text-xl" />,
           },

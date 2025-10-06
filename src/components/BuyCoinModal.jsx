@@ -5,7 +5,7 @@ import { usePaystackPayment } from "react-paystack";
 import { toast, Toaster } from "react-hot-toast";
 import Api from "../components/Api";
 
-// --- UPDATED: Base Price is 1 Coin = 100 NGN (₦100) ---
+// --- Base Price is 1 Coin = 100 NGN (₦100) ---
 const COIN_TO_NGN_RATE = 100;
 
 const coinOptions = [
@@ -19,8 +19,7 @@ const coinOptions = [
   { coins: 2000, priceNGN: 2000 * COIN_TO_NGN_RATE, popular: false, bonus: 0 },
 ];
 
-// 🔑 CORE FIX: Define the calculation logic outside the component
-// to ensure it can be called reliably with any given state.
+// 🚀 UPDATED: Pricing calculation now only returns the equivalent coin price in NGN.
 const calculatePricing = (selectedOption, customCoins) => {
   let baseCoins = 0;
   let basePriceNGN = 0;
@@ -38,16 +37,9 @@ const calculatePricing = (selectedOption, customCoins) => {
 
   const totalCoins = baseCoins + bonusCoins;
 
-  // --- Transaction Fee Logic (2% Tax + ₦50 flat fee for high value) ---
-  const taxRate = 0.02; // 2% tax
-  let flatFee = basePriceNGN >= 2500 ? 50 : 0; // NGN flat fee for base prices over ₦2500
-
-  // Price = (Base NGN Price + FlatFee) / (1 - TaxRate)
-  // This formula accounts for a fee that is paid out of the base price.
-  // Assuming transactionPrice is the final price the user pays, and basePriceNGN
-  // is the amount the seller *should* receive before fees.
-  // Based on your original formula: transactionPrice includes the fees.
-  const transactionPrice = (basePriceNGN + flatFee) / (1 - taxRate);
+  // --- Transaction Fee Logic REMOVED ---
+  // The user pays exactly the base price.
+  const transactionPrice = basePriceNGN;
 
   // Amount in kobo for Paystack
   const amountInLowestUnit = Math.round(transactionPrice * 100);
@@ -71,10 +63,10 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // const PAYSTACK_PUBLIC_KEY = "pk_test_c42384ba4484dd9a4be899cbd29120e0811d9494";
+  // You can switch to the test key if needed: "pk_test_c42384ba4484dd9a4be899cbd29120e0811d9494";
   const PAYSTACK_PUBLIC_KEY = "pk_live_8cae50cbecfc7b94bb6d0fa77b5fb5ce2c5b5ad2";
 
-  // 🔑 FIX: Use useMemo to ensure pricing recalculates ONLY when state changes
+  // Use useMemo to ensure pricing recalculates ONLY when state changes
   const pricing = useMemo(() => {
     return calculatePricing(selectedOption, customCoins);
   }, [selectedOption, customCoins]);
@@ -89,11 +81,11 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
     amount,
   } = pricing;
 
-  // 🔑 FIX: The config is stable now because 'amount' is memoized
+  // The config uses the fresh memoized amount
   const config = {
     reference: new Date().getTime().toString(),
     email: user.email,
-    amount: amount, // Uses the fresh memoized amount
+    amount: amount, 
     publicKey: PAYSTACK_PUBLIC_KEY,
     currency: "NGN",
   };
@@ -103,9 +95,8 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   const onSuccess = async (reference) => {
     setLoading(true);
     setError(null);
-    
-    // 🔑 FINAL FAILSAFE: Re-calculate the current amount just before sending
-    // to ensure no stale closure issues from the Paystack hook.
+
+    // Re-calculate the current amount just before sending for reliability.
     const currentPricing = calculatePricing(selectedOption, customCoins);
 
     try {
@@ -115,10 +106,10 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
         // Use the freshest calculated value for the deposit amount
         amount: Number(currentPricing.coins), 
       };
-      
+
       // Check for valid amount before sending
       if (isNaN(data.amount) || data.amount <= 0) {
-           throw new Error("Invalid deposit amount calculated (0 or less).");
+        throw new Error("Invalid deposit amount calculated (0 or less).");
       }
 
       await axios.post(`${Api}/client/deposit`, data);
@@ -316,8 +307,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
               </span>
             </div>
             <p className="text-xs mt-2 text-gray-400">
-              Final amount includes 2% processing fee and ₦50 flat fee for base
-              prices over ₦2500.
+              **No transaction fees** are being charged. You pay the exact coin equivalent in NGN.
             </p>
           </div>
         </div>

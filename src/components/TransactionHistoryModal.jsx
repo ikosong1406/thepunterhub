@@ -47,7 +47,7 @@ const TransactionHistoryModal = ({ user, onClose }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed':
+      case 'success':
       case 'won':
         return '#18ffc8';
       case 'failed':

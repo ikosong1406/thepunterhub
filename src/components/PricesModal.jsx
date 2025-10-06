@@ -197,7 +197,7 @@ const PricingPlansModal = ({ onClose, user }) => {
                   className="block text-sm mb-2 flex items-center"
                   style={{ color: "#f57cff" }}
                 >
-                  Price for {selectedPlan} plan / week
+                  Price for {selectedPlan} plan / week ( coins )
                 </label>
                 <div className="relative">
                   <input
