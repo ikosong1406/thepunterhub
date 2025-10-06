@@ -115,7 +115,6 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
         // Use the freshest calculated value for the deposit amount
         amount: Number(currentPricing.coins), 
       };
-      console.log("Deposit data:", data);
       
       // Check for valid amount before sending
       if (isNaN(data.amount) || data.amount <= 0) {
@@ -124,8 +123,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
 
       await axios.post(`${Api}/client/deposit`, data);
 
-      toast.success("Deposit successful! Your coins have been added.");
-      onDepositSuccess(currentPricing.coins);
+      toast.success("Deposit successful! Please refresh the page.");
 
       setTimeout(() => {
         onClose();

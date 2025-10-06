@@ -48,12 +48,12 @@ const formatPostedAt = (dateString) => {
 const getTipTypeDesign = (tipType) => {
   const type = tipType?.toLowerCase();
   switch (type) {
-    case "free":
+    case "silver":
       return "bg-[#376553] text-[#18ffc8] border border-[#18ffc8] font-semibold";
-    case "premium":
+    case "gold":
       // Lock icon for premium to indicate exclusivity
       return "bg-[#fea92a]/30 text-[#fea92a] border border-[#fea92a] font-semibold flex items-center";
-    case "vip":
+    case "diamond":
       // A more intense style for VIP
       return "bg-[#f57cff]/30 text-[#f57cff] border border-[#f57cff] font-extrabold flex items-center";
     default:
@@ -92,7 +92,6 @@ const TipDetails = () => {
       throw err; // rethrow for the useEffect catch block
     }
   };
-
 
   useEffect(() => {
     if (!tipId) {
@@ -350,14 +349,13 @@ const TipDetails = () => {
                 tip.tipType
               )}`}
             >
-              {/* Conditionally render icon for premium/vip */}
-              {(tip.tipType?.toLowerCase() === "premium" ||
-                tip.tipType?.toLowerCase() === "vip") && (
+              {/* Conditionally render icon for gold/diamond */}
+              {(tip.tipType?.toLowerCase() === "gold" ||
+                tip.tipType?.toLowerCase() === "diamond") && (
                 <FiLock size={12} className="mr-1" />
               )}
               <span className="align-middle">{tip.tipType}</span>
             </div>
-            {/* END TIP TYPE DESIGN */}
           </div>
         </div>
       </div>

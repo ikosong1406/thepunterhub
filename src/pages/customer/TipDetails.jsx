@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Api from "../../components/Api"; // Assuming this path is correct
@@ -10,15 +10,11 @@ import {
   FiThumbsUp,
   FiThumbsDown,
   FiMessageSquare,
-  FiLock,
-  FiTrendingUp,
-  FiTrendingDown,
-  FiClock,
-  FiCalendar,
+  // Removed unused icons for cleaner imports
 } from "react-icons/fi";
 import { MdPushPin } from "react-icons/md";
 
-// --- Utility Functions (Copied/Modified from TipsHistoryMobile for consistency) ---
+// --- Utility Functions ---
 
 const getStatusColor = (status) => {
   if (status === "win") return "bg-[#18ffc8]/20 text-[#18ffc8]";
@@ -33,16 +29,41 @@ const getDirectionColor = (direction) => {
     : "bg-red-900/20 text-red-400";
 };
 
-const formatPostedAt = (dateString) => {
-  const options = {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  };
-  return new Date(dateString).toLocaleDateString(undefined, options);
+/**
+ * Formats a date string into a relative time string (e.g., "2 minutes ago").
+ * @param {string} dateString The ISO date string to format.
+ * @returns {string} The relative time string.
+ */
+const formatRelativeTime = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+
+  let interval = seconds / 31536000; // 60 * 60 * 24 * 365
+  if (interval > 1) {
+    return Math.floor(interval) + " years ago";
+  }
+  interval = seconds / 2592000; // 60 * 60 * 24 * 30
+  if (interval > 1) {
+    return Math.floor(interval) + " months ago";
+  }
+  interval = seconds / 86400; // 60 * 60 * 24
+  if (interval > 1) {
+    return Math.floor(interval) + " days ago";
+  }
+  interval = seconds / 3600; // 60 * 60
+  if (interval > 1) {
+    return Math.floor(interval) + " hours ago";
+  }
+  interval = seconds / 60;
+  if (interval > 1) {
+    return Math.floor(interval) + " minutes ago";
+  }
+  if (seconds < 5) return "just now";
+  return Math.floor(seconds) + " seconds ago";
 };
+
+// Removed formatPostedAt as it's replaced by formatRelativeTime
 
 // --- Tip Details Component ---
 
@@ -57,6 +78,25 @@ const TipDetails = () => {
   const [newComment, setNewComment] = useState("");
   const [user, setUser] = useState(null);
 
+  // Define fetchTipDetails using useCallback to prevent unnecessary re-creation
+  const fetchTipDetails = useCallback(async () => {
+    try {
+      const response = await axios.post(`${Api}/client/getTip`, { tipId });
+
+      if (response.data.status === "ok") {
+        setTip(response.data.data.tip);
+      } else {
+        throw new Error(
+          response.data.message || "Failed to fetch tip details."
+        );
+      }
+    } catch (err) {
+      console.error("Error refetching tip:", err);
+      // Don't set error state here if it's just a refetch after a successful load
+      // but log it.
+    }
+  }, [tipId]);
+
   useEffect(() => {
     if (!tipId) {
       setError("No Tip ID provided.");
@@ -64,7 +104,7 @@ const TipDetails = () => {
       return;
     }
 
-    const fetchTipDetails = async () => {
+    const initialFetch = async () => {
       setLoading(true);
       setError(null);
       try {
@@ -77,25 +117,21 @@ const TipDetails = () => {
         setUser(userResponse.data.data);
 
         // 2. Get Tip Details
-        const response = await axios.post(`${Api}/client/getTip`, { tipId });
+        await fetchTipDetails();
 
-        if (response.data.status === "ok") {
-          setTip(response.data.data.tip);
-        } else {
-          throw new Error(
-            response.data.message || "Failed to fetch tip details."
-          );
-        }
       } catch (err) {
         console.error(err);
-        setError(err.message || "An unexpected error occurred.");
+        // Only set the general error if the user fetch or initial tip fetch fails
+        if (err.response?.status !== 401) { // Ignore 401 if it's just user data failing
+             setError(err.message || "An unexpected error occurred during initial load.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTipDetails();
-  }, [tipId]);
+    initialFetch();
+  }, [tipId, fetchTipDetails]); // Added fetchTipDetails to the dependency array
 
   const handlePostComment = async () => {
     if (!newComment.trim()) return;
@@ -109,38 +145,18 @@ const TipDetails = () => {
       const response = await axios.post(`${Api}/client/comment`, {
         signalId: tipId,
         comment: newComment,
-        author: user.username || user.firstname, // Use username if available
+        author: user.username || user.firstname || "User", // Use a fallback
       });
 
       if (response.data.status === "ok") {
-        // Optimistically update comments or refetch data
         setNewComment("");
-        // A full re-fetch ensures all data (like comment counts) is fresh
-        // but for a smooth UX, an optimistic update is better. Let's re-fetch for accuracy.
+        // Re-fetch to update comments list and count
         await fetchTipDetails();
       } else {
         throw new Error(response.data.message || "Failed to post comment.");
       }
     } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const fetchTipDetails = async () => {
-    // This function is defined inside useEffect but is needed by handlePostComment too.
-    // Redefining it here and ensuring handlePostComment calls it.
-    try {
-      const response = await axios.post(`${Api}/client/getTip`, { tipId });
-
-      if (response.data.status === "ok") {
-        setTip(response.data.data.tip);
-      } else {
-        throw new Error(
-          response.data.message || "Failed to fetch tip details."
-        );
-      }
-    } catch (err) {
-      console.error("Error refetching tip:", err);
+      setError(err.message || "Error posting comment.");
     }
   };
 
@@ -221,7 +237,7 @@ const TipDetails = () => {
         </button>
       </div>
 
-      {/* Tip Card Section (Redesigned) */}
+      {/* Tip Card Section */}
       <div className="space-y-4">
         <div className="relative rounded-xl bg-[#162821] border border-[#376553]/30 p-4">
           {/* Pin Indicator */}
@@ -250,7 +266,8 @@ const TipDetails = () => {
                 </div>
               )}
               <p className="text-sm text-[#efefef]/70 mt-1">
-                {formatPostedAt(tip.createdAt)}
+                {/* UPDATED: Use formatRelativeTime */}
+                {formatRelativeTime(tip.createdAt)}
               </p>
             </div>
             <span
@@ -296,6 +313,24 @@ const TipDetails = () => {
                 <div className="text-sm">
                   <p className="text-[#efefef]/70">Total Odd</p>
                   <p>{tip.totalOdd}</p>
+                </div>
+                <div className="text-sm col-span-2">
+                  <p className="text-[#efefef]/70">Matches</p>
+                  {tip.matches?.length > 0 ? (
+                    tip.matches.map((match, i) => (
+                      <div
+                        key={i}
+                        className="flex justify-between items-center text-xs bg-[#0f1f1a] p-2 rounded mt-1"
+                      >
+                        <span>{match.teams}</span>
+                        <span className="text-[#18ffc8]">
+                          {match.prediction}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-500">No matches listed.</p>
+                  )}
                 </div>
               </>
             )}
@@ -391,7 +426,7 @@ const TipDetails = () => {
   );
 };
 
-// --- Helper Component (Unchanged) ---
+// --- Helper Component (Updated) ---
 
 const CommentCard = ({ comment }) => (
   <div className="bg-[#162821] border border-[#376553]/30 p-4 rounded-lg shadow-md">
@@ -400,7 +435,8 @@ const CommentCard = ({ comment }) => (
         {comment.user || "Anonymous User"}
       </p>
       <p className="text-xs text-[#efefef]/50">
-        {formatPostedAt(comment.createdAt)}
+        {/* UPDATED: Use formatRelativeTime */}
+        {formatRelativeTime(comment.createdAt)}
       </p>
     </div>
     <p className="text-sm text-[#efefef]/90">{comment.comment}</p>

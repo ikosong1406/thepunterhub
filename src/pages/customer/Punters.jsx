@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import localforage from "localforage";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -10,7 +10,8 @@ import {
   FaThumbtack,
   FaHistory,
   FaMoneyBillWave,
-} from "react-icons/fa";
+}
+from "react-icons/fa";
 import { FiThumbsUp, FiThumbsDown, FiChevronRight } from "react-icons/fi";
 import { AiOutlineMessage } from "react-icons/ai";
 import Api from "../../components/Api";
@@ -38,12 +39,11 @@ const PunterDetailsPage = () => {
   const [processingSubscription, setProcessingSubscription] = useState(false);
   const [expiryDate, setExpiryDate] = useState(null);
 
-  const formatPostedAt = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
+  // Formats a date string into a relative time string (e.g., "about 2 hours ago").
+  const formatRelativeTime = (dateString) => {
+    if (!dateString) return '';
+    return formatDistanceToNow(new Date(dateString), {
+      addSuffix: true
     });
   };
 
@@ -55,9 +55,9 @@ const PunterDetailsPage = () => {
   };
 
   const getDirectionColor = (direction) => {
-    return direction?.toLowerCase() === "buy"
-      ? "bg-green-900/20 text-green-400"
-      : "bg-red-900/20 text-red-400";
+    return direction?.toLowerCase() === "buy" ?
+      "bg-green-900/20 text-green-400" :
+      "bg-red-900/20 text-red-400";
   };
 
   const getInitials = (username) => {
@@ -77,17 +77,22 @@ const PunterDetailsPage = () => {
           if (likedSignals[signalId]) {
             s.thumbsUpCount -= 1;
             setLikedSignals((prev) => {
-              const newState = { ...prev };
+              const newState = { ...prev
+              };
               delete newState[signalId];
               return newState;
             });
           } else {
             s.thumbsUpCount = (s.thumbsUpCount || s.thumbsUp) + 1;
-            setLikedSignals((prev) => ({ ...prev, [signalId]: true }));
+            setLikedSignals((prev) => ({
+              ...prev,
+              [signalId]: true
+            }));
             if (dislikedSignals[signalId]) {
               s.thumbsDownCount = (s.thumbsDownCount || s.thumbsDown) - 1;
               setDislikedSignals((prev) => {
-                const newState = { ...prev };
+                const newState = { ...prev
+                };
                 delete newState[signalId];
                 return newState;
               });
@@ -97,17 +102,22 @@ const PunterDetailsPage = () => {
           if (dislikedSignals[signalId]) {
             s.thumbsDownCount = (s.thumbsDownCount || s.thumbsDown) - 1;
             setDislikedSignals((prev) => {
-              const newState = { ...prev };
+              const newState = { ...prev
+              };
               delete newState[signalId];
               return newState;
             });
           } else {
             s.thumbsDownCount = (s.thumbsDownCount || s.thumbsDown) + 1;
-            setDislikedSignals((prev) => ({ ...prev, [signalId]: true }));
+            setDislikedSignals((prev) => ({
+              ...prev,
+              [signalId]: true
+            }));
             if (likedSignals[signalId]) {
               s.thumbsUpCount = (s.thumbsUpCount || s.thumbsUp) - 1;
               setLikedSignals((prev) => {
-                const newState = { ...prev };
+                const newState = { ...prev
+                };
                 delete newState[signalId];
                 return newState;
               });
@@ -177,7 +187,9 @@ const PunterDetailsPage = () => {
           ...prevUser,
           balance: response.data.newBalance,
         }));
-        toast.success(response.data.message, { id: subscriptionToastId });
+        toast.success(response.data.message, {
+          id: subscriptionToastId
+        });
       } else {
         toast.error("Subscription failed. Please try again.", {
           id: subscriptionToastId,
@@ -186,8 +198,9 @@ const PunterDetailsPage = () => {
     } catch (err) {
       console.error("Subscription error:", err);
       toast.error(
-        err.response?.data?.message || "An error occurred during subscription.",
-        { id: subscriptionToastId }
+        err.response?.data?.message || "An error occurred during subscription.", {
+          id: subscriptionToastId
+        }
       );
     } finally {
       setProcessingSubscription(false);
@@ -195,8 +208,28 @@ const PunterDetailsPage = () => {
   };
 
   const navigateToTipDetails = (tipId) => {
-    navigate("/customer/tip", { state: { tipId } });
+    navigate("/customer/tip", {
+      state: {
+        tipId
+      }
+    });
   };
+
+  // Memoize the sorting logic: Pinned signals (for slider) and Unpinned signals (for the list)
+  const pinnedSignals = useMemo(() => {
+    return signals.filter((signal) => signal.isPinned);
+  }, [signals]);
+
+  const unpinnedSignals = useMemo(() => {
+    // 1. Filter out pinned signals
+    const unpinned = signals.filter((signal) => !signal.isPinned);
+
+    // 2. Sort unpinned signals from newest (largest createdAt date) to oldest
+    return unpinned.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+  }, [signals]);
+
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -211,7 +244,7 @@ const PunterDetailsPage = () => {
         const token = await localforage.getItem("token");
         let userResponse = null;
         let userData = null;
-        let planToSend = null; // Initialize plan holder
+        let planToSend = null;
 
         if (token) {
           userResponse = await axios.post(`${Api}/client/getUser`, {
@@ -228,7 +261,7 @@ const PunterDetailsPage = () => {
           setIsSubscribed(subResponse.data.isSubscribed);
 
           if (subResponse.data.isSubscribed) {
-            planToSend = subResponse.data.plan; // Get the active plan
+            planToSend = subResponse.data.plan;
             setActivePlanName(planToSend);
 
             const subDate = new Date(
@@ -238,40 +271,40 @@ const PunterDetailsPage = () => {
           }
         }
 
-        // --- 🔑 KEY UPDATE: Pass planToSend to getPunterdetails ---
+        // Get Punter details and signals
         const punterResponse = await axios.post(
-          `${Api}/client/getPunterdetails`,
-          {
+          `${Api}/client/getPunterdetails`, {
             punterId,
-            plan: planToSend, // Send the active plan name (will be null if not subscribed)
+            plan: planToSend,
           }
         );
-        // -----------------------------------------------------------
 
         const statsResponse = await axios.post(`${Api}/client/winloss`, {
           punterId,
         });
-        const { wins, losses } = statsResponse.data;
+        const {
+          wins,
+          losses
+        } = statsResponse.data;
         setWins(wins);
         setLosses(losses);
         setWinRate(
-          wins + losses > 0
-            ? `${((wins / (wins + losses)) * 100).toFixed(0)}%`
-            : "0%"
+          wins + losses > 0 ?
+          `${((wins / (wins + losses)) * 100).toFixed(0)}%` :
+          "0%"
         );
 
         const fetchedSignals = punterResponse.data.data.signals.map((s) => {
           const totalComments = s.comments?.length || 0;
           const topComment =
-            totalComments > 0
-              ? {
-                  user:
-                    s.comments[0].user?.username ||
-                    s.comments[0].user ||
-                    "User",
-                  comment: s.comments[0].comment,
-                }
-              : null;
+            totalComments > 0 ?
+            {
+              user: s.comments[0].user?.username ||
+                s.comments[0].user ||
+                "User",
+              comment: s.comments[0].comment,
+            } :
+            null;
 
           return {
             ...s,
@@ -288,8 +321,7 @@ const PunterDetailsPage = () => {
 
         if (userData?._id) {
           const reactionsResponse = await axios.post(
-            `${Api}/client/getReaction`,
-            {
+            `${Api}/client/getReaction`, {
               userId: userData._id,
               signalIds: fetchedSignals.map((s) => s._id),
             }
@@ -342,10 +374,6 @@ const PunterDetailsPage = () => {
     );
   }
 
-  const pinnedSignals = signals.filter((signal) => signal.isPinned);
-  const unpinnedSignals = signals.filter((signal) => !signal.isPinned);
-  const sortedSignals = [...pinnedSignals, ...unpinnedSignals];
-
   const sliderSettings = {
     dots: true,
     infinite: pinnedSignals.length > 1,
@@ -389,7 +417,7 @@ const PunterDetailsPage = () => {
                 </div>
               )}
               <p className="text-sm text-[#efefef]/70 mt-1">
-                {formatPostedAt(signal.createdAt)}
+                {formatRelativeTime(signal.createdAt)}
               </p>
             </div>
             <span
@@ -552,7 +580,8 @@ const PunterDetailsPage = () => {
   const pricingPlans = punter.pricingPlans || {};
 
   return (
-    <div className="min-h-screen bg-[#09100d] text-white">
+    // min-h-screen, flex, and flex-col for the full-screen container
+    <div className="min-h-screen bg-[#09100d] text-white flex flex-col">
       <Toaster />
       <div className="p-4 border-b border-[#2a3a34] flex items-center">
         <button
@@ -563,7 +592,9 @@ const PunterDetailsPage = () => {
         </button>
         <h1 className="text-xl font-bold">Punter Details</h1>
       </div>
-      <div className="p-6">
+
+      {/* FIXED CONTENT AREA: Flex-grow-0 ensures this area doesn't take up extra space */}
+      <div className="p-6 flex-grow-0">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center">
             <div className="relative mr-4">
@@ -624,6 +655,10 @@ const PunterDetailsPage = () => {
             </Slider>
           </div>
         )}
+      </div>
+
+      {/* SCROLLABLE CONTENT AREA: Flex-grow-1 ensures this area fills the remaining space */}
+      <div className="flex-grow overflow-y-auto p-6 pt-0">
         <div className="mb-6">
           {isSubscribed ? (
             <>
@@ -638,13 +673,14 @@ const PunterDetailsPage = () => {
                 All Signals
               </h3>
               <div className="space-y-3">
-                {sortedSignals.length > 0 ? (
-                  sortedSignals.map((signal) => (
+                {/* Now only contains UNPINNED signals, sorted by newest */}
+                {unpinnedSignals.length > 0 ? (
+                  unpinnedSignals.map((signal) => (
                     <div key={signal._id}>{renderSignalCard(signal)}</div>
                   ))
                 ) : (
                   <div className="text-center text-gray-400">
-                    No signals available.
+                    No unpinned signals available.
                   </div>
                 )}
               </div>

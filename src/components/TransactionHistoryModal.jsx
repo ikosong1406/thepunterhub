@@ -144,7 +144,6 @@ const TransactionHistoryModal = ({ user, onClose }) => {
                         className={`font-bold`}
                         style={{ color: isPositiveTransaction(tx.type) ? '#18ffc8' : '#f57cff' }}
                       >
-                        {isPositiveTransaction(tx.type) ? '+' : '-'}
                         {parseFloat(tx.amount).toFixed(1)} coins
                       </p>
                       <p

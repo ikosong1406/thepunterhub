@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import localforage from "localforage";
 import axios from "axios";
 import { FaFootballBall, FaChartLine } from "react-icons/fa";
-import { FiThumbsUp, FiThumbsDown } from "react-icons/fi";
+import { FiThumbsUp, FiThumbsDown, FiChevronRight } from "react-icons/fi";
+import { AiOutlineMessage } from "react-icons/ai";
 import Header from "../customer/Header";
 import Api from "../../components/Api";
 
@@ -42,39 +43,56 @@ const FeedPage = () => {
     fetchUserData();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      const fetchAllFeed = async () => {
-        setLoading(true);
-        try {
-          const feedResponse = await axios.post(`${Api}/client/getFeed`, {
-            userId: user._id,
-          });
-          // Set the data directly without sorting
-          setAllFeedData(feedResponse.data.data);
+ useEffect(() => {
+  if (!user) return;
 
-          const signalIds = feedResponse.data.data.map((s) => s._id);
-          const reactionsResponse = await axios.post(
-            `${Api}/client/getReaction`,
-            {
-              userId: user._id,
-              signalIds: signalIds,
-            }
-          );
-          setLikedSignals(reactionsResponse.data.likedSignals);
-          setDislikedSignals(reactionsResponse.data.dislikedSignals);
-        } catch (error) {
-          console.error("Error fetching feed data:", error);
-          setAllFeedData([]);
-          setLikedSignals({});
-          setDislikedSignals({});
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchAllFeed();
+  const fetchAllFeed = async () => {
+    setLoading(true);
+    try {
+      const feedResponse = await axios.post(`${Api}/client/getFeed`, {
+        userId: user._id,
+      });
+
+      // ✅ Process feed to include totalComments and topComment
+      const processedFeed = (feedResponse.data?.data || []).map((item) => {
+        const comments = item.comments || [];
+        const totalComments = comments.length;
+        const topComment =
+          totalComments > 0 ? comments[comments.length - 1] : null; // latest comment
+        return { ...item, totalComments, topComment };
+      });
+
+      setAllFeedData(processedFeed);
+
+      // Fetch reactions
+      const signalIds = processedFeed.map((s) => s._id);
+      const reactionsResponse = await axios.post(
+        `${Api}/client/getReaction`,
+        { userId: user._id, signalIds }
+      );
+
+      setLikedSignals(reactionsResponse.data.likedSignals);
+      setDislikedSignals(reactionsResponse.data.dislikedSignals);
+    } catch (error) {
+      console.error("Error fetching feed data:", error);
+      setAllFeedData([]);
+      setLikedSignals({});
+      setDislikedSignals({});
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
+
+  // Initial fetch
+  fetchAllFeed();
+
+  // ✅ Auto refresh every 30 seconds
+  const interval = setInterval(() => {
+    fetchAllFeed();
+  }, 30000);
+
+  return () => clearInterval(interval);
+}, [user]);
 
   const handleThumbsClick = async (signalId, type) => {
     if (!user) {
@@ -183,6 +201,10 @@ const FeedPage = () => {
     navigate(`/customer/punters`, { state: { punterId: punterId } });
   };
 
+  const navigateToTipDetails = (tipId) => {
+    navigate("/customer/tip", { state: { tipId } });
+  };
+
   const renderSportTip = (tip) => (
     <div
       key={tip._id}
@@ -222,9 +244,9 @@ const FeedPage = () => {
                 key={i}
                 className="flex justify-between items-center text-xs bg-[#0f1f1a] p-2 rounded mt-1"
               >
-                <span>{match.team}</span>
+                <span>{match.teams}</span>
                 <span className="text-[#18ffc8]">
-                  {match.prediction} - {match.odd}
+                  {match.prediction}
                 </span>
               </div>
             ))
@@ -280,7 +302,61 @@ const FeedPage = () => {
             <FiThumbsDown size={20} />
             <span className="text-sm">{tip.thumbsDown || 0}</span>
           </button>
+          <div
+            className="flex items-center space-x-1 text-[#fea92a] cursor-pointer"
+            onClick={() => navigateToTipDetails(signal._id)}
+          >
+            <AiOutlineMessage size={16} />
+            <span className="text-sm">{tip.totalComments || 0}</span>
+          </div>
         </div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-[#376553]/30">
+        {tip.topComment ? (
+          <>
+            <div className="text-sm mb-2 p-2 bg-[#376553]/20 rounded-lg">
+              <p className="font-bold text-[#fea92a] text-xs">
+                {tip.topComment.user}
+              </p>
+              <p className="text-[#efefef]/90 line-clamp-2">
+                {tip.topComment.comment}
+              </p>
+            </div>
+            {tip.totalComments > 1 && (
+              <button
+                onClick={() => navigateToTipDetails(tip._id)}
+                className="text-xs font-medium text-[#18ffc8] hover:text-[#18ffc8]/80 flex items-center transition"
+              >
+                {`See ${tip.totalComments - 1} more comment${
+                  tip.totalComments - 1 !== 1 ? "s" : ""
+                }`}
+                <FiChevronRight size={14} className="ml-1" />
+              </button>
+            )}
+            {tip.totalComments === 1 && (
+              <button
+                onClick={() => navigateToTipDetails(tip._id)}
+                className="text-xs font-medium text-[#18ffc8] hover:text-[#18ffc8]/80 flex items-center transition"
+              >
+                View Tip Details
+                <FiChevronRight size={14} className="ml-1" />
+              </button>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col items-start space-y-2">
+            <p className="text-sm text-[#efefef]/70">
+              Be the first to comment on this tip!
+            </p>
+            <button
+              onClick={() => navigateToTipDetails(tip._id)}
+              className="w-full p-2 text-sm font-medium rounded-md bg-[#376553]/50 text-[#efefef] hover:bg-[#376553] flex justify-between items-center transition"
+            >
+              Drop a comment...
+              <FiChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -371,7 +447,61 @@ const FeedPage = () => {
             <FiThumbsDown size={20} />
             <span className="text-sm">{signal.thumbsDown || 0}</span>
           </button>
+          <div
+            className="flex items-center space-x-1 text-[#fea92a] cursor-pointer"
+            onClick={() => navigateToTipDetails(signal._id)}
+          >
+            <AiOutlineMessage size={16} />
+            <span className="text-sm">{signal.totalComments || 0}</span>
+          </div>
         </div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-[#376553]/30">
+        {signal.topComment ? (
+          <>
+            <div className="text-sm mb-2 p-2 bg-[#376553]/20 rounded-lg">
+              <p className="font-bold text-[#fea92a] text-xs">
+                {signal.topComment.user}
+              </p>
+              <p className="text-[#efefef]/90 line-clamp-2">
+                {signal.topComment.comment}
+              </p>
+            </div>
+            {signal.totalComments > 1 && (
+              <button
+                onClick={() => navigateToTipDetails(signal._id)}
+                className="text-xs font-medium text-[#18ffc8] hover:text-[#18ffc8]/80 flex items-center transition"
+              >
+                {`See ${signal.totalComments - 1} more comment${
+                  signal.totalComments - 1 !== 1 ? "s" : ""
+                }`}
+                <FiChevronRight size={14} className="ml-1" />
+              </button>
+            )}
+            {signal.totalComments === 1 && (
+              <button
+                onClick={() => navigateToTipDetails(signal._id)}
+                className="text-xs font-medium text-[#18ffc8] hover:text-[#18ffc8]/80 flex items-center transition"
+              >
+                View Tip Details
+                <FiChevronRight size={14} className="ml-1" />
+              </button>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col items-start space-y-2">
+            <p className="text-sm text-[#efefef]/70">
+              Be the first to comment on this tip!
+            </p>
+            <button
+              onClick={() => navigateToTipDetails(signal._id)}
+              className="w-full p-2 text-sm font-medium rounded-md bg-[#376553]/50 text-[#efefef] hover:bg-[#376553] flex justify-between items-center transition"
+            >
+              Drop a comment...
+              <FiChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

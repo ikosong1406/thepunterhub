@@ -20,9 +20,9 @@ const CreateTipPage = () => {
     { key: "sports", name: "Sports Betting", icon: <FaFutbol /> },
     { key: "trading", name: "Trading Signal", icon: <FaChartLine /> },
   ];
-  
+
   // NEW STATE: Tip Type (silver, gold, diamond)
-  const [tipType, setTipType] = useState("silver"); 
+  const [tipType, setTipType] = useState("silver");
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -111,13 +111,13 @@ const CreateTipPage = () => {
         setIsSubmitting(false);
         return; // Stop the function execution
       }
-      
+
       let signalData = {};
 
       if (activeCategory === "sports") {
         // Ensure matches is an array of objects
         const formattedMatches = sportsForm.matches.map((match) => ({
-          team: match.team,
+          teams: match.teams,
           prediction: match.prediction,
         }));
 
@@ -180,7 +180,7 @@ const CreateTipPage = () => {
           type: "forex",
         });
       }
-      
+
       setTipType("silver"); // Clear the selected tip type to default
 
       // Show success message
@@ -606,7 +606,7 @@ const CreateTipPage = () => {
             </div>
           </div>
         )}
-        
+
         {/* TIP TYPE SELECTION: Silver, Gold, Diamond (New Section) */}
         <div className="mt-6">
           <label className="block text-sm mb-2 text-[#efefef]/70">
