@@ -141,8 +141,7 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
       const response = await axios.post(`${Api}/client/withdrawal`, data);
 
       setIsSuccess(true);
-      onWithdrawSuccess(response.data.newBalance);
-      toast.success("Withdrawal successful! The modal will close shortly.");
+      toast.success("Withdrawal successful! Refresh to see updated balance.");
 
       setTimeout(() => {
         onClose();
