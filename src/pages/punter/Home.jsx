@@ -7,6 +7,7 @@ import Api from "../../components/Api";
 import localforage from "localforage";
 import Colors from "../../components/colors";
 import logoImage from "../../assets/logo2.png";
+import { FaCoins } from "react-icons/fa";
 
 const PunterDashboard = () => {
   // State for fetching and displaying data
@@ -70,7 +71,7 @@ const PunterDashboard = () => {
             title: "Total Earnings",
             value: `${totalEarnings}`,
             change: "+18%",
-            icon: <FiDollarSign className="text-xl" />,
+            icon: <FaCoins className="text-xl" />,
           },
           {
             title: "Win Rate",
