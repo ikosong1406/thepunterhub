@@ -30,11 +30,11 @@ export default function PunterLayout() {
       name: "History",
       icon: <FaHistory size={20} />,
     },
-    // {
-    //   path: "/punter/daily",
-    //   name: "Daily",
-    //   icon: <IoAlarm size={20} />,
-    // },
+    {
+      path: "/punter/daily",
+      name: "Daily",
+      icon: <IoAlarm size={20} />,
+    },
     {
       path: "/punter/chat",
       name: "Chat",

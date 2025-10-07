@@ -20,15 +20,16 @@ import Header from "./Header";
 const MyTipsButton = ({ tipCount, onClick }) => (
   <button
     onClick={onClick}
-    className="relative p-2 rounded-full bg-[#162821] text-[#fea92a] hover:bg-[#376553] transition-colors duration-200 border border-[#376553] ml-4"
+    className="relative p-2 rounded-xl bg-[#162821] text-[#fea92a] hover:bg-[#376553] transition-colors duration-200 border border-[#376553] ml-4 flex items-center space-x-1"
     aria-label="Go to My Purchased Tips Page"
   >
     <FaBookmark className="text-xl" />
-    {tipCount > 0 && (
+    {/* {tipCount > 0 && (
       <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-[#18ffc8] text-[#09100d] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-[#09100d]">
         {tipCount}
       </span>
-    )}
+    )} */}
+    <span className="text-xs">My Tips</span>
   </button>
 );
 
@@ -177,7 +178,7 @@ const DailyBread = () => {
   const categories = [
     { id: "slice", name: "Slice", icon: <FaStar />, description: "Single Tip" },
     { id: "loaf", name: "Loaf", icon: <FaFire />, description: "Bundle Tip" },
-    { id: "crust", name: "Crust", icon: <FaGift />, description: "Free Tip" },
+    // { id: "crust", name: "Crust", icon: <FaGift />, description: "Free Tip" },
   ];
 
   const subCategories = [
@@ -231,7 +232,7 @@ const DailyBread = () => {
   return (
     <div className="min-h-screen bg-[#09100d] text-[#efefef] p-4 pb-10">
       <Header />
-      
+
       {/* Fixed Navigation Container */}
       <div className="sticky top-0 z-10 bg-[#09100d] pb-4">
         {/* Header - Daily Bread Title and My Tips Icon */}
@@ -246,257 +247,265 @@ const DailyBread = () => {
         </header>
 
         {/* Primary Category Navigation */}
-        <div className="flex justify-center mb-3">
-          <div className="bg-[#162821] rounded-xl p-1 flex space-x-1 border border-[#376553] w-full max-w-lg">
+        <div className="flex justify-center mb-7 mt-8">
+          <div className="bg-[#162821] rounded-xl p-1 flex space-x-1 border border-[#376553] w-[50%] justify-between">
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`flex-1 flex items-center justify-center px-2 py-3 rounded-lg transition-all duration-200 text-center ${
+                className={`flex-1 flex items-center px-4 md:px-6 py-3 rounded-lg transition-all duration-200 text-sm md:text-base ${
                   activeCategory === category.id
                     ? "bg-[#18ffc8] text-[#09100d] shadow-lg"
                     : "text-[#efefef] hover:bg-[#376553] hover:text-[#efefef]"
                 }`}
               >
-                <span className="mr-2 text-xl">{category.icon}</span>
-                <div className="text-left hidden sm:block">
-                  <div className="font-semibold text-sm">{category.name}</div>
-                  <div className="text-xs opacity-80">{category.description}</div>
+                <span className="mr-2">{category.icon}</span>
+                <div className="text-left whitespace-nowrap">
+                  <div className="font-semibold">{category.name}</div>
                 </div>
-                {/* Mobile-only name */}
-                <div className="font-semibold text-sm sm:hidden">{category.name}</div>
               </button>
             ))}
           </div>
         </div>
 
         {/* Sub Category Navigation */}
-        <div className="flex justify-center">
-          <div className="bg-[#162821] rounded-xl p-1 flex space-x-1 border border-[#376553] w-full max-w-sm">
+        <div className="flex mb-6 w-full justify-between">
+          {/* The container for subcategories now uses w-full and flex to distribute space */}
+          <div className="bg-[#162821] rounded-xl p-1 flex w-full justify-between space-x-1 border border-[#376553]">
             {subCategories.map((subCategory) => (
               <button
                 key={subCategory.id}
                 onClick={() => setActiveSubCategory(subCategory.id)}
-                className={`flex-1 flex items-center justify-center px-6 py-2 rounded-lg transition-all duration-200 ${
+                // Added 'flex-1' here to make the buttons take equal width
+                className={`flex-1 flex items-center justify-center px-2 py-2 rounded-lg transition-all duration-200 text-sm md:text-base ${
                   activeSubCategory === subCategory.id
                     ? "bg-[#fea92a] text-[#09100d] shadow-md"
                     : "text-[#efefef] hover:bg-[#376553]"
                 }`}
               >
-                <span className="mr-2 text-lg">{subCategory.icon}</span>
-                <span className="font-medium">{subCategory.name}</span>
+                {/* Adjusted spacing and centering for content inside the button */}
+                <span className="mr-2">{subCategory.icon}</span>
+                <span className="font-medium whitespace-nowrap">
+                  {subCategory.name}
+                </span>
               </button>
             ))}
           </div>
         </div>
       </div>
-      {/* End Fixed Navigation Container */}
-      <hr className="border-t border-[#376553] mb-8" />
-
 
       {/* Tips Grid (Scrollable Content) */}
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {tips.map((tip) => {
-            const directionDetails = tip.type === 'trading' ? getDirectionDetails(tip.direction) : null;
-            
+            const directionDetails =
+              tip.type === "trading"
+                ? getDirectionDetails(tip.direction)
+                : null;
+
             return (
-            <div
-              key={tip.id}
-              className="bg-[#162821] rounded-xl overflow-hidden border border-[#376553] hover:border-[#18ffc8] transition-all duration-300 group"
-            >
-              {/* Punter Header */}
-              <div className="bg-[#376553] p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-[#855391] rounded-full flex items-center justify-center">
-                      <FaUser className="text-[#efefef]" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-[#efefef]">
-                        {tip.punterName}
-                      </h3>
-                      <div className="flex items-center text-xs text-[#fea92a]">
-                        <FaStar className="mr-1" />
-                        <span>{tip.rating}</span>
+              <div
+                key={tip.id}
+                className="bg-[#162821] rounded-xl overflow-hidden border border-[#376553] hover:border-[#18ffc8] transition-all duration-300 group"
+              >
+                {/* Punter Header */}
+                <div className="bg-[#376553] p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-[#855391] rounded-full flex items-center justify-center">
+                        <FaUser className="text-[#efefef]" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-[#efefef]">
+                          {tip.punterName}
+                        </h3>
+                        <div className="flex items-center text-xs text-[#fea92a]">
+                          <FaStar className="mr-1" />
+                          <span>{tip.rating}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Tip Content */}
-              <div className="p-4">
-                <p className="text-[#efefef] mb-4 leading-relaxed text-sm italic">
-                  "{tip.description}"
-                </p>
+                {/* Tip Content */}
+                <div className="p-4">
+                  <p className="text-[#efefef] mb-4 leading-relaxed text-sm italic">
+                    "{tip.description}"
+                  </p>
 
-                {/* Details Section - Simplified */}
-                <div className="bg-[#09100d] rounded-lg p-3 mb-4 border border-[#376553]">
-                  {tip.type === "sports" && (
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="text-[#376553] text-xs font-medium">
-                          Potential Max Odd
-                        </div>
-                        <div className="text-xl font-bold text-[#18ffc8]">
-                          {tip.bookingCodes?.[0]?.odd || "N/A"}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                         <div className="text-[#376553] text-xs font-medium">
-                          {tip.type === "sports" ? "Matches" : "Timeframe"}
-                        </div>
-                        <div className="text-[#efefef] text-sm mt-1 font-medium">
-                          {tip.type === "sports"
-                            ? `${tip.matches?.length} Event(s)`
-                            : tip.timeframe}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {tip.type === "trading" && directionDetails && (
-                     <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="text-[#376553] text-xs font-medium mr-4">
-                          Direction
-                        </div>
-                        <div className={`flex items-center text-xl font-bold ${directionDetails.color}`}>
-                          {directionDetails.icon}
-                          {directionDetails.text}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                         <div className="text-[#376553] text-xs font-medium">
-                          Timeframe
-                        </div>
-                        <div className="text-[#efefef] text-sm mt-1 font-medium">
-                          {tip.timeframe}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Purchased Content (Unchanged) */}
-                {purchasedTips[tip.id] && (
-                  <div className="bg-[#09100d] rounded-lg p-4 mb-4 border border-[#18ffc8]">
-                    <div className="flex items-center mb-3">
-                      <FaCheck className="text-[#18ffc8] mr-2" />
-                      <span className="text-[#18ffc8] font-semibold">
-                        Purchased Details
-                      </span>
-                    </div>
-
-                    {tip.type === "sports" ? (
-                      <div>
-                        <h4 className="text-[#fea92a] font-semibold mb-2">
-                          Booking Codes:
-                        </h4>
-                        {tip.bookingCodes?.map((code, index) => (
-                          <div
-                            key={index}
-                            className="bg-[#162821] rounded p-3 mb-2"
-                          >
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-[#efefef] font-medium">
-                                {code.company}
-                              </span>
-                              <span className="text-[#18ffc8] font-bold">
-                                Odd: {code.odd}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <code className="text-[#f57cff] bg-[#09100d] px-2 py-1 rounded text-sm overflow-auto">
-                                {code.code}
-                              </code>
-                              <button
-                                onClick={() => copyToClipboard(code.code)}
-                                className="text-[#376553] hover:text-[#18ffc8] transition-colors"
-                              >
-                                <FaCopy />
-                              </button>
-                            </div>
+                  {/* Details Section - Simplified */}
+                  <div className="bg-[#09100d] rounded-lg p-3 mb-4 border border-[#376553]">
+                    {tip.type === "sports" && (
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-[#376553] text-xs font-medium">
+                            Potential Max Odd
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div>
-                        <h4 className="text-[#fea92a] font-semibold mb-2">
-                          Trading Signals:
-                        </h4>
-                        {tip.assets?.map((asset, index) => (
-                          <div
-                            key={index}
-                            className="bg-[#162821] rounded p-3 mb-2"
-                          >
-                            <div className="text-[#efefef] font-medium mb-2 border-b border-[#376553] pb-2">
-                              {asset.symbol}
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 text-sm pt-2">
-                              <div className="text-[#18ffc8] text-center">
-                                <div className="text-xs text-[#376553]">Buy</div>
-                                <div className="font-bold">{asset.buy}</div>
-                              </div>
-                              <div className="text-[#f57cff] text-center">
-                                <div className="text-xs text-[#376553]">Sell</div>
-                                <div className="font-bold">{asset.sell}</div>
-                              </div>
-                              <div className="text-[#fea92a] text-center">
-                                <div className="text-xs text-[#376553]">
-                                  Stop Loss
-                                </div>
-                                <div className="font-bold">
-                                  {asset.stopLoss}
-                                </div>
-                              </div>
-                            </div>
+                          <div className="text-xl font-bold text-[#18ffc8]">
+                            {tip.bookingCodes?.[0]?.odd || "N/A"}
                           </div>
-                        ))}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[#376553] text-xs font-medium">
+                            {tip.type === "sports" ? "Matches" : "Timeframe"}
+                          </div>
+                          <div className="text-[#efefef] text-sm mt-1 font-medium">
+                            {tip.type === "sports"
+                              ? `${tip.matches?.length} Event(s)`
+                              : tip.timeframe}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {tip.type === "trading" && directionDetails && (
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="text-[#376553] text-xs font-medium mr-4">
+                            Direction
+                          </div>
+                          <div
+                            className={`flex items-center text-xl font-bold ${directionDetails.color}`}
+                          >
+                            {directionDetails.icon}
+                            {directionDetails.text}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[#376553] text-xs font-medium">
+                            Timeframe
+                          </div>
+                          <div className="text-[#efefef] text-sm mt-1 font-medium">
+                            {tip.timeframe}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
 
-                {/* Price & Buy Button (Unchanged) */}
-                <div className="flex items-center justify-between pt-2 border-t border-[#376553]">
-                  <div>
-                    <div className="text-[#376553] text-xs font-medium">
-                      Price
-                    </div>
-                    <div
-                      className={`text-xl font-bold ${
-                        tip.price === 0 ? "text-[#f57cff]" : "text-[#fea92a]"
-                      }`}
-                    >
-                      {tip.price === 0 ? "FREE" : formatPrice(tip.price)}
-                    </div>
-                  </div>
+                  {/* Purchased Content (Unchanged) */}
+                  {purchasedTips[tip.id] && (
+                    <div className="bg-[#09100d] rounded-lg p-4 mb-4 border border-[#18ffc8]">
+                      <div className="flex items-center mb-3">
+                        <FaCheck className="text-[#18ffc8] mr-2" />
+                        <span className="text-[#18ffc8] font-semibold">
+                          Purchased Details
+                        </span>
+                      </div>
 
-                  {!purchasedTips[tip.id] ? (
-                    <button
-                      onClick={() => handleBuyTip(tip.id)}
-                      className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${
-                        tip.price === 0
-                          ? "bg-[#855391] hover:bg-[#f57cff] text-[#efefef]"
-                          : "bg-[#18ffc8] hover:bg-[#fea92a] text-[#09100d]"
-                      }`}
-                    >
-                      <FaShoppingCart />
-                      <span className="font-bold">
-                        {tip.price === 0 ? "Get Free" : "Buy Now"}
-                      </span>
-                    </button>
-                  ) : (
-                    <div className="text-[#18ffc8] font-semibold flex items-center">
-                      <FaCheck className="mr-1" />
-                      View Details
+                      {tip.type === "sports" ? (
+                        <div>
+                          <h4 className="text-[#fea92a] font-semibold mb-2">
+                            Booking Codes:
+                          </h4>
+                          {tip.bookingCodes?.map((code, index) => (
+                            <div
+                              key={index}
+                              className="bg-[#162821] rounded p-3 mb-2"
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[#efefef] font-medium">
+                                  {code.company}
+                                </span>
+                                <span className="text-[#18ffc8] font-bold">
+                                  Odd: {code.odd}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <code className="text-[#f57cff] bg-[#09100d] px-2 py-1 rounded text-sm overflow-auto">
+                                  {code.code}
+                                </code>
+                                <button
+                                  onClick={() => copyToClipboard(code.code)}
+                                  className="text-[#376553] hover:text-[#18ffc8] transition-colors"
+                                >
+                                  <FaCopy />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div>
+                          <h4 className="text-[#fea92a] font-semibold mb-2">
+                            Trading Signals:
+                          </h4>
+                          {tip.assets?.map((asset, index) => (
+                            <div
+                              key={index}
+                              className="bg-[#162821] rounded p-3 mb-2"
+                            >
+                              <div className="text-[#efefef] font-medium mb-2 border-b border-[#376553] pb-2">
+                                {asset.symbol}
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 text-sm pt-2">
+                                <div className="text-[#18ffc8] text-center">
+                                  <div className="text-xs text-[#376553]">
+                                    Buy
+                                  </div>
+                                  <div className="font-bold">{asset.buy}</div>
+                                </div>
+                                <div className="text-[#f57cff] text-center">
+                                  <div className="text-xs text-[#376553]">
+                                    Sell
+                                  </div>
+                                  <div className="font-bold">{asset.sell}</div>
+                                </div>
+                                <div className="text-[#fea92a] text-center">
+                                  <div className="text-xs text-[#376553]">
+                                    Stop Loss
+                                  </div>
+                                  <div className="font-bold">
+                                    {asset.stopLoss}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
+
+                  {/* Price & Buy Button (Unchanged) */}
+                  <div className="flex items-center justify-between pt-2 border-t border-[#376553]">
+                    <div>
+                      <div className="text-[#376553] text-xs font-medium">
+                        Price
+                      </div>
+                      <div
+                        className={`text-xl font-bold ${
+                          tip.price === 0 ? "text-[#f57cff]" : "text-[#fea92a]"
+                        }`}
+                      >
+                        {tip.price === 0 ? "FREE" : formatPrice(tip.price)}
+                      </div>
+                    </div>
+
+                    {!purchasedTips[tip.id] ? (
+                      <button
+                        onClick={() => handleBuyTip(tip.id)}
+                        className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-2 ${
+                          tip.price === 0
+                            ? "bg-[#855391] hover:bg-[#f57cff] text-[#efefef]"
+                            : "bg-[#18ffc8] hover:bg-[#fea92a] text-[#09100d]"
+                        }`}
+                      >
+                        <FaShoppingCart />
+                        <span className="font-bold">
+                          {tip.price === 0 ? "Get Free" : "Buy Now"}
+                        </span>
+                      </button>
+                    ) : (
+                      <div className="text-[#18ffc8] font-semibold flex items-center">
+                        <FaCheck className="mr-1" />
+                        View Details
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
+            );
           })}
         </div>
       </div>
@@ -505,7 +514,9 @@ const DailyBread = () => {
       {tips.length === 0 && (
         <div className="text-center py-20">
           <div className="text-6xl mb-4 text-[#376553]">🍞</div>
-          <h3 className="text-xl text-[#efefef] mb-2">No tips available for this category.</h3>
+          <h3 className="text-xl text-[#efefef] mb-2">
+            No tips available for this category.
+          </h3>
           <p className="text-[#376553]">Check back later for fresh insights!</p>
         </div>
       )}

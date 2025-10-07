@@ -12,16 +12,16 @@ import {
   FaTimesCircle,
   FaMoneyBillWave,
   FaClock,
+  FaSpinner, // Added for loading state
 } from "react-icons/fa";
 import { FiPlus } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // 👈 New Import
+import localforage from "localforage"; // 👈 New Import
+import Api from "../../components/Api";
 
 // NOTE: Assuming Header component exists in "./Header"
-// If it doesn't, you'll need to remove the import and usage.
 import Header from "./Header";
-
-// --- Mock Current User (Focus: Elite Punter Pro) ---
-const CURRENT_USER_PUNTER_NAME = "Elite Punter Pro";
 
 // --- Mock Toast for Demo ---
 const mockToast = (message, type = "info") => {
@@ -29,13 +29,18 @@ const mockToast = (message, type = "info") => {
   alert(`[Notification]: ${message}`); // Use alert for a simple browser demo
 };
 
-// --- Tip Countdown Component ---
+// =========================================================
+// --- Tip Countdown Component (NO CHANGE) ---
+// =========================================================
 const TipCountdown = ({ expiryTime }) => {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
+    // Note: expiryTime can be a date string from the API, convert it.
+    const numericExpiryTime = new Date(expiryTime).getTime();
+
     const calculateTimeLeft = () => {
-      const difference = expiryTime - Date.now();
+      const difference = numericExpiryTime - Date.now();
       return difference > 0 ? difference : 0;
     };
 
@@ -78,11 +83,18 @@ const TipCountdown = ({ expiryTime }) => {
   );
 };
 
-// --- Modal Component (Punter Management) ---
+// =========================================================
+// --- Modal Component (Punter Management) (Minor Change) ---
+// =========================================================
 const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
-  const isExpired = useMemo(
-    () => tip.expiryTime < Date.now(),
+  // Ensure expiryTime is a number for comparison
+  const expiryTimestamp = useMemo(
+    () => new Date(tip.expiryTime).getTime(),
     [tip.expiryTime]
+  );
+  const isExpired = useMemo(
+    () => expiryTimestamp < Date.now(),
+    [expiryTimestamp]
   );
 
   const handleStatusChange = (newStatus) => {
@@ -99,7 +111,7 @@ const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
       <div className="bg-[#09100d] rounded-xl border border-[#18ffc8] w-full max-w-md p-6 shadow-2xl">
         <div className="flex justify-between items-start mb-4 border-b border-[#376553] pb-3">
           <h2 className="text-2xl font-bold text-[#18ffc8]">
-            Manage Tip #{tip.id}
+            Manage Tip
           </h2>
           <button
             onClick={onClose}
@@ -136,7 +148,7 @@ const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
                 tip.status === "Active" ? "text-[#18ffc8]" : "text-[#f57cff]"
               }`}
             >
-              {tip.status}
+              {tip.status.charAt(0).toUpperCase() + tip.status.slice(1)}
             </span>
           </div>
         </div>
@@ -152,20 +164,24 @@ const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
             <button
               onClick={() =>
                 handleStatusChange(
-                  tip.status === "Active" ? "Deactivated" : "Active"
+                  tip.status.toLowerCase() === "active"
+                    ? "deactivated"
+                    : "active"
                 )
               }
               className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all duration-200 text-[#09100d] ${
-                tip.status === "Active"
+                tip.status.toLowerCase() === "active"
                   ? "bg-[#f57cff] hover:bg-[#855391]"
                   : "bg-[#18ffc8] hover:bg-[#376553] text-[#09100d]"
               }`}
               disabled={isExpired}
             >
-              {tip.status === "Active" ? "Deactivate" : "Activate"}
+              {tip.status.toLowerCase() === "active"
+                ? "Deactivate"
+                : "Activate"}
             </button>
             <button
-              onClick={() => handleStatusChange("Settled")}
+              onClick={() => handleStatusChange("settled")}
               className="flex-1 px-4 py-2 rounded-lg font-semibold text-[#09100d] bg-[#fea92a] hover:bg-yellow-600 transition-all duration-200"
               disabled={isExpired}
             >
@@ -174,61 +190,65 @@ const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
           </div>
 
           {/* REDEEM BUTTON (The Target Experience) */}
-          {isExpired && tip.price > 0 && tip.status !== "Redeemed" && (
-            <button
-              onClick={() => onRedeemSales(tip.id, totalSales)}
-              className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-[#efefef] shadow-red-500/50 shadow-md"
-            >
-              <FaMoneyBillWave />
-              <span>REDEEM SALES ({totalSales.toLocaleString()} coins)</span>
-            </button>
-          )}
+          {isExpired &&
+            tip.price > 0 &&
+            tip.status.toLowerCase() !== "redeemed" && (
+              <button
+                onClick={() => onRedeemSales(tip.id, totalSales)}
+                className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-[#efefef] shadow-red-500/50 shadow-md"
+              >
+                <FaMoneyBillWave />
+                <span>REDEEM SALES ({totalSales.toLocaleString()} coins)</span>
+              </button>
+            )}
 
-          {tip.status === "Redeemed" && (
+          {tip.status.toLowerCase() === "redeemed" && (
             <div className="w-full py-3 text-center rounded-lg font-bold text-lg bg-[#376553] text-[#18ffc8]">
               Sales Redeemed! ({totalSales.toLocaleString()} coins)
             </div>
           )}
-
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 rounded-lg font-semibold text-[#efefef] bg-[#162821] hover:bg-[#376553] transition-all duration-200 mt-2"
-          >
-            Close
-          </button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- Tip Card Component for Punter Dashboard ---
-// Simplified colors here
-const TipCard = ({ tip, handleOpenManagementModal, handleRedeemSales, formatPrice }) => {
+// =========================================================
+// --- Tip Card Component (Minor Change) ---
+// =========================================================
+const TipCard = ({
+  tip,
+  handleOpenManagementModal,
+  handleRedeemSales,
+  formatPrice,
+}) => {
+  const expiryTimestamp = new Date(tip.expiryTime).getTime();
+  const isExpired = expiryTimestamp < Date.now();
+
   const canRedeem =
-    tip.expiryTime < Date.now() &&
+    isExpired &&
     tip.price > 0 &&
     tip.salesCount > 0 &&
-    tip.status !== "Redeemed";
+    tip.status.toLowerCase() !== "redeemed";
 
   // Map status to a more restrained color
   const statusColors = {
-    Active: "bg-[#18ffc8] text-[#09100d]",
-    Deactivated: "bg-[#f57cff] text-[#09100d]",
-    Settled: "bg-[#fea92a] text-[#09100d]",
-    Redeemed: "bg-green-700 text-[#efefef]",
+    active: "bg-[#18ffc8] text-[#09100d]",
+    deactivated: "bg-[#f57cff] text-[#09100d]",
+    settled: "bg-[#fea92a] text-[#09100d]",
+    redeemed: "bg-green-700 text-[#efefef]",
   };
 
-  const statusClass = statusColors[tip.status] || "bg-[#376553] text-[#efefef]";
+  const statusKey = tip.status.toLowerCase();
+  const statusClass = statusColors[statusKey] || "bg-[#376553] text-[#efefef]";
   const isFree = tip.price === 0;
-  const isExpired = tip.expiryTime < Date.now();
 
   return (
     <div
       key={tip.id}
       // Simplified border color to reduce noise
       className={`bg-[#162821] rounded-xl overflow-hidden border border-[#376553] hover:border-[#f57cff] transition-all duration-300 shadow-lg ${
-        isExpired && tip.status !== "Redeemed" ? "opacity-80" : ""
+        isExpired && tip.status.toLowerCase() !== "redeemed" ? "opacity-80" : ""
       }`}
     >
       {/* Punter Header */}
@@ -246,13 +266,6 @@ const TipCard = ({ tip, handleOpenManagementModal, handleRedeemSales, formatPric
                   YOU
                 </span>
               </h3>
-              <div className="flex items-center space-x-2">
-                <FaStar className="text-[#fea92a] text-sm" />
-                <span className="text-sm text-[#efefef]">{tip.rating}</span>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusClass}`}>
-                  {tip.status}
-                </span>
-              </div>
             </div>
           </div>
           <button
@@ -273,22 +286,6 @@ const TipCard = ({ tip, handleOpenManagementModal, handleRedeemSales, formatPric
 
         {/* Summary Section */}
         <div className="bg-[#09100d] rounded-lg p-3 mb-4 border border-[#376553]">
-          <div className="grid grid-cols-2 gap-2 text-center mb-3">
-            <div>
-              <div className="text-[#376553] text-xs font-medium">Type</div>
-              <div className="text-lg font-bold text-[#fea92a]">
-                {tip.type === "sports" ? "Sports Tip" : "Trading Signal"}
-              </div>
-            </div>
-            {/* Added Tip Category (Slice/Loaf/Crust) */}
-            <div>
-              <div className="text-[#376553] text-xs font-medium">Category</div>
-              <div className="text-lg font-bold text-[#f57cff]">
-                {tip.category.charAt(0).toUpperCase() + tip.category.slice(1)}
-              </div>
-            </div>
-          </div>
-
           <TipCountdown expiryTime={tip.expiryTime} />
 
           <div className="mt-2 pt-2 border-t border-[#162821] flex justify-between">
@@ -303,19 +300,13 @@ const TipCard = ({ tip, handleOpenManagementModal, handleRedeemSales, formatPric
 
         {/* Full Details Revealed */}
         <div className="bg-[#09100d] rounded-lg p-4 mb-4 border border-[#18ffc8]">
-          <div className="flex items-center mb-3">
-            <FaCheck className="text-[#18ffc8] mr-2" />
-            <span className="text-[#18ffc8] font-semibold">
-              Full Details (Your Tip)
-            </span>
-          </div>
-
           {/* Displaying Tip Details (Sports vs Trading) */}
           {tip.type === "sports" ? (
             <div>
               <h4 className="text-[#fea92a] font-semibold mb-2">
                 Booking Codes:
               </h4>
+              {/* Note: bookingCodes is an array of objects: { company, code, odd } */}
               {tip.bookingCodes?.map((code, index) => (
                 <div key={index} className="bg-[#162821] rounded p-3 mb-2">
                   <div className="flex items-center justify-between">
@@ -323,7 +314,11 @@ const TipCard = ({ tip, handleOpenManagementModal, handleRedeemSales, formatPric
                       {code.company}: {code.code} (Odd: {code.odd})
                     </code>
                     <button
-                      onClick={() => navigator.clipboard.writeText(code.code).then(() => mockToast("Code copied!", "info"))}
+                      onClick={() =>
+                        navigator.clipboard
+                          .writeText(code.code)
+                          .then(() => mockToast("Code copied!", "info"))
+                      }
                       className="text-[#376553] hover:text-[#18ffc8] transition-colors"
                     >
                       <FaCopy />
@@ -337,6 +332,7 @@ const TipCard = ({ tip, handleOpenManagementModal, handleRedeemSales, formatPric
               <h4 className="text-[#fea92a] font-semibold mb-2">
                 Trading Signals:
               </h4>
+              {/* Note: assets is an array of objects: { symbol, buy, sell, stopLoss } */}
               {tip.assets?.map((asset, index) => (
                 <div key={index} className="bg-[#162821] rounded p-3 mb-2">
                   <div className="text-[#efefef] font-medium mb-2">
@@ -389,7 +385,7 @@ const TipCard = ({ tip, handleOpenManagementModal, handleRedeemSales, formatPric
                 {isFree ? "FREE" : formatPrice(tip.price)}
               </div>
             </div>
-            {tip.status === "Redeemed" && (
+            {tip.status.toLowerCase() === "redeemed" && (
               <div className="text-sm text-green-500 font-bold">
                 Sales Settled
               </div>
@@ -401,134 +397,132 @@ const TipCard = ({ tip, handleOpenManagementModal, handleRedeemSales, formatPric
   );
 };
 
-// --- Tip Data Setup (Expanded) ---
-
-// Define categories outside the component for clarity
+// =========================================================
+// --- DailyBread Component (MAJOR UPDATE) ---
+// =========================================================
 const categories = [
-  { id: 'slice', name: 'Slice', icon: <FaStar />, description: 'Single Tip' },
-  { id: 'loaf', name: 'Loaf', icon: <FaFire />, description: 'Bundle Tip' },
-  { id: 'crust', name: 'Crust', icon: <FaGift />, description: 'Free Tip' }
+  { id: "slice", name: "Slice", icon: <FaStar />, description: "Single Tip" },
+  { id: "loaf", name: "Loaf", icon: <FaFire />, description: "Bundle Tip" },
 ];
 
 const subCategories = [
-  { id: 'sports', name: 'Sports', icon: <FaFutbol /> },
-  { id: 'trading', name: 'Trading', icon: <FaChartLine /> }
+  { id: "sports", name: "Sports", icon: <FaFutbol /> },
+  { id: "trading", name: "Trading", icon: <FaChartLine /> },
 ];
 
 const DailyBread = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState(categories[0].id); // 'slice'
-  const [activeSubCategory, setActiveSubCategory] = useState(subCategories[0].id); // 'sports'
+  const [activeSubCategory, setActiveSubCategory] = useState(
+    subCategories[0].id
+  ); // 'sports'
   const [showModal, setShowModal] = useState(false);
-  const [selectedTipForManagement, setSelectedTipForManagement] = useState(null);
+  const [selectedTipForManagement, setSelectedTipForManagement] =
+    useState(null);
 
-  // --- Mock Tips State (Expanded and Categorized) ---
-  const [allTips, setAllTips] = useState(() => {
-    const baseTime = Date.now() + 12 * 60 * 60 * 1000; // 12 hours from now
-    const nearExpiredTime = Date.now() + 1 * 60 * 60 * 1000; // 1 hour from now
-    const expiredTime = Date.now() - 3600000; // 1 hour ago - READY FOR REDEMPTION
+  // --- New State for Data Fetching ---
+  const [allTips, setAllTips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
 
-    // Filtered data relevant to CURRENT_USER_PUNTER_NAME: "Elite Punter Pro"
-    return [
-      // 1. Slice (Paid) - Sports - Active (Near Expired)
-      {
-        id: 1,
-        punterName: CURRENT_USER_PUNTER_NAME,
-        description: "Secure win prediction with 85% accuracy rate based on recent form and head-to-head statistics",
-        price: 500,
-        rating: 4.9,
-        type: "sports",
-        category: "slice",
-        status: "Active",
-        salesCount: 15,
-        expiryTime: nearExpiredTime,
-        bookingCodes: [
-          { company: "Bet365", code: "MCAR123", odd: 2.45 },
-        ],
-      },
-      // 2. Loaf (Bundle) - Sports - Expired (Ready for Redemption)
-      {
-        id: 5,
-        punterName: CURRENT_USER_PUNTER_NAME,
-        description: "5 carefully selected accumulator tips with comprehensive analysis. Max Profit Potential!",
-        price: 1200,
-        rating: 4.8,
-        type: "sports",
-        category: "loaf",
-        status: "Active", // Will be redeemable because it's expired
-        salesCount: 5,
-        expiryTime: expiredTime,
-        bookingCodes: [
-          { company: "Bet365", code: "ACC123", odd: 12.5 },
-          { company: "1xBet", code: "ACC456", odd: 11.8 },
-        ],
-      },
-      // 3. Crust (Free) - Sports - Settled
-      {
-        id: 7,
-        punterName: CURRENT_USER_PUNTER_NAME,
-        description: "Quick, low-stakes tip to test the waters. High-confidence single match over/under.",
-        price: 0,
-        rating: 4.5,
-        type: "sports",
-        category: "crust",
-        status: "Settled",
-        salesCount: 55,
-        expiryTime: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 days ago
-        bookingCodes: [
-          { company: "Bet9ja", code: "FREE999", odd: 1.85 },
-        ],
-      },
-      // 4. Slice (Paid) - Trading - Active
-      {
-        id: 10,
-        punterName: CURRENT_USER_PUNTER_NAME,
-        description: "Short-term EUR/USD signal based on key support and resistance bounce.",
-        price: 750,
-        rating: 4.7,
-        type: "trading",
-        category: "slice",
-        status: "Active",
-        salesCount: 12,
-        expiryTime: baseTime + 2 * 60 * 60 * 1000, // 14 hours from now
-        timeframe: "H1",
-        assets: [
-          { symbol: "EURUSD", buy: 1.0850, sell: 1.0920, stopLoss: 1.0820 },
-        ],
-      },
-      // 5. Loaf (Bundle) - Trading - Redeemed (Previously Expired)
-      {
-        id: 12,
-        punterName: CURRENT_USER_PUNTER_NAME,
-        description: "Complete crypto portfolio rebalance recommendations for Q4 2024.",
-        price: 2500,
-        rating: 5.0,
-        type: "trading",
-        category: "loaf",
-        status: "Redeemed",
-        salesCount: 3,
-        expiryTime: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 days ago
-        timeframe: "D1/W1",
-        assets: [
-          { symbol: "BTC", buy: "HODL", sell: 75000, stopLoss: 55000 },
-          { symbol: "ETH", buy: "HODL", sell: 4500, stopLoss: 3000 },
-        ],
-      },
-    ];
-  });
+  // --- Data Mapping and Formatting Logic ---
+
+  /**
+   * Transforms the raw API tip data into the frontend TipCard format.
+   * @param {object} apiTip The raw tip object from the backend.
+   */
+  const mapApiTipToFrontend = useCallback(
+    (apiTip) => {
+      // Determine the category based on price/secondaryCategory
+      let categoryKey = apiTip.secondaryCategory.toLowerCase();
+      if (apiTip.price === 0) {
+        categoryKey = "crust"; // Map price 0 to 'crust' for filter logic
+      }
+
+      return {
+        id: apiTip._id,
+        punterName: apiTip.punterName,
+        description: apiTip.description,
+        price: apiTip.price,
+        // NOTE: Assuming a mock rating as it's not in the API response
+        rating:
+          apiTip.rating ||
+          (apiTip.punterName === user?.punterName ? 4.9 : "N/A"),
+        type: apiTip.primaryCategory.toLowerCase(),
+        category: categoryKey,
+        status: apiTip.status.toLowerCase(),
+        salesCount: apiTip.sales, // Map 'sales' to 'salesCount'
+        expiryTime: new Date(apiTip.expiryTime).getTime(), // Convert ISO string to timestamp
+        // Map 'bookingCode' array to 'bookingCodes' array (renaming keys)
+        bookingCodes:
+          apiTip.bookingCode?.map((bc) => ({
+            company: bc.bookingSite, // Map 'bookingSite' to 'company'
+            code: bc.code,
+            odd: bc.odd,
+          })) || [],
+        // 'assets' and 'timeframe' are for trading tips (assuming same structure as mock for now)
+        timeframe: apiTip.timeframe,
+        assets: apiTip.assets || [],
+      };
+    },
+    [user]
+  );
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await localforage.getItem("token");
+      if (!token) {
+        // If no token, redirect to login or show an error
+        throw new Error("No authentication token found. Please log in.");
+      }
+
+      // 1. Fetch User Data to get punterId
+      const userResponse = await axios.post(`${Api}/client/getUser`, { token });
+      const userData = userResponse.data.data;
+      // Set the user data, including the punterName for TipCard to recognize "YOU"
+      setUser(userData);
+      const punterId = userData._id; // Assuming user ID is the punter ID
+
+      // 2. Fetch Punter Tips using punterId
+      const tipsResponse = await axios.post(`${Api}/client/getPuntertip`, {
+        userId: punterId, // Using punterId for the userId field in the request
+      });
+
+      // 3. Map API data to the frontend format
+      const mappedTips = tipsResponse.data.data.map(mapApiTipToFrontend);
+      setAllTips(mappedTips);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError(err.message || "Failed to fetch tips and user data.");
+      mockToast(err.message || "Data fetch failed.", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [mapApiTipToFrontend]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const formatPrice = (price) => {
     return `${price.toLocaleString()} coins`;
   };
 
-  // --- Filtering Logic (Use useMemo for performance) ---
+  // --- Filtering Logic (Updated to account for 'crust' mapping) ---
   const filteredTips = useMemo(() => {
-    return allTips.filter(tip => {
+    return allTips.filter((tip) => {
       // 1. Filter by Primary Category (Slice, Loaf, Crust)
+      const isFreeTip = tip.price === 0;
+      const primaryCategory = isFreeTip ? "crust" : tip.category;
+
       const matchesCategory =
-        activeCategory === 'all' || // Option for 'all' tips
-        (tip.price === 0 && activeCategory === 'crust') ||
-        (tip.category === activeCategory);
+        activeCategory === primaryCategory ||
+        (activeCategory === "crust" && isFreeTip) ||
+        (activeCategory === "slice" && tip.category === "slice") ||
+        (activeCategory === "loaf" && tip.category === "loaf");
 
       // 2. Filter by Sub Category (Sports, Trading)
       const matchesSubCategory = tip.type === activeSubCategory;
@@ -537,7 +531,7 @@ const DailyBread = () => {
     });
   }, [allTips, activeCategory, activeSubCategory]);
 
-  // --- Punter Management Functions ---
+  // --- Punter Management Functions (Updated to use tip ID from API) ---
 
   const handleOpenManagementModal = (tip) => {
     setSelectedTipForManagement(tip);
@@ -545,6 +539,7 @@ const DailyBread = () => {
   };
 
   const handleUpdateTip = useCallback((tipId, updates) => {
+    // Frontend Update
     setAllTips((prevAllTips) => {
       const index = prevAllTips.findIndex((t) => t.id === tipId);
       if (index !== -1) {
@@ -554,8 +549,10 @@ const DailyBread = () => {
           updatedTip,
           ...prevAllTips.slice(index + 1),
         ];
+        // NOTE: A real application would call an API endpoint here to update the tip status in the backend.
+        // e.g., axios.post(`${Api}/punter/updateTipStatus`, { tipId, status: updates.status, ... });
         mockToast(
-          `Tip #${tipId} status updated to: ${updatedTip.status}!`,
+          `Tip #${tipId} status updated to: ${updatedTip.status}! (Frontend only)`,
           "success"
         );
         return newTips;
@@ -565,13 +562,31 @@ const DailyBread = () => {
   }, []);
 
   const handleRedeemSales = (tipId, totalSales) => {
-    handleUpdateTip(tipId, { status: "Redeemed" });
+    handleUpdateTip(tipId, { status: "redeemed" });
+    // NOTE: A real application would call an API endpoint here to perform the redemption and credit the user.
+    // e.g., axios.post(`${Api}/punter/redeemTipSales`, { tipId, amount: totalSales, ... });
+
     mockToast(
-      `💰 Redemption Complete! ${totalSales.toLocaleString()} coins credited to your account for Tip #${tipId}.`,
+      `💰 Redemption Complete! ${totalSales.toLocaleString()} coins credited to your account for Tip #${tipId}. (Frontend only)`,
       "success"
     );
     setShowModal(false);
   };
+
+  // --- Render Logic with Loading and Error States ---
+
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#09100d] text-red-500 p-8 text-center">
+        <Header />
+        <p className="mt-4 text-xl">{error}</p>
+        <p className="mt-2 text-[#376553]">
+          Please check your token and API connection.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#09100d] text-[#efefef] p-4 pb-10">
@@ -586,16 +601,16 @@ const DailyBread = () => {
       {/* --- Category Navigation START --- */}
 
       {/* Primary Category Navigation */}
-      <div className="flex justify-center mb-7">
-        <div className="bg-[#162821] rounded-xl p-1 flex space-x-1 border border-[#376553] max-w-full overflow-x-auto">
+      <div className="flex justify-center mb-7 mt-8">
+        <div className="bg-[#162821] rounded-xl p-1 flex space-x-1 border border-[#376553] w-[50%] justify-between">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`flex items-center px-4 md:px-6 py-3 rounded-lg transition-all duration-200 text-sm md:text-base ${
+              className={`flex-1 flex items-center px-4 md:px-6 py-3 rounded-lg transition-all duration-200 text-sm md:text-base ${
                 activeCategory === category.id
-                  ? 'bg-[#18ffc8] text-[#09100d] shadow-lg'
-                  : 'text-[#efefef] hover:bg-[#376553] hover:text-[#efefef]'
+                  ? "bg-[#18ffc8] text-[#09100d] shadow-lg"
+                  : "text-[#efefef] hover:bg-[#376553] hover:text-[#efefef]"
               }`}
             >
               <span className="mr-2">{category.icon}</span>
@@ -608,20 +623,25 @@ const DailyBread = () => {
       </div>
 
       {/* Sub Category Navigation */}
-      <div className="flex justify-center mb-12">
-        <div className="bg-[#162821] rounded-xl p-1 flex space-x-1 border border-[#376553] max-w-full overflow-x-auto">
+      <div className="flex mb-6 w-full justify-between">
+        {/* The container for subcategories now uses w-full and flex to distribute space */}
+        <div className="bg-[#162821] rounded-xl p-1 flex w-full justify-between space-x-1 border border-[#376553]">
           {subCategories.map((subCategory) => (
             <button
               key={subCategory.id}
               onClick={() => setActiveSubCategory(subCategory.id)}
-              className={`flex items-center px-6 py-2 rounded-lg transition-all duration-200 text-sm md:text-base ${
+              // Added 'flex-1' here to make the buttons take equal width
+              className={`flex-1 flex items-center justify-center px-2 py-2 rounded-lg transition-all duration-200 text-sm md:text-base ${
                 activeSubCategory === subCategory.id
-                  ? 'bg-[#fea92a] text-[#09100d] shadow-md'
-                  : 'text-[#efefef] hover:bg-[#376553]'
+                  ? "bg-[#fea92a] text-[#09100d] shadow-md"
+                  : "text-[#efefef] hover:bg-[#376553]"
               }`}
             >
+              {/* Adjusted spacing and centering for content inside the button */}
               <span className="mr-2">{subCategory.icon}</span>
-              <span className="font-medium whitespace-nowrap">{subCategory.name}</span>
+              <span className="font-medium whitespace-nowrap">
+                {subCategory.name}
+              </span>
             </button>
           ))}
         </div>
@@ -646,7 +666,6 @@ const DailyBread = () => {
         ) : (
           /* Empty State for Filtered Results */
           <div className="text-center py-20">
-            <div className="text-6xl mb-4 text-[#376553]">📭</div>
             <h3 className="text-xl text-[#efefef] mb-2">
               No "{activeCategory}" Tips in "{activeSubCategory}" found.
             </h3>
@@ -668,10 +687,11 @@ const DailyBread = () => {
       )}
 
       {/* Floating Create Tip Button */}
+
       <button
         className="fixed bottom-30 right-8 h-16 rounded-full bg-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5"
         onClick={() => {
-          navigate("/punter/create");
+          navigate("/punter/createDaily");
         }}
       >
         <FiPlus className="text-2xl group-hover:rotate-90 transition-transform" />

@@ -26,11 +26,11 @@ export default function CustomerLayout() {
       name: "Tips",
       icon: <MdTipsAndUpdates size={20} />,
     },
-    // {
-    //   path: "/customer/daily",
-    //   name: "Daily",
-    //   icon: <IoAlarm size={20} />,
-    // },
+    {
+      path: "/customer/daily",
+      name: "Daily",
+      icon: <IoAlarm size={20} />,
+    },
     {
       path: "/customer/chat",
       name: "Chat",
