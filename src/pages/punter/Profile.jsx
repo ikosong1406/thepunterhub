@@ -63,6 +63,7 @@ const ProfilePage = () => {
   const closeModal = () => {
     setActiveModal(null);
   };
+  
   if (loading) {
     return (
       <div className="bg-[#09100d] flex flex-col items-center justify-center w-screen h-screen bg-cover bg-center text-center">
