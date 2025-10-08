@@ -104,8 +104,8 @@ const WithdrawModal = ({ user, onClose, onWithdrawSuccess }) => {
       return;
     }
 
-    if (numericAmount < 10) {
-      toast.error("Minimum withdrawal amount is 10 coins.");
+    if (numericAmount < 20) {
+      toast.error("Minimum withdrawal amount is 20 coins.");
       return;
     }
 

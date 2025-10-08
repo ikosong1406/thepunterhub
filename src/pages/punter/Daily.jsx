@@ -3,7 +3,6 @@ import {
   FaUser,
   FaStar,
   FaFire,
-  FaGift,
   FaChartLine,
   FaFutbol,
   FaCheck,
@@ -12,22 +11,18 @@ import {
   FaTimesCircle,
   FaMoneyBillWave,
   FaClock,
-  FaSpinner, // Added for loading state
+  FaSpinner,
 } from "react-icons/fa";
 import { FiPlus } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // 👈 New Import
-import localforage from "localforage"; // 👈 New Import
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import localforage from "localforage";
 import Api from "../../components/Api";
+import logoImage from "../../assets/logo2.png";
 
 // NOTE: Assuming Header component exists in "./Header"
 import Header from "./Header";
-
-// --- Mock Toast for Demo ---
-const mockToast = (message, type = "info") => {
-  console.log(`[TOAST - ${type.toUpperCase()}]: ${message}`);
-  alert(`[Notification]: ${message}`); // Use alert for a simple browser demo
-};
 
 // =========================================================
 // --- Tip Countdown Component (NO CHANGE) ---
@@ -84,10 +79,10 @@ const TipCountdown = ({ expiryTime }) => {
 };
 
 // =========================================================
-// --- Modal Component (Punter Management) (Minor Change) ---
+// --- Modal Component (Punter Management) (NO CHANGE) ---
 // =========================================================
-const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
-  // Ensure expiryTime is a number for comparison
+const TipManagementModal = ({ tip, punterId, onClose, onTipAction }) => {
+  // tip.status will be 'active', 'closed', or 'redeemed'
   const expiryTimestamp = useMemo(
     () => new Date(tip.expiryTime).getTime(),
     [tip.expiryTime]
@@ -96,23 +91,25 @@ const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
     () => expiryTimestamp < Date.now(),
     [expiryTimestamp]
   );
+  const totalSales = tip.salesCount * tip.price;
+  const isPaidTip = tip.price > 0;
 
-  const handleStatusChange = (newStatus) => {
-    onUpdateTip(tip.id, { status: newStatus });
+  // Function to handle all status/redemption changes
+  const handleAction = (actionType) => {
+    // actionType will be 'close', 'activate', or 'redeem'
+    onTipAction(tip.id, punterId, actionType, totalSales);
     onClose();
   };
 
   if (!tip) return null;
 
-  const totalSales = tip.salesCount * tip.price;
+  const currentStatus = tip.status.toLowerCase();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
       <div className="bg-[#09100d] rounded-xl border border-[#18ffc8] w-full max-w-md p-6 shadow-2xl">
         <div className="flex justify-between items-start mb-4 border-b border-[#376553] pb-3">
-          <h2 className="text-2xl font-bold text-[#18ffc8]">
-            Manage Tip
-          </h2>
+          <h2 className="text-2xl font-bold text-[#18ffc8]">Manage Tip</h2>
           <button
             onClick={onClose}
             className="text-[#376553] hover:text-[#f57cff] transition-colors"
@@ -145,10 +142,14 @@ const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
             <span className="text-[#376553]">Current Status:</span>
             <span
               className={`font-semibold ${
-                tip.status === "Active" ? "text-[#18ffc8]" : "text-[#f57cff]"
+                currentStatus === "active"
+                  ? "text-[#18ffc8]"
+                  : currentStatus === "redeemed"
+                  ? "text-green-500"
+                  : "text-[#f57cff]"
               }`}
             >
-              {tip.status.charAt(0).toUpperCase() + tip.status.slice(1)}
+              {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
             </span>
           </div>
         </div>
@@ -157,54 +158,59 @@ const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
           <TipCountdown expiryTime={tip.expiryTime} />
         </div>
 
-        {/* Actions */}
+        {/* --- Dynamic Actions Based on Status and Expiry --- */}
         <div className="space-y-3">
-          {/* Status Buttons */}
-          <div className="flex space-x-2">
-            <button
-              onClick={() =>
-                handleStatusChange(
-                  tip.status.toLowerCase() === "active"
-                    ? "deactivated"
-                    : "active"
-                )
-              }
-              className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all duration-200 text-[#09100d] ${
-                tip.status.toLowerCase() === "active"
-                  ? "bg-[#f57cff] hover:bg-[#855391]"
-                  : "bg-[#18ffc8] hover:bg-[#376553] text-[#09100d]"
-              }`}
-              disabled={isExpired}
-            >
-              {tip.status.toLowerCase() === "active"
-                ? "Deactivate"
-                : "Activate"}
-            </button>
-            <button
-              onClick={() => handleStatusChange("settled")}
-              className="flex-1 px-4 py-2 rounded-lg font-semibold text-[#09100d] bg-[#fea92a] hover:bg-yellow-600 transition-all duration-200"
-              disabled={isExpired}
-            >
-              Mark as Settled
-            </button>
-          </div>
-
-          {/* REDEEM BUTTON (The Target Experience) */}
-          {isExpired &&
-            tip.price > 0 &&
-            tip.status.toLowerCase() !== "redeemed" && (
-              <button
-                onClick={() => onRedeemSales(tip.id, totalSales)}
-                className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-[#efefef] shadow-red-500/50 shadow-md"
-              >
-                <FaMoneyBillWave />
-                <span>REDEEM SALES ({totalSales.toLocaleString()} coins)</span>
-              </button>
-            )}
-
-          {tip.status.toLowerCase() === "redeemed" && (
+          {currentStatus === "redeemed" && (
             <div className="w-full py-3 text-center rounded-lg font-bold text-lg bg-[#376553] text-[#18ffc8]">
               Sales Redeemed! ({totalSales.toLocaleString()} coins)
+            </div>
+          )}
+
+          {/* Case 1: Active & Valid -> Only option is to Close */}
+          {currentStatus === "active" && !isExpired && (
+            <button
+              onClick={() => handleAction("closed")}
+              className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-[#efefef] shadow-red-500/50 shadow-md"
+            >
+              <FaTimesCircle />
+              <span>Close Tip Now</span>
+            </button>
+          )}
+
+          {/* Case 2: Active & Expired -> Only option is to Redeem (if paid tip) */}
+          {currentStatus === "active" && isExpired && isPaidTip && (
+            <button
+              onClick={() => handleAction("redeemed")}
+              className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#fea92a] hover:bg-yellow-600 text-[#09100d] shadow-yellow-500/50 shadow-md"
+            >
+              <FaMoneyBillWave />
+              <span>REDEEM SALES ({totalSales.toLocaleString()} coins)</span>
+            </button>
+          )}
+
+          {/* Case 3: Closed & Valid/Expired -> Options: Activate or Redeem (if paid tip) */}
+          {currentStatus === "closed" && (
+            <div className="flex flex-col space-y-3">
+              <button
+                onClick={() => handleAction("active")}
+                className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#18ffc8] hover:bg-green-400 text-[#09100d] shadow-green-500/50 shadow-md"
+                disabled={isExpired}
+              >
+                <FaCheck />
+                <span>Activate Tip</span>
+              </button>
+              {isPaidTip && (
+                <button
+                  onClick={() => handleAction("redeemed")}
+                  className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#f57cff] hover:bg-[#855391] text-[#09100d] shadow-purple-500/50 shadow-md"
+                  disabled={totalSales === 0}
+                >
+                  <FaMoneyBillWave />
+                  <span>
+                    REDEEM SALES ({totalSales.toLocaleString()} coins)
+                  </span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -214,45 +220,39 @@ const TipManagementModal = ({ tip, onClose, onUpdateTip, onRedeemSales }) => {
 };
 
 // =========================================================
-// --- Tip Card Component (Minor Change) ---
+// --- Tip Card Component (NO CHANGE) ---
 // =========================================================
-const TipCard = ({
-  tip,
-  handleOpenManagementModal,
-  handleRedeemSales,
-  formatPrice,
-}) => {
+const TipCard = ({ tip, handleOpenManagementModal, formatPrice }) => {
   const expiryTimestamp = new Date(tip.expiryTime).getTime();
   const isExpired = expiryTimestamp < Date.now();
-
-  const canRedeem =
-    isExpired &&
-    tip.price > 0 &&
-    tip.salesCount > 0 &&
-    tip.status.toLowerCase() !== "redeemed";
 
   // Map status to a more restrained color
   const statusColors = {
     active: "bg-[#18ffc8] text-[#09100d]",
-    deactivated: "bg-[#f57cff] text-[#09100d]",
-    settled: "bg-[#fea92a] text-[#09100d]",
+    closed: "bg-[#f57cff] text-[#09100d]",
     redeemed: "bg-green-700 text-[#efefef]",
   };
 
   const statusKey = tip.status.toLowerCase();
-  const statusClass = statusColors[statusKey] || "bg-[#376553] text-[#efefef]";
+  // Using 'closed' as the fallback status for unknown types
+  const statusClass = statusColors[statusKey] || "bg-[#f57cff] text-[#09100d]";
   const isFree = tip.price === 0;
+
+  // The redemption logic is now handled exclusively in the Modal
+  const needsRedemption =
+    isExpired &&
+    tip.price > 0 &&
+    tip.salesCount > 0 &&
+    statusKey !== "redeemed";
 
   return (
     <div
       key={tip.id}
-      // Simplified border color to reduce noise
       className={`bg-[#162821] rounded-xl overflow-hidden border border-[#376553] hover:border-[#f57cff] transition-all duration-300 shadow-lg ${
-        isExpired && tip.status.toLowerCase() !== "redeemed" ? "opacity-80" : ""
+        needsRedemption ? "border-red-500 ring-2 ring-red-500" : ""
       }`}
     >
       {/* Punter Header */}
-      {/* Simplified header background */}
       <div className="bg-[#376553] p-4 border-b border-[#09100d]">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -284,6 +284,21 @@ const TipCard = ({
           {tip.description}
         </p>
 
+        {/* Status Badge */}
+        <div className="flex justify-between items-center mb-4">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-bold ${statusClass}`}
+          >
+            {tip.status.toUpperCase()}
+          </span>
+          {needsRedemption && (
+            <span className="text-sm font-bold text-red-500 flex items-center space-x-1 animate-pulse">
+              <FaMoneyBillWave />
+              <span>READY TO REDEEM!</span>
+            </span>
+          )}
+        </div>
+
         {/* Summary Section */}
         <div className="bg-[#09100d] rounded-lg p-3 mb-4 border border-[#376553]">
           <TipCountdown expiryTime={tip.expiryTime} />
@@ -306,7 +321,6 @@ const TipCard = ({
               <h4 className="text-[#fea92a] font-semibold mb-2">
                 Booking Codes:
               </h4>
-              {/* Note: bookingCodes is an array of objects: { company, code, odd } */}
               {tip.bookingCodes?.map((code, index) => (
                 <div key={index} className="bg-[#162821] rounded p-3 mb-2">
                   <div className="flex items-center justify-between">
@@ -332,20 +346,23 @@ const TipCard = ({
               <h4 className="text-[#fea92a] font-semibold mb-2">
                 Trading Signals:
               </h4>
-              {/* Note: assets is an array of objects: { symbol, buy, sell, stopLoss } */}
               {tip.assets?.map((asset, index) => (
                 <div key={index} className="bg-[#162821] rounded p-3 mb-2">
                   <div className="text-[#efefef] font-medium mb-2">
-                    {asset.symbol} - ({tip.timeframe})
+                    {asset.pair} - ({asset.timeFrame})
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div className="text-[#18ffc8]">
-                      <div className="text-xs text-[#376553]">Buy</div>
-                      <div className="font-bold">{asset.buy}</div>
+                      <div className="text-xs text-[#376553]">Direction</div>
+                      <div className="font-bold">{asset.direction}</div>
+                    </div>
+                    <div className="text-[#18ffc8]">
+                      <div className="text-xs text-[#376553]">Entry Price</div>
+                      <div className="font-bold">{asset.enteryPrice}</div>
                     </div>
                     <div className="text-[#f57cff]">
-                      <div className="text-xs text-[#376553]">Sell</div>
-                      <div className="font-bold">{asset.sell}</div>
+                      <div className="text-xs text-[#376553]">Take Profit</div>
+                      <div className="font-bold">{asset.takeProfit}</div>
                     </div>
                     <div className="text-[#fea92a]">
                       <div className="text-xs text-[#376553]">Stop Loss</div>
@@ -358,47 +375,32 @@ const TipCard = ({
           )}
         </div>
 
-        {/* Redemption/Price Footer */}
-        {canRedeem ? (
-          <button
-            onClick={() =>
-              handleRedeemSales(tip.id, tip.salesCount * tip.price)
-            }
-            className="w-full mt-4 px-6 py-2 rounded-lg font-bold text-sm transition-all duration-200 flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-[#efefef] shadow-red-500/50 shadow-md"
-          >
-            <FaMoneyBillWave />
-            <span>
-              REDEEM SALES ({formatPrice(tip.salesCount * tip.price)})
-            </span>
-          </button>
-        ) : (
-          <div className="flex items-center justify-between pt-2">
-            <div>
-              <div className="text-[#376553] text-xs font-medium">
-                Tip Price
-              </div>
-              <div
-                className={`text-xl font-bold ${
-                  isFree ? "text-[#f57cff]" : "text-[#fea92a]"
-                }`}
-              >
-                {isFree ? "FREE" : formatPrice(tip.price)}
-              </div>
+        {/* Price Footer */}
+        <div className="flex items-center justify-between pt-2">
+          <div>
+            <div className="text-[#376553] text-xs font-medium">Tip Price</div>
+            <div
+              className={`text-xl font-bold ${
+                isFree ? "text-[#f57cff]" : "text-[#fea92a]"
+              }`}
+            >
+              {isFree ? "FREE" : formatPrice(tip.price)}
             </div>
-            {tip.status.toLowerCase() === "redeemed" && (
-              <div className="text-sm text-green-500 font-bold">
-                Sales Settled
-              </div>
-            )}
           </div>
-        )}
+          <div className="text-[#376553] text-sm">
+            Total Revenue:{" "}
+            <span className="font-bold text-[#fea92a]">
+              {formatPrice(tip.salesCount * tip.price)}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 // =========================================================
-// --- DailyBread Component (MAJOR UPDATE) ---
+// --- DailyBread Component (UPDATED: FAB Loader Removed) ---
 // =========================================================
 const categories = [
   { id: "slice", name: "Slice", icon: <FaStar />, description: "Single Tip" },
@@ -412,56 +414,48 @@ const subCategories = [
 
 const DailyBread = () => {
   const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState(categories[0].id); // 'slice'
+  const [activeCategory, setActiveCategory] = useState(categories[0].id);
   const [activeSubCategory, setActiveSubCategory] = useState(
     subCategories[0].id
-  ); // 'sports'
+  );
   const [showModal, setShowModal] = useState(false);
   const [selectedTipForManagement, setSelectedTipForManagement] =
     useState(null);
 
-  // --- New State for Data Fetching ---
+  // --- State for Data Fetching ---
   const [allTips, setAllTips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
-  // --- Data Mapping and Formatting Logic ---
+  const formatPrice = (price) => {
+    return `${price.toLocaleString()} coins`;
+  };
 
-  /**
-   * Transforms the raw API tip data into the frontend TipCard format.
-   * @param {object} apiTip The raw tip object from the backend.
-   */
   const mapApiTipToFrontend = useCallback(
     (apiTip) => {
-      // Determine the category based on price/secondaryCategory
-      let categoryKey = apiTip.secondaryCategory.toLowerCase();
-      if (apiTip.price === 0) {
-        categoryKey = "crust"; // Map price 0 to 'crust' for filter logic
-      }
+      const categoryKey = apiTip.secondaryCategory.toLowerCase();
 
       return {
         id: apiTip._id,
+        punterId: apiTip.userId,
         punterName: apiTip.punterName,
         description: apiTip.description,
         price: apiTip.price,
-        // NOTE: Assuming a mock rating as it's not in the API response
         rating:
           apiTip.rating ||
           (apiTip.punterName === user?.punterName ? 4.9 : "N/A"),
         type: apiTip.primaryCategory.toLowerCase(),
         category: categoryKey,
         status: apiTip.status.toLowerCase(),
-        salesCount: apiTip.sales, // Map 'sales' to 'salesCount'
-        expiryTime: new Date(apiTip.expiryTime).getTime(), // Convert ISO string to timestamp
-        // Map 'bookingCode' array to 'bookingCodes' array (renaming keys)
+        salesCount: apiTip.sales,
+        expiryTime: new Date(apiTip.expiryTime).toISOString(),
         bookingCodes:
           apiTip.bookingCode?.map((bc) => ({
-            company: bc.bookingSite, // Map 'bookingSite' to 'company'
+            company: bc.bookingSite,
             code: bc.code,
             odd: bc.odd,
           })) || [],
-        // 'assets' and 'timeframe' are for trading tips (assuming same structure as mock for now)
         timeframe: apiTip.timeframe,
         assets: apiTip.assets || [],
       };
@@ -475,20 +469,18 @@ const DailyBread = () => {
     try {
       const token = await localforage.getItem("token");
       if (!token) {
-        // If no token, redirect to login or show an error
         throw new Error("No authentication token found. Please log in.");
       }
 
       // 1. Fetch User Data to get punterId
       const userResponse = await axios.post(`${Api}/client/getUser`, { token });
       const userData = userResponse.data.data;
-      // Set the user data, including the punterName for TipCard to recognize "YOU"
       setUser(userData);
-      const punterId = userData._id; // Assuming user ID is the punter ID
+      const punterId = userData._id;
 
       // 2. Fetch Punter Tips using punterId
       const tipsResponse = await axios.post(`${Api}/client/getPuntertip`, {
-        userId: punterId, // Using punterId for the userId field in the request
+        userId: punterId,
       });
 
       // 3. Map API data to the frontend format
@@ -497,7 +489,6 @@ const DailyBread = () => {
     } catch (err) {
       console.error("Error fetching data:", err);
       setError(err.message || "Failed to fetch tips and user data.");
-      mockToast(err.message || "Data fetch failed.", "error");
     } finally {
       setLoading(false);
     }
@@ -507,74 +498,134 @@ const DailyBread = () => {
     fetchData();
   }, [fetchData]);
 
-  const formatPrice = (price) => {
-    return `${price.toLocaleString()} coins`;
-  };
-
-  // --- Filtering Logic (Updated to account for 'crust' mapping) ---
+  // --- Filtering Logic ---
   const filteredTips = useMemo(() => {
     return allTips.filter((tip) => {
-      // 1. Filter by Primary Category (Slice, Loaf, Crust)
-      const isFreeTip = tip.price === 0;
-      const primaryCategory = isFreeTip ? "crust" : tip.category;
+      // 1. Filter out all free tips (price === 0)
+      if (tip.price === 0) {
+        return false;
+      }
 
-      const matchesCategory =
-        activeCategory === primaryCategory ||
-        (activeCategory === "crust" && isFreeTip) ||
-        (activeCategory === "slice" && tip.category === "slice") ||
-        (activeCategory === "loaf" && tip.category === "loaf");
+      // 2. Filter by Primary Category (Slice, Loaf)
+      const matchesCategory = tip.category === activeCategory;
 
-      // 2. Filter by Sub Category (Sports, Trading)
+      // 3. Filter by Sub Category (Sports, Trading)
       const matchesSubCategory = tip.type === activeSubCategory;
 
       return matchesCategory && matchesSubCategory;
     });
   }, [allTips, activeCategory, activeSubCategory]);
 
-  // --- Punter Management Functions (Updated to use tip ID from API) ---
+  // --- Punter Management Functions ---
 
   const handleOpenManagementModal = (tip) => {
     setSelectedTipForManagement(tip);
     setShowModal(true);
   };
 
-  const handleUpdateTip = useCallback((tipId, updates) => {
-    // Frontend Update
-    setAllTips((prevAllTips) => {
-      const index = prevAllTips.findIndex((t) => t.id === tipId);
-      if (index !== -1) {
-        const updatedTip = { ...prevAllTips[index], ...updates };
-        const newTips = [
-          ...prevAllTips.slice(0, index),
-          updatedTip,
-          ...prevAllTips.slice(index + 1),
-        ];
-        // NOTE: A real application would call an API endpoint here to update the tip status in the backend.
-        // e.g., axios.post(`${Api}/punter/updateTipStatus`, { tipId, status: updates.status, ... });
-        mockToast(
-          `Tip #${tipId} status updated to: ${updatedTip.status}! (Frontend only)`,
-          "success"
-        );
-        return newTips;
-      }
-      return prevAllTips;
-    });
-  }, []);
+  /**
+   * Handles all tip actions (close, activate, redeem) and calls the API.
+   */
+  const handleTipAction = useCallback(
+    async (tipId, punterId, actionType, totalSales) => {
+      const newStatus =
+        actionType === "closed"
+          ? "closed"
+          : actionType === "active"
+          ? "active"
+          : "redeemed";
+      const endpoint = `${Api}/client/redeemTip`;
 
-  const handleRedeemSales = (tipId, totalSales) => {
-    handleUpdateTip(tipId, { status: "redeemed" });
-    // NOTE: A real application would call an API endpoint here to perform the redemption and credit the user.
-    // e.g., axios.post(`${Api}/punter/redeemTipSales`, { tipId, amount: totalSales, ... });
+      try {
+        const response = await axios.post(endpoint, {
+          tipId: tipId,
+          punterId: punterId,
+          status: newStatus,
+        });
 
-    mockToast(
-      `💰 Redemption Complete! ${totalSales.toLocaleString()} coins credited to your account for Tip #${tipId}. (Frontend only)`,
-      "success"
-    );
-    setShowModal(false);
-  };
+        if (response.data.success) {
+          const successMessage =
+            actionType === "redeemed"
+              ? `Sales Redemption Complete! coins credited.`
+              : `Tip status successfully updated`;
+
+          toast.success(successMessage);
+
+          // Update frontend state with the new status
+          setAllTips((prevAllTips) => {
+            const index = prevAllTips.findIndex((t) => t.id === tipId);
+            if (index !== -1) {
+              const updatedTip = { ...prevAllTips[index], status: newStatus };
+              return [
+                ...prevAllTips.slice(0, index),
+                updatedTip,
+                ...prevAllTips.slice(index + 1),
+              ];
+            }
+            return prevAllTips;
+          });
+        } else {
+          throw new Error(
+            response.data.message || `API call failed for action: ${newStatus}`
+          );
+        }
+      } catch (err) {
+        console.error("Error performing tip action:", err);
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          `Failed to perform ${newStatus} action.`;
+      } // finally { setLoading(false); } // Removed from global state
+    },
+    []
+  );
 
   // --- Render Logic with Loading and Error States ---
-
+  if (loading && allTips.length === 0 && !error) {
+    return (
+      <div className="bg-[#09100d] flex flex-col items-center justify-center w-screen h-screen bg-cover bg-center text-center">
+        {/* Arcs + Logo */}
+        <div className="flex flex-col items-center space-y-6">
+          <div className="relative w-[15rem] h-[15rem] flex items-center justify-center">
+            {/* ... (Your SVG and logo JSX here) */}
+            <svg
+              className="absolute w-full h-full spin-slow"
+              viewBox="0 0 100 100"
+            >
+              <path
+                d="M50,0 A50,50 0 1,1 0,50"
+                fill="none"
+                stroke="#fea92a"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="glow-stroke"
+              />
+            </svg>
+            <svg
+              className="absolute w-[13rem] h-[13rem] spin-medium"
+              viewBox="0 0 100 100"
+            >
+              <path
+                d="M50,0 A50,50 0 1,1 0,50"
+                fill="none"
+                stroke="#855391"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="glow-stroke"
+              />
+            </svg>
+            <div className="relative flex items-center justify-center w-[10rem] h-[10rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
+              <img
+                src={logoImage}
+                alt="Platform Logo"
+                className="max-w-full max-h-full"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -582,14 +633,21 @@ const DailyBread = () => {
         <Header />
         <p className="mt-4 text-xl">{error}</p>
         <p className="mt-2 text-[#376553]">
-          Please check your token and API connection.
+          Please check your network connection.
         </p>
+        <button
+          onClick={fetchData}
+          className="mt-4 px-4 py-2 bg-[#f57cff] text-[#09100d] rounded-lg font-semibold"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#09100d] text-[#efefef] p-4 pb-10">
+      <Toaster />
       <Header />
       {/* Header */}
       <header className="text-center mb-8 pt-8">
@@ -658,7 +716,6 @@ const DailyBread = () => {
                 key={tip.id}
                 tip={tip}
                 handleOpenManagementModal={handleOpenManagementModal}
-                handleRedeemSales={handleRedeemSales}
                 formatPrice={formatPrice}
               />
             ))}
@@ -680,14 +737,16 @@ const DailyBread = () => {
       {showModal && selectedTipForManagement && (
         <TipManagementModal
           tip={selectedTipForManagement}
-          onClose={() => setShowModal(false)}
-          onUpdateTip={handleUpdateTip}
-          onRedeemSales={handleRedeemSales}
+          punterId={user._id}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedTipForManagement(null);
+          }}
+          onTipAction={handleTipAction}
         />
       )}
 
-      {/* Floating Create Tip Button */}
-
+      {/* Floating Create Tip Button (FAB) */}
       <button
         className="fixed bottom-30 right-8 h-16 rounded-full bg-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5"
         onClick={() => {
@@ -695,7 +754,7 @@ const DailyBread = () => {
         }}
       >
         <FiPlus className="text-2xl group-hover:rotate-90 transition-transform" />
-        <span className="ml-2">Create New Tip</span>
+        <span className="ml-2 font-semibold">Create New Tip</span>
       </button>
     </div>
   );

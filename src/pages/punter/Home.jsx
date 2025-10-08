@@ -5,12 +5,12 @@ import Header from "./Header";
 import axios from "axios";
 import Api from "../../components/Api";
 import localforage from "localforage";
-import Colors from "../../components/colors";
+import { useNavigate } from "react-router-dom";
 import logoImage from "../../assets/logo2.png";
 import { FaCoins } from "react-icons/fa";
 
 const PunterDashboard = () => {
-  // State for fetching and displaying data
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
@@ -94,7 +94,7 @@ const PunterDashboard = () => {
           action: note.title,
           details: note.description,
           time: formatPostedAt(note.createdAt),
-          amount: note.amount > 0 ? `+$${note.amount.toFixed(2)}` : null,
+          amount: note.amount > 0 ? `+${note.amount.toFixed(2)}` : null,
           icon: getNotificationIcon(note.type),
         }));
 
@@ -226,7 +226,7 @@ const PunterDashboard = () => {
         <div className="bg-[#162821]/80 backdrop-blur-sm rounded-xl p-5 border border-[#376553]/30">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-lg font-semibold">Recent Activity</h2>
-            <button className="text-sm text-[#fea92a] hover:underline">
+            <button className="text-sm text-[#fea92a] hover:underline" onClick={() => navigate('/punter/notifications')}>
               View All
             </button>
           </div>
