@@ -277,7 +277,7 @@ const LivePage = () => {
             onClick={() => {
               setActivePrimary(category.key);
             }}
-            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 text-sm ${
               activePrimary === category.key
                 ? "text-[#18ffc8] border-b-2 border-[#18ffc8]"
                 : "text-gray-400"
@@ -295,7 +295,7 @@ const LivePage = () => {
               <button
                 key={category.key}
                 onClick={() => setActiveSport(category.key)}
-                className={`flex flex-col items-center min-w-[70px] px-3 py-2 rounded-xl ${
+                className={`flex flex-col items-center min-w-[70px] px-3 py-2 rounded-xl text-sm ${
                   activeSport === category.key
                     ? "bg-[#855391] text-white shadow-lg"
                     : "bg-[#162821] text-white"

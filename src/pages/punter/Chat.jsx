@@ -226,7 +226,7 @@ const ChatInterface = () => {
             placeholder="Search conversations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none text-[#efefef] w-full outline-none"
+            className="bg-transparent border-none text-[#efefef] w-full outline-none text-sm"
           />
         </div>
 
@@ -234,7 +234,7 @@ const ChatInterface = () => {
         <div className="bg-[#162821] rounded-xl overflow-hidden">
           {loadingChats && chatList.length === 0 ? (
             <div className="p-8 text-center">
-              <p style={{ color: "#efefef" }}>Loading messages...</p>
+              <p style={{ color: "#efefef" }} className="text-sm">Loading messages...</p>
             </div>
           ) : chatError ? (
             <div className="p-8 text-center">
@@ -290,7 +290,7 @@ const ChatInterface = () => {
             ))
           ) : (
             <div className="p-8 text-center">
-              <p style={{ color: "#efefef" }}>
+              <p style={{ color: "#efefef" }} className="text-sm">
                 No messages found. Start a new chat!
               </p>
             </div>

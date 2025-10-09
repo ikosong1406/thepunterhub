@@ -5,7 +5,7 @@ const ContactUsModal = ({ onClose }) => {
   const contactMethods = [
     {
       type: "WhatsApp",
-      icon: <FaWhatsapp size={24} />,
+      icon: <FaWhatsapp size={22} />,
       details: "+44 777 003 9379",
       action: "https://wa.me/447770039379",
       description: "Chat with our support team in real-time",
@@ -14,7 +14,7 @@ const ContactUsModal = ({ onClose }) => {
     },
     {
       type: "Email",
-      icon: <FaEnvelope size={24} />,
+      icon: <FaEnvelope size={22} />,
       details: "support@thepunterhub.com",
       action: "mailto:support@thepunterhub.com",
       description: "Send us an email and we'll respond within 24 hours",
@@ -53,13 +53,13 @@ const ContactUsModal = ({ onClose }) => {
         <div className="flex-1 px-6 py-4 overflow-y-auto">
           <div className="mb-6">
             <h3 
-              className="text-lg font-semibold mb-2"
+              className="text-base font-semibold mb-2"
               style={{ color: "#efefef" }}
             >
               Need Help?
             </h3>
             <p 
-              className="text-sm"
+              className="text-xs"
               style={{ color: "#376553" }}
             >
               Our support team is available to assist you with any questions or issues you may have.
@@ -82,7 +82,7 @@ const ContactUsModal = ({ onClose }) => {
                   </div>
                   <div>
                     <h4 
-                      className="font-semibold"
+                      className="font-semibold text-base"
                       style={{ color: "#efefef" }}
                     >
                       {method.type}
@@ -96,7 +96,7 @@ const ContactUsModal = ({ onClose }) => {
                   </div>
                 </div>
                 <p 
-                  className="text-sm mb-4"
+                  className="text-xs mb-4"
                   style={{ color: "#376553" }}
                 >
                   {method.description}
@@ -105,7 +105,7 @@ const ContactUsModal = ({ onClose }) => {
                   href={method.action}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-3 rounded-lg font-bold text-center"
+                  className="block w-full py-3 rounded-lg font-bold text-center text-sm"
                   style={{ backgroundColor: method.color, color: "#09100d" }}
                 >
                   {method.buttonText}
@@ -119,7 +119,7 @@ const ContactUsModal = ({ onClose }) => {
             style={{ backgroundColor: "#162821" }}
           >
             <h4 
-              className="font-semibold mb-2"
+              className="font-semibold mb-2 text-sm"
               style={{ color: "#efefef" }}
             >
               Support Hours

@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { MdDashboard } from "react-icons/md";
+import { IoMdStats } from "react-icons/io";
 import { FaHistory, FaUser } from "react-icons/fa";
 import { IoChatbubblesSharp } from "react-icons/io5";
 import { PiBroadcastFill } from "react-icons/pi";
@@ -22,8 +22,8 @@ export default function PunterLayout() {
   const tabs = [
     {
       path: "/punter/home",
-      name: "Dashboard",
-      icon: <MdDashboard size={20} />,
+      name: "Stats",
+      icon: <IoMdStats size={20} />,
     },
     {
       path: "/punter/history",

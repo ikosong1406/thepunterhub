@@ -75,7 +75,7 @@ const BackToDailyBreadButton = ({ onClick }) => (
     className="relative p-2 rounded-xl bg-[#162821] text-[#fea92a] hover:bg-[#376553] transition-colors duration-200 border border-[#376553] ml-4 flex items-center space-x-1"
     aria-label="Go back to Daily Bread market"
   >
-    <FaHistory className="text-xl" />
+    <FaHistory className="text-base" />
     <span className="text-xs">Market</span>
   </button>
 );
@@ -324,7 +324,7 @@ const handleGoBack = () => {
       {/* Sticky Header with Title and Back Button */}
       <div className="sticky top-0 z-10 bg-[#09100d] pb-4">
         <header className="flex justify-between items-center mb-6 pt-8">
-          <h1 className="text-3xl font-bold text-[#f57cff] tracking-tight">
+          <h1 className="text-2xl font-bold text-[#f57cff] tracking-tight">
             Purchased Bread
           </h1>
           <BackToDailyBreadButton onClick={handleGoBack} />
@@ -513,10 +513,10 @@ const handleGoBack = () => {
       {/* Empty State */}
       {processedTips.length === 0 && !loadingTips && (
         <div className="text-center py-20">
-          <h3 className="text-xl text-[#efefef] mb-2">
+          <h3 className="text-sm text-[#efefef] mb-2">
             No active purchased tips found.
           </h3>
-          <p className="text-[#376553]">
+          <p className="text-[#376553] text-xs">
             You can find new tips on the Daily Bread market.
           </p>
         </div>

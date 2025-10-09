@@ -28,7 +28,7 @@ const TipInput = ({
         step={step}
         value={value}
         onChange={onChange}
-        className={`w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 ${
+        className={`w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 text-sm ${
           Icon ? "pl-10" : ""
         } focus:outline-none ${
           colorClass ? `focus:border-[${colorClass}]` : "focus:border-[#fea92a]"
@@ -353,8 +353,8 @@ const CreateDaily = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#fea92a]">Create Daily Bread</h1>
-        <p className="text-[#efefef]/70">
+        <h1 className="text-xl font-bold text-[#fea92a]">Create Daily Bread</h1>
+        <p className="text-[#efefef]/70 text-sm">
           Share your daily prediction
         </p>
       </div>
@@ -365,7 +365,7 @@ const CreateDaily = () => {
           <button
             key={category.key}
             onClick={() => setActiveCategory(category.key)}
-            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 text-sm ${
               activeCategory === category.key
                 ? "text-[#18ffc8] border-b-2 border-[#18ffc8]"
                 : "text-[#efefef]/50"
@@ -389,7 +389,7 @@ const CreateDaily = () => {
                   key={category.key}
                   type="button"
                   onClick={() => setSecondaryCategory(category.key)}
-                  className={`flex-1 py-2 capitalize font-semibold rounded-lg transition-colors border-2 ${
+                  className={`flex-1 py-2 capitalize font-semibold rounded-lg transition-colors border-2 text-sm ${
                     secondaryCategory === category.key
                       ? "bg-[#fea92a] text-[#09100d] border-[#fea92a]"
                       : "bg-[#162821] text-[#efefef]/70 border-[#376553]"
@@ -413,7 +413,7 @@ const CreateDaily = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={200}
-                className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none min-h-[80px]"
+                className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none min-h-[80px] text-sm"
                 placeholder="Brief summary of the tip/signal."
                 required
               />
@@ -678,7 +678,7 @@ const CreateDaily = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full mt-8 bg-gradient-to-r from-[#fea92a] to-[#855391] text-[#09100d] font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity"
+          className="w-full mt-8 bg-gradient-to-r from-[#fea92a] to-[#855391] text-[#09100d] font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity text-sm"
           disabled={isSubmitting}
         >
           {isSubmitting ? `Publishing Daily Bread...` : `Publish Daily Bread`}

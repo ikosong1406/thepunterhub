@@ -238,14 +238,14 @@ const Home = () => {
       >
         <div className="p-4 flex items-start">
           <div className="relative mr-4">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center bg-[#18ffc8]/20 text-[#18ffc8] text-3xl font-bold border-2 border-[#18ffc8]">
+            <div className="w-17 h-17 rounded-full flex items-center justify-center bg-[#18ffc8]/20 text-[#18ffc8] text-2xl font-bold border-2 border-[#18ffc8]">
               {getInitials(punter.username)}
             </div>
           </div>
           <div className="ml-4 flex-1">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-bold text-lg flex items-center">
+                <h3 className="font-bold text-base flex items-center">
                   {punter.username}
                   {punter.isVerified && (
                     <svg
@@ -284,7 +284,7 @@ const Home = () => {
           </div>
         </div>
         <div className="border-t border-[#2a3a34] p-3 flex justify-between items-center">
-          <button className="w-full bg-[#f57cff] text-black font-bold py-3 rounded-lg flex items-center justify-center">
+          <button className="w-full bg-[#f57cff] text-black font-bold py-3 rounded-lg flex items-center justify-center text-sm">
             <FaMoneyBillWave className="mr-2" />
             Subscribe
           </button>
@@ -309,7 +309,7 @@ const Home = () => {
       <div className="flex px-4 lg:px-8">
         <button
           onClick={handleClick}
-          className="flex gap-2 px-4 py-2 bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] shadow hover:bg-blue-700 transition w-[100%]"
+          className="flex gap-2 px-4 py-2 bg-gradient-to-br from-[#162821] to-[#0f1f1a] rounded-xl shadow-xl overflow-hidden border border-[#2a3a34] shadow hover:bg-blue-700 transition w-[100%] text-sm"
         >
           <FaSearch size={20} />
           <span>Search</span>
@@ -323,7 +323,7 @@ const Home = () => {
             <button
               key={category.key}
               onClick={() => setActivePrimary(category.key)}
-              className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 text-lg ${
+              className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 text-sm ${
                 activePrimary === category.key
                   ? "text-[#18ffc8] border-b-2 border-[#18ffc8]"
                   : "text-gray-400 hover:text-white transition-colors"
@@ -348,7 +348,7 @@ const Home = () => {
                       : "bg-[#162821] text-white hover:bg-[#1e332b]"
                   }`}
                 >
-                  <span className="text-xl">{category.icon}</span>
+                  <span className="text-sm">{category.icon}</span>
                   <span className="text-sm mt-1">{category.name}</span>
                 </button>
               ))
@@ -387,7 +387,7 @@ const Home = () => {
 
         {/* PUNTERS LIST */}
         <div>
-          <h2 className="text-xl font-bold mb-4 flex items-center lg:text-2xl">
+          <h2 className="text-lg font-bold mb-4 flex items-center lg:text-2xl">
             <FaStar className="mr-2 text-[#fea92a]" />
             Top{" "}
             {activePrimary === "sports"

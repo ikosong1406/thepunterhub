@@ -637,12 +637,12 @@ const PunterDetailsPage = () => {
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center">
             <div className="relative mr-4">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center bg-[#18ffc8]/20 text-[#18ffc8] text-3xl font-bold border-2 border-[#18ffc8]">
+              <div className="w-15 h-15 rounded-full flex items-center justify-center bg-[#18ffc8]/20 text-[#18ffc8] text-2xl font-bold border-2 border-[#18ffc8]">
                 {getInitials(punter.username)}
               </div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold flex items-center">
+              <h2 className="text-xl font-bold flex items-center">
                 {punter.username}
                 {punter.isVerified && (
                   <svg
@@ -659,7 +659,7 @@ const PunterDetailsPage = () => {
                   </svg>
                 )}
               </h2>
-              <p className="text-[#18ffc8]">
+              <p className="text-[#18ffc8] text-sm">
                 {punter.primaryCategory} - {punter.secondaryCategory}
               </p>
             </div>
@@ -667,15 +667,15 @@ const PunterDetailsPage = () => {
         </div>
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-[#162821] p-3 rounded-lg text-center">
-            <div className="text-green-400 font-bold text-xl">{wins}</div>
+            <div className="text-green-400 font-bold text-lg">{wins}</div>
             <div className="text-xs text-gray-400">Wins</div>
           </div>
           <div className="bg-[#162821] p-3 rounded-lg text-center">
-            <div className="text-red-400 font-bold text-xl">{losses}</div>
+            <div className="text-red-400 font-bold text-lg">{losses}</div>
             <div className="text-xs text-gray-400">Losses</div>
           </div>
           <div className="bg-[#162821] p-3 rounded-lg text-center">
-            <div className="text-[#18ffc8] font-bold text-xl">{winRate}</div>
+            <div className="text-[#18ffc8] font-bold text-lg">{winRate}</div>
             <div className="text-xs text-gray-400">Win Rate</div>
           </div>
         </div>
@@ -736,7 +736,7 @@ const PunterDetailsPage = () => {
                         ...planDetails,
                       })
                     }
-                    className={`flex-1 py-3 px-2 rounded-lg capitalize font-medium ${
+                    className={`flex-1 py-3 px-2 rounded-lg capitalize font-medium text-sm ${
                       selectedPlan?.name === planName
                         ? "bg-[#f57cff] text-black"
                         : "bg-[#162821] text-gray-300"
@@ -748,14 +748,14 @@ const PunterDetailsPage = () => {
               </div>
               {selectedPlan && (
                 <div className="p-4 bg-[#162821] rounded-lg">
-                  <h4 className="text-lg font-bold capitalize mb-2">
+                  <h4 className="text-base font-bold capitalize mb-2">
                     {selectedPlan.name} Plan
                   </h4>
-                  <p className="text-xl font-bold mb-4 text-[#18ffc8]">
+                  <p className="text-lg font-bold mb-4 text-[#18ffc8]">
                     {selectedPlan.price}
                     <span className="text-sm text-gray-400">/week</span>
                   </p>
-                  <ul className="list-disc list-inside space-y-2 mb-4 text-gray-300">
+                  <ul className="list-disc list-inside space-y-2 mb-4 text-gray-300 text-sm">
                     {selectedPlan.offers && selectedPlan.offers.length > 0 ? (
                       selectedPlan.offers.map((offer, index) => (
                         <li key={index}>{offer}</li>
@@ -767,7 +767,7 @@ const PunterDetailsPage = () => {
                   <button
                     onClick={handleSubscribe}
                     disabled={processingSubscription}
-                    className="w-full bg-[#f57cff] text-black font-bold py-3 rounded-lg flex items-center justify-center"
+                    className="w-full bg-[#f57cff] text-black font-bold py-3 rounded-lg flex items-center justify-center text-sm"
                   >
                     {processingSubscription ? (
                       "Processing..."

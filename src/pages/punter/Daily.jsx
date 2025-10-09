@@ -16,7 +16,7 @@ import {
 import { FiPlus } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+// import toast, { Toaster } from "react-hot-toast"; // REMOVED: toast import
 import localforage from "localforage";
 import Api from "../../components/Api";
 import logoImage from "../../assets/logo2.png";
@@ -181,7 +181,7 @@ const TipManagementModal = ({ tip, punterId, onClose, onTipAction }) => {
           {currentStatus === "active" && isExpired && isPaidTip && (
             <button
               onClick={() => handleAction("redeemed")}
-              className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#fea92a] hover:bg-yellow-600 text-[#09100d] shadow-yellow-500/50 shadow-md"
+              className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#fea92a] hover:bg-yellow-600 text-[#09100d] shadow-yellow-500/50 shadow-md text-sm"
             >
               <FaMoneyBillWave />
               <span>REDEEM SALES ({totalSales.toLocaleString()} coins)</span>
@@ -193,7 +193,7 @@ const TipManagementModal = ({ tip, punterId, onClose, onTipAction }) => {
             <div className="flex flex-col space-y-3">
               <button
                 onClick={() => handleAction("active")}
-                className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#18ffc8] hover:bg-green-400 text-[#09100d] shadow-green-500/50 shadow-md"
+                className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#18ffc8] hover:bg-green-400 text-[#09100d] shadow-green-500/50 shadow-md text-sm"
                 disabled={isExpired}
               >
                 <FaCheck />
@@ -202,7 +202,7 @@ const TipManagementModal = ({ tip, punterId, onClose, onTipAction }) => {
               {isPaidTip && (
                 <button
                   onClick={() => handleAction("redeemed")}
-                  className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#f57cff] hover:bg-[#855391] text-[#09100d] shadow-purple-500/50 shadow-md"
+                  className="w-full px-4 py-3 rounded-lg font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-[#f57cff] hover:bg-[#855391] text-[#09100d] shadow-purple-500/50 shadow-md text-sm"
                   disabled={totalSales === 0}
                 >
                   <FaMoneyBillWave />
@@ -220,7 +220,7 @@ const TipManagementModal = ({ tip, punterId, onClose, onTipAction }) => {
 };
 
 // =========================================================
-// --- Tip Card Component (NO CHANGE) ---
+// --- Tip Card Component (MODIFIED) ---
 // =========================================================
 const TipCard = ({ tip, handleOpenManagementModal, formatPrice }) => {
   const expiryTimestamp = new Date(tip.expiryTime).getTime();
@@ -244,6 +244,14 @@ const TipCard = ({ tip, handleOpenManagementModal, formatPrice }) => {
     tip.price > 0 &&
     tip.salesCount > 0 &&
     statusKey !== "redeemed";
+
+  // Function to copy code without toast
+  const copyCode = (code) => {
+    navigator.clipboard
+      .writeText(code)
+      .then(() => console.log("Code copied successfully!")) // Replaced toast.info with console.log
+      .catch((err) => console.error("Failed to copy code:", err));
+  };
 
   return (
     <div
@@ -328,11 +336,7 @@ const TipCard = ({ tip, handleOpenManagementModal, formatPrice }) => {
                       {code.company}: {code.code} (Odd: {code.odd})
                     </code>
                     <button
-                      onClick={() =>
-                        navigator.clipboard
-                          .writeText(code.code)
-                          .then(() => mockToast("Code copied!", "info"))
-                      }
+                      onClick={() => copyCode(code.code)} // Using local copyCode function
                       className="text-[#376553] hover:text-[#18ffc8] transition-colors"
                     >
                       <FaCopy />
@@ -400,7 +404,7 @@ const TipCard = ({ tip, handleOpenManagementModal, formatPrice }) => {
 };
 
 // =========================================================
-// --- DailyBread Component (UPDATED: FAB Loader Removed) ---
+// --- DailyBread Component (MODIFIED) ---
 // =========================================================
 const categories = [
   { id: "slice", name: "Slice", icon: <FaStar />, description: "Single Tip" },
@@ -424,7 +428,8 @@ const DailyBread = () => {
 
   // --- State for Data Fetching ---
   const [allTips, setAllTips] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true); // New state for initial loading
+  const [isRefreshing, setIsRefreshing] = useState(false); // New state for background refresh
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -463,40 +468,85 @@ const DailyBread = () => {
     [user]
   );
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const token = await localforage.getItem("token");
-      if (!token) {
-        throw new Error("No authentication token found. Please log in.");
+  /**
+   * Fetches user and tips data. Manages loading state based on whether it's the initial load or a background refresh.
+   * @param {boolean} isInitialLoad - True if this is the very first load.
+   */
+  const fetchData = useCallback(
+    async (isInitialLoad = false) => {
+      // Only set initial loading screen if it's the first time and we have no data
+      if (isInitialLoad) {
+        setIsLoadingInitial(true);
+      } else {
+        setIsRefreshing(true); // Set background refresh indicator
       }
 
-      // 1. Fetch User Data to get punterId
-      const userResponse = await axios.post(`${Api}/client/getUser`, { token });
-      const userData = userResponse.data.data;
-      setUser(userData);
-      const punterId = userData._id;
+      setError(null);
+      try {
+        const token = await localforage.getItem("token");
+        if (!token) {
+          throw new Error("No authentication token found. Please log in.");
+        }
 
-      // 2. Fetch Punter Tips using punterId
-      const tipsResponse = await axios.post(`${Api}/client/getPuntertip`, {
-        userId: punterId,
-      });
+        // 1. Fetch User Data to get punterId
+        let punterId;
+        if (!user || isInitialLoad) {
+          const userResponse = await axios.post(`${Api}/client/getUser`, {
+            token,
+          });
+          const userData = userResponse.data.data;
+          setUser(userData);
+          punterId = userData._id;
+        } else {
+          punterId = user._id;
+        }
+        // 2. Fetch Punter Tips using punterId
+        const tipsResponse = await axios.post(`${Api}/client/getPuntertip`, {
+          userId: punterId,
+        });
 
-      // 3. Map API data to the frontend format
-      const mappedTips = tipsResponse.data.data.map(mapApiTipToFrontend);
-      setAllTips(mappedTips);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError(err.message || "Failed to fetch tips and user data.");
-    } finally {
-      setLoading(false);
-    }
-  }, [mapApiTipToFrontend]);
+        // 3. Map API data to the frontend format (Handle no tips found gracefully)
+        const apiTips = tipsResponse.data.data || [];
+        const mappedTips = apiTips.map(mapApiTipToFrontend);
+        setAllTips(mappedTips);
+
+        // If data was fetched successfully, clear error even if tips are empty
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        // Only show a prominent error on the UI if no tips have been loaded yet
+        if (allTips.length === 0) {
+          setError(
+            err.message ||
+              "Failed to fetch tips and user data. Please check your network."
+          );
+        } else {
+          // For background refreshes, just log the error
+          console.error("Background refresh failed.", err);
+        }
+      } finally {
+        if (isInitialLoad) {
+          setIsLoadingInitial(false);
+        }
+        setIsRefreshing(false);
+      }
+    },
+    [mapApiTipToFrontend, user, allTips.length]
+  );
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    // Initial data fetch
+    fetchData(true);
+
+    // Set up background polling every 3 seconds
+    const pollingInterval = setInterval(() => {
+      fetchData(false); // Not initial load, so it's a silent refresh
+    }, 3000); // 3 seconds
+
+    // Cleanup function to clear the interval on unmount
+    return () => clearInterval(pollingInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchData]); // Dependency array includes fetchData to satisfy linter, but fetchData is memoized.
 
   // --- Filtering Logic ---
   const filteredTips = useMemo(() => {
@@ -525,6 +575,7 @@ const DailyBread = () => {
 
   /**
    * Handles all tip actions (close, activate, redeem) and calls the API.
+   * Replaced toast.promise with standard async/await and try/catch.
    */
   const handleTipAction = useCallback(
     async (tipId, punterId, actionType, totalSales) => {
@@ -537,6 +588,9 @@ const DailyBread = () => {
       const endpoint = `${Api}/client/redeemTip`;
 
       try {
+        console.log(`Sending action: ${newStatus} for tip: ${tipId}`);
+        // No loading indicator since toast is removed. A spinner should be used on the button/modal if needed.
+
         const response = await axios.post(endpoint, {
           tipId: tipId,
           punterId: punterId,
@@ -546,16 +600,19 @@ const DailyBread = () => {
         if (response.data.success) {
           const successMessage =
             actionType === "redeemed"
-              ? `Sales Redemption Complete! coins credited.`
-              : `Tip status successfully updated`;
+              ? `Sales Redemption Complete! ${totalSales.toLocaleString()} coins credited.`
+              : `Tip status successfully updated to ${newStatus}.`;
 
-          toast.success(successMessage);
+          console.log("Success:", successMessage);
 
-          // Update frontend state with the new status
+          // Update frontend state with the new status immediately
           setAllTips((prevAllTips) => {
             const index = prevAllTips.findIndex((t) => t.id === tipId);
             if (index !== -1) {
-              const updatedTip = { ...prevAllTips[index], status: newStatus };
+              const updatedTip = {
+                ...prevAllTips[index],
+                status: newStatus,
+              };
               return [
                 ...prevAllTips.slice(0, index),
                 updatedTip,
@@ -565,78 +622,37 @@ const DailyBread = () => {
             return prevAllTips;
           });
         } else {
-          throw new Error(
-            response.data.message || `API call failed for action: ${newStatus}`
-          );
+          // API call successful, but application logic failed
+          const errorMessage =
+            response.data.message ||
+            `API call failed for action: ${newStatus}`;
+          console.error("Action Failed:", errorMessage);
+          // NOTE: You would typically update an internal state variable here to show a banner/error message in the UI
         }
       } catch (err) {
-        console.error("Error performing tip action:", err);
-        const errorMessage =
-          err.response?.data?.message ||
-          err.message ||
-          `Failed to perform ${newStatus} action.`;
-      } // finally { setLoading(false); } // Removed from global state
+        // Network or unexpected error
+        console.error("Error performing tip action:", err.message);
+        // NOTE: You would typically update an internal state variable here to show a banner/error message in the UI
+      }
     },
     []
   );
 
-  // --- Render Logic with Loading and Error States ---
-  if (loading && allTips.length === 0 && !error) {
-    return (
-      <div className="bg-[#09100d] flex flex-col items-center justify-center w-screen h-screen bg-cover bg-center text-center">
-        {/* Arcs + Logo */}
-        <div className="flex flex-col items-center space-y-6">
-          <div className="relative w-[15rem] h-[15rem] flex items-center justify-center">
-            {/* ... (Your SVG and logo JSX here) */}
-            <svg
-              className="absolute w-full h-full spin-slow"
-              viewBox="0 0 100 100"
-            >
-              <path
-                d="M50,0 A50,50 0 1,1 0,50"
-                fill="none"
-                stroke="#fea92a"
-                strokeWidth="4"
-                strokeLinecap="round"
-                className="glow-stroke"
-              />
-            </svg>
-            <svg
-              className="absolute w-[13rem] h-[13rem] spin-medium"
-              viewBox="0 0 100 100"
-            >
-              <path
-                d="M50,0 A50,50 0 1,1 0,50"
-                fill="none"
-                stroke="#855391"
-                strokeWidth="4"
-                strokeLinecap="round"
-                className="glow-stroke"
-              />
-            </svg>
-            <div className="relative flex items-center justify-center w-[10rem] h-[10rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
-              <img
-                src={logoImage}
-                alt="Platform Logo"
-                className="max-w-full max-h-full"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // --- Render Logic with Loading and Error States (Loading Screen commented out) ---
 
-  if (error) {
+  // ... (Removed the commented-out full-screen loading screen JSX) ...
+
+  // Show persistent error state if initial load failed and we have no data
+  if (error && allTips.length === 0) {
     return (
       <div className="min-h-screen bg-[#09100d] text-red-500 p-8 text-center">
         <Header />
-        <p className="mt-4 text-xl">{error}</p>
-        <p className="mt-2 text-[#376553]">
-          Please check your network connection.
+        <p className="mt-4 text-base">{error}</p>
+        <p className="mt-2 text-[#376553] text-sm">
+          Please check your network connection and try again.
         </p>
         <button
-          onClick={fetchData}
+          onClick={() => fetchData(true)} // Re-run initial fetch on click
           className="mt-4 px-4 py-2 bg-[#f57cff] text-[#09100d] rounded-lg font-semibold"
         >
           Try Again
@@ -647,11 +663,11 @@ const DailyBread = () => {
 
   return (
     <div className="min-h-screen bg-[#09100d] text-[#efefef] p-4 pb-10">
-      <Toaster />
+      {/* <Toaster /> REMOVED: Toaster component */}
       <Header />
       {/* Header */}
       <header className="text-center mb-8 pt-8">
-        <h1 className="text-3xl font-bold text-[#f57cff] mb-2 tracking-tight">
+        <h1 className="text-2xl font-bold text-[#f57cff] mb-2 tracking-tight">
           Daily Bread
         </h1>
       </header>
@@ -665,7 +681,7 @@ const DailyBread = () => {
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`flex-1 flex items-center px-4 md:px-6 py-3 rounded-lg transition-all duration-200 text-sm md:text-base ${
+              className={`flex-1 flex items-center px-4 md:px-6 py-3 rounded-lg transition-all duration-200 text-xs md:text-base ${
                 activeCategory === category.id
                   ? "bg-[#18ffc8] text-[#09100d] shadow-lg"
                   : "text-[#efefef] hover:bg-[#376553] hover:text-[#efefef]"
@@ -689,7 +705,7 @@ const DailyBread = () => {
               key={subCategory.id}
               onClick={() => setActiveSubCategory(subCategory.id)}
               // Added 'flex-1' here to make the buttons take equal width
-              className={`flex-1 flex items-center justify-center px-2 py-2 rounded-lg transition-all duration-200 text-sm md:text-base ${
+              className={`flex-1 flex items-center justify-center px-2 py-2 rounded-lg transition-all duration-200 text-xs md:text-base ${
                 activeSubCategory === subCategory.id
                   ? "bg-[#fea92a] text-[#09100d] shadow-md"
                   : "text-[#efefef] hover:bg-[#376553]"
@@ -723,18 +739,18 @@ const DailyBread = () => {
         ) : (
           /* Empty State for Filtered Results */
           <div className="text-center py-20">
-            <h3 className="text-xl text-[#efefef] mb-2">
-              No "{activeCategory}" Tips in "{activeSubCategory}" found.
+            <h3 className="text-sm text-[#efefef] mb-2">
+              No paid tips found for "{activeCategory}" - "{activeSubCategory}".
             </h3>
-            <p className="text-[#376553]">
-              Try adjusting your category filters or creating a new tip!
+            <p className="text-[#376553] text-xs">
+              Please create a new tip to see it here!
             </p>
           </div>
         )}
       </div>
 
       {/* Tip Management Modal */}
-      {showModal && selectedTipForManagement && (
+      {showModal && selectedTipForManagement && user && (
         <TipManagementModal
           tip={selectedTipForManagement}
           punterId={user._id}
@@ -748,13 +764,13 @@ const DailyBread = () => {
 
       {/* Floating Create Tip Button (FAB) */}
       <button
-        className="fixed bottom-30 right-8 h-16 rounded-full bg-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5"
+        className="fixed bottom-30 right-8 h-16 rounded-full bg-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5" // Adjusted position to bottom-8
         onClick={() => {
           navigate("/punter/createDaily");
         }}
       >
-        <FiPlus className="text-2xl group-hover:rotate-90 transition-transform" />
-        <span className="ml-2 font-semibold">Create New Tip</span>
+        <FiPlus className="text-xl group-hover:rotate-90 transition-transform" />
+        <span className="ml-2 text-sm">Create New Tip</span>
       </button>
     </div>
   );

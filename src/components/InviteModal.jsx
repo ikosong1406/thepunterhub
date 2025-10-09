@@ -36,7 +36,7 @@ const InviteModal = ({ onClose, user }) => {
           {/* Header */}
           <div className="text-center mb-6">
             <h2 
-              className="text-2xl font-bold"
+              className="text-xl font-bold"
               style={{ color: "#efefef" }}
             >
               Invite Friends
@@ -52,7 +52,7 @@ const InviteModal = ({ onClose, user }) => {
               Your Promo Code
             </p>
             <div className="flex items-center justify-center space-x-2 mt-2">
-              <span className="text-4xl font-extrabold tracking-widest" style={{ color: "#fea92a" }}>
+              <span className="text-2xl font-extrabold tracking-widest" style={{ color: "#fea92a" }}>
                 {promoCode}
               </span>
             </div>
@@ -67,13 +67,13 @@ const InviteModal = ({ onClose, user }) => {
             >
               {copied ? (
                 <>
-                  <FaCheck size={16} />
-                  <span>Code Copied!</span>
+                  <FaCheck size={15} />
+                  <span className='text-sm'>Code Copied!</span>
                 </>
               ) : (
                 <>
-                  <FaCopy size={16} />
-                  <span>Copy Code</span>
+                  <FaCopy size={15} />
+                  <span className='text-sm'>Copy Code</span>
                 </>
               )}
             </button>

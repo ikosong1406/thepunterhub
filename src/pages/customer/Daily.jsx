@@ -41,7 +41,7 @@ const MyTipsButton = ({ tipCount, onClick }) => (
     className="relative p-2 rounded-xl bg-[#162821] text-[#fea92a] hover:bg-[#376553] transition-colors duration-200 border border-[#376553] ml-4 flex items-center space-x-1"
     aria-label="Go to My Purchased Tips Page"
   >
-    <FaBookmark className="text-xl" />
+    <FaBookmark className="text-base" />
     <span className="text-xs">My Tips</span>
   </button>
 );
@@ -160,7 +160,6 @@ const DailyBread = () => {
       setAllTips(sortedTips);
     } catch (err) {
       console.error("Daily tips fetch failed:", err);
-      toast.error("Failed to load daily tips.");
     } finally {
       if (isInitial) {
         setLoadingTips(false);
@@ -401,8 +400,8 @@ const DailyBread = () => {
       {/* Fixed Navigation Container */}
       <div className="sticky top-0 z-10 bg-[#09100d] pb-4">
         {/* Header - Daily Bread Title and My Tips Icon */}
-        <header className="flex justify-between items-center mb-6 pt-8">
-          <h1 className="text-3xl font-bold text-[#18ffc8] tracking-tight">
+        <header className="flex justify-between items-center mb-6 pt-5">
+          <h1 className="text-2xl font-bold text-[#18ffc8] tracking-tight">
             Daily Bread
           </h1>
           <MyTipsButton
@@ -418,7 +417,7 @@ const DailyBread = () => {
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`flex-1 flex items-center px-4 md:px-6 py-3 rounded-lg transition-all duration-200 text-sm md:text-base ${
+                className={`flex-1 flex items-center px-4 md:px-6 py-3 rounded-lg transition-all duration-200 text-xs md:text-base ${
                   activeCategory === category.id
                     ? "bg-[#18ffc8] text-[#09100d] shadow-lg"
                     : "text-[#efefef] hover:bg-[#376553] hover:text-[#efefef]"
@@ -440,7 +439,7 @@ const DailyBread = () => {
               <button
                 key={subCategory.id}
                 onClick={() => setActiveSubCategory(subCategory.id)}
-                className={`flex-1 flex items-center justify-center px-2 py-2 rounded-lg transition-all duration-200 text-sm md:text-base ${
+                className={`flex-1 flex items-center justify-center px-2 py-2 rounded-lg transition-all duration-200 text-xs md:text-base ${
                   activeSubCategory === subCategory.id
                     ? "bg-[#fea92a] text-[#09100d] shadow-md"
                     : "text-[#efefef] hover:bg-[#376553]"
@@ -609,13 +608,13 @@ const DailyBread = () => {
       {/* Empty State */}
       {tips.length === 0 && (
         <div className="text-center py-20">
-          <h3 className="text-xl text-[#efefef] mb-2">
+          <h3 className="text-base text-[#efefef] mb-2">
             {loadingTips
               ? "Fetching tips..."
-              : `No unpurchased ${activeCategory.toUpperCase()} ${activeSubCategory.toUpperCase()} tips available.`}
+              : `No unpurchased tips available.`}
           </h3>
           {!loadingTips && (
-            <p className="text-[#376553]">
+            <p className="text-[#376553] text-sm">
               Check back later for fresh insights!
             </p>
           )}

@@ -79,7 +79,7 @@ const PersonalInfoModal = ({ user, onClose }) => {
           style={{ borderColor: "#376553" }}
         >
           <h2 
-            className="text-xl font-bold"
+            className="text-lg font-bold"
             style={{ color: "#efefef" }}
           >
             Personal Information
@@ -113,9 +113,9 @@ const PersonalInfoModal = ({ user, onClose }) => {
           )}
 
           {/* Profile Picture Section */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6">
             <div 
-              className="relative w-24 h-24 rounded-full flex items-center justify-center"
+              className="relative w-20 h-20 rounded-full flex items-center justify-center"
               style={{ backgroundColor: "#376553" }}
             >
               {user.profilePicture ? (
@@ -125,7 +125,7 @@ const PersonalInfoModal = ({ user, onClose }) => {
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <span className="text-3xl font-bold" style={{ color: "#efefef" }}>
+                <span className="text-2xl font-bold" style={{ color: "#efefef" }}>
                   {initials}
                 </span>
               )}
@@ -191,14 +191,14 @@ const PersonalInfoModal = ({ user, onClose }) => {
                 <button 
                   onClick={handleSave}
                   disabled={loading}
-                  className="py-3 px-6 rounded-lg flex items-center text-lg font-semibold"
+                  className="py-3 px-6 rounded-lg flex items-center text-sm font-semibold"
                   style={{ 
                     backgroundColor: "#18ffc8", 
                     color: "#09100d",
                     opacity: loading ? 0.7 : 1
                   }}
                 >
-                  <FaSave className="mr-2" size={18} />
+                  <FaSave className="mr-2" size={16} />
                   {loading ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button 
@@ -213,26 +213,26 @@ const PersonalInfoModal = ({ user, onClose }) => {
                       isMessageable: user.isMessageable || false,
                     });
                   }}
-                  className="py-3 px-6 rounded-lg flex items-center text-lg font-semibold"
+                  className="py-3 px-6 rounded-lg flex items-center text-sm font-semibold"
                   style={{ 
                     backgroundColor: "#f57cff", 
                     color: "#09100d" 
                   }}
                 >
-                  <FaTimes className="mr-2" size={18} />
+                  <FaTimes className="mr-2" size={16} />
                   Cancel
                 </button>
               </>
             ) : (
               <button 
                 onClick={() => setIsEditing(true)}
-                className="py-3 px-6 rounded-lg flex items-center text-lg font-semibold"
+                className="py-3 px-6 rounded-lg flex items-center text-sm font-semibold"
                 style={{ 
                   backgroundColor: "#fea92a", 
                   color: "#09100d" 
                 }}
               >
-                <FaEdit className="mr-2" size={18} />
+                <FaEdit className="mr-2" size={16} />
                 Edit Information
               </button>
             )}

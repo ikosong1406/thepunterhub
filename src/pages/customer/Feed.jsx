@@ -542,7 +542,7 @@ const FeedPage = () => {
           <button
             key={category.key}
             onClick={() => setActivePrimary(category.key)}
-            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 text-sm ${
               activePrimary === category.key
                 ? "text-[#18ffc8] border-b-2 border-[#18ffc8]"
                 : "text-gray-400"

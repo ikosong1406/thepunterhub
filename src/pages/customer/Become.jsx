@@ -209,12 +209,12 @@ const BecomePunter = () => {
           >
             <div className="mb-8">
               <h1
-                className="text-3xl font-bold mb-4"
+                className="text-2xl font-bold mb-4"
                 style={{ color: Colors.orange }}
               >
                 Become a Verified Punter
               </h1>
-              <p className="text-lg mb-6" style={{ color: Colors.white }}>
+              <p className="text-base mb-6" style={{ color: Colors.white }}>
                 Share your expertise, build your reputation, and earn from your
                 predictions.
               </p>
@@ -525,7 +525,7 @@ const BecomePunter = () => {
                     >
                       I agree to the{" "}
                       <a
-                        href="/terms"
+                        href="https://thepunterhub.com/terms"
                         className="underline"
                         style={{ color: Colors.orange }}
                       >

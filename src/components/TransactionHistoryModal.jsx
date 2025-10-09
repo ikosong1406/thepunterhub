@@ -11,7 +11,8 @@ const TransactionHistoryModal = ({ user, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const isPositiveTransaction = (type) => ["deposit", "payment"].includes(type);
+  const isPositiveTransaction = (type) =>
+    ["deposit", "payment", "redeemed"].includes(type);
 
   const fetchTransactions = useCallback(async () => {
     if (!user?._id) {

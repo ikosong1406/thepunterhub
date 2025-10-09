@@ -163,7 +163,7 @@ const ProfilePage = () => {
                 />
               ) : (
                 <span
-                  className="text-lg font-bold"
+                  className="text-sm font-bold"
                   style={{ color: "#efefef" }}
                 >
                   {initials}
@@ -171,7 +171,7 @@ const ProfilePage = () => {
               )}
             </div>
             <div>
-              <h1 className="font-bold" style={{ color: "#efefef" }}>
+              <h1 className="font-bold text-base" style={{ color: "#efefef" }}>
                 {fullName || user.username || "User"}
               </h1>
               <p className="text-xs" style={{ color: "#18ffc8" }}>
@@ -197,15 +197,15 @@ const ProfilePage = () => {
           <div className="flex justify-between items-center w-full mb-3">
             <div className="flex flex-col">
               <span
-                className="text-sm font-semibold"
+                className="text-xs font-semibold"
                 style={{ color: "#f57cff" }}
               >
                 Main Balance
               </span>
               <div className="flex items-center space-x-2">
-                <FaWallet style={{ color: "#efefef", fontSize: "1.2rem" }} />
+                <FaWallet style={{ color: "#efefef", fontSize: "1.1rem" }} />
                 <span
-                  className="text-2xl font-bold"
+                  className="text-xl font-bold"
                   style={{ color: "#efefef" }}
                 >
                   {user.balance?.toFixed(2) || "0.00"}
@@ -228,10 +228,10 @@ const ProfilePage = () => {
           {/* Promo Balance Row */}
           <div className="flex items-center space-x-2 mt-2 w-full">
             <FaMoneyBillWave style={{ color: "#f57cff", fontSize: "1rem" }} />
-            <span className="text-sm font-medium" style={{ color: "#f57cff" }}>
+            <span className="text-xs font-medium" style={{ color: "#f57cff" }}>
               Promo Balance:
             </span>
-            <span className="text-lg font-bold" style={{ color: "#efefef" }}>
+            <span className="text-sm font-bold" style={{ color: "#efefef" }}>
               {user.promoBalance?.toFixed(2) || "0.00"}
             </span>
           </div>
@@ -299,7 +299,7 @@ const ProfilePage = () => {
             style={{ backgroundColor: "#376553", color: "#efefef" }}
           >
             <FaSignOutAlt />
-            <span>Sign Out</span>
+            <span className="text-sm">Sign Out</span>
           </button>
         </div>
       </div>
@@ -379,7 +379,7 @@ const MenuItem = ({ icon, title, onClick }) => (
   >
     <div className="flex items-center space-x-3">
       <div style={{ color: "#fea92a" }}>{icon}</div>
-      <span style={{ color: "#efefef" }}>{title}</span>
+      <span style={{ color: "#efefef" }} className="text-sm">{title}</span>
     </div>
     <FaChevronRight style={{ color: "#18ffc8" }} />
   </div>

@@ -519,8 +519,8 @@ const TipsHistoryMobile = () => {
         className="fixed bottom-30 right-8 h-16 rounded-full bg-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5"
         onClick={() => {navigate('/punter/create')}}
       >
-        <FiPlus className="text-2xl group-hover:rotate-90 transition-transform" />
-        <span className="ml-2">Create New Tip</span>
+        <FiPlus className="text-xl group-hover:rotate-90 transition-transform" />
+        <span className="ml-2 text-sm">Create New Tip</span>
       </button>
     </div>
   );

@@ -265,7 +265,7 @@ const LivePage = () => {
     <div className="bg-[#0a120e] text-white px-4 py-6 pb-20 min-h-screen">
       <Header />
       {/* Primary Category Selection */}
-      <div className="flex border-b border-[#2a3a34] mb-4">
+      <div className="flex border-b border-[#2a3a34] mb-4 text-sm">
         {primaryCategories.map((category) => (
           <button
             key={category.key}

@@ -388,7 +388,7 @@ const ChatInterface = () => {
             placeholder="Search conversations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none text-[#efefef] w-full outline-none"
+            className="bg-transparent border-none text-[#efefef] w-full outline-none text-sm"
           />
         </div>
 
@@ -396,7 +396,7 @@ const ChatInterface = () => {
         <div className="bg-[#162821] rounded-xl overflow-hidden">
           {loadingChats && chatList.length === 0 ? (
             <div className="p-8 text-center">
-              <p style={{ color: "#efefef" }}>Loading messages...</p>
+              <p style={{ color: "#efefef" }} className="text-sm">Loading messages...</p>
             </div>
           ) : chatError ? (
             <div className="p-8 text-center">
@@ -452,7 +452,7 @@ const ChatInterface = () => {
             ))
           ) : (
             <div className="p-8 text-center">
-              <p style={{ color: "#efefef" }}>
+              <p style={{ color: "#efefef" }} className="text-sm">
                 No messages found. Start a new chat!
               </p>
             </div>
@@ -465,8 +465,8 @@ const ChatInterface = () => {
         className="fixed bottom-30 right-8 h-16 rounded-full bg-gradient-to-br from-[#fea92a] to-[#855391] flex items-center justify-center shadow-lg hover:shadow-xl transition-all group px-5"
         onClick={handleOpenPuntersModal}
       >
-        <FiPlus className="text-2xl group-hover:rotate-90 transition-transform" />
-        <span className="ml-2">New chat</span>
+        <FiPlus className="text-xl group-hover:rotate-90 transition-transform" />
+        <span className="ml-2 text-sm">New chat</span>
       </button>
 
       {/* Chat Modal */}

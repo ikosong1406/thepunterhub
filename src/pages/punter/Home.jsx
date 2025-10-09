@@ -199,7 +199,7 @@ const PunterDashboard = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-xl font-bold">
               Welcome,{" "}
               <span className="font-medium text-[#fea92a]">{username}</span>
             </h1>
@@ -214,7 +214,7 @@ const PunterDashboard = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm text-[#efefef]/70 mb-1">{stat.title}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-xl font-bold">{stat.value}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-[#376553]/20 text-[#fea92a]">
                   {stat.icon}
@@ -225,7 +225,7 @@ const PunterDashboard = () => {
         </div>
         <div className="bg-[#162821]/80 backdrop-blur-sm rounded-xl p-5 border border-[#376553]/30">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="text-lg font-semibold">Recent Activity</h2>
+            <h2 className="text-base font-semibold">Recent Activity</h2>
             <button className="text-sm text-[#fea92a] hover:underline" onClick={() => navigate('/punter/notifications')}>
               View All
             </button>

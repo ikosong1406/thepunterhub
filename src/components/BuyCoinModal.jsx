@@ -181,7 +181,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
           className="px-6 py-4 flex justify-between items-center border-b"
           style={{ borderColor: "#376553" }}
         >
-          <h2 className="text-xl font-bold" style={{ color: "#efefef" }}>
+          <h2 className="text-lg font-bold" style={{ color: "#efefef" }}>
             Buy Coins
           </h2>
           <button
@@ -197,7 +197,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
           {/* Coin Packages */}
           <div className="mb-8">
             <h3
-              className="text-lg font-semibold mb-4"
+              className="text-base font-semibold mb-4"
               style={{ color: "#efefef" }}
             >
               Select Package (1 Coin = ₦100)
@@ -235,12 +235,12 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                   <div className="flex flex-col items-center">
                     <div className="flex items-end mb-1">
                       <span
-                        className="text-2xl font-bold mr-1"
+                        className="text-xl font-bold mr-1"
                         style={{ color: "#efefef" }}
                       >
                         {option.coins}
                       </span>
-                      <span className="text-sm" style={{ color: "#18ffc8" }}>
+                      <span className="text-xs" style={{ color: "#18ffc8" }}>
                         coins
                       </span>
                     </div>
@@ -249,17 +249,17 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
               ))}
             </div>
           </div>
-          <p className="text-center text-gray-400 my-4">OR</p>
+          <p className="text-center text-gray-400 my-4 text-xs">OR</p>
           {/* Custom Coin Input */}
           <div className="mb-8">
             <h3
-              className="text-lg font-semibold mb-4"
+              className="text-base font-semibold mb-4"
               style={{ color: "#efefef" }}
             >
               Enter Custom Amount (Min 5)
             </h3>
             <div
-              className={`p-4 rounded-xl border-2 transition-all ${
+              className={`p-3 rounded-xl border-2 transition-all ${
                 selectedOption === -1
                   ? "border-orange-500 scale-105"
                   : "border-gray-500 hover:border-blue-500"
@@ -280,7 +280,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                   setSelectedOption(-1);
                 }}
                 placeholder="Enter number of coins"
-                className="w-full text-center text-white bg-transparent outline-none border-none text-xl placeholder-gray-500"
+                className="w-full text-center text-white bg-transparent outline-none border-none text-xl placeholder-gray-500 placeholder:text-base"
                 style={{ color: "#efefef" }}
                 min="5"
               />
@@ -291,8 +291,8 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
             style={{ backgroundColor: "#162821" }}
           >
             <div className="flex justify-between items-center mb-2">
-              <span style={{ color: "#efefef" }}>Coins Purchased:</span>
-              <span className="font-bold" style={{ color: "#18ffc8" }}>
+              <span style={{ color: "#efefef" }} className="text-sm">Coins Purchased:</span>
+              <span className="font-bold text-sm" style={{ color: "#18ffc8" }}>
                 {baseCoins}
               </span>
             </div>
@@ -301,14 +301,11 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
               style={{ borderColor: "#376553" }}
             ></div>
             <div className="flex justify-between items-center mb-2">
-              <span style={{ color: "#efefef" }}>Price:</span>
-              <span className="font-bold" style={{ color: "#efefef" }}>
+              <span style={{ color: "#efefef" }} className="text-sm">Price:</span>
+              <span className="font-bold text-sm" style={{ color: "#efefef" }}>
                 {getCurrencySymbol("NGN")} {displayPrice} NGN
               </span>
             </div>
-            <p className="text-xs mt-2 text-gray-400">
-              **No transaction fees** are being charged. You pay the exact coin equivalent in NGN.
-            </p>
           </div>
         </div>
         <div className="px-6 py-4 border-t" style={{ borderColor: "#376553" }}>
@@ -326,7 +323,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
           <button
             onClick={handlePayment}
             disabled={loading || baseCoins <= 0 || amount <= 0 || isNaN(amount)}
-            className={`w-full py-4 rounded-xl font-bold flex items-center justify-center transition-all ${
+            className={`w-full py-4 rounded-xl font-bold flex items-center justify-center transition-all text-base${
               loading || baseCoins <= 0 || amount <= 0 || isNaN(amount)
                 ? "opacity-70 cursor-not-allowed"
                 : "hover:opacity-90"
@@ -358,9 +355,11 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
                 Processing...
               </>
             ) : (
-              `PAY ${getCurrencySymbol(
+              <span className="text-base">
+              PAY {getCurrencySymbol(
                 transactionCurrency
-              )} ${transactionPrice}`
+              )} {transactionPrice}
+              </span>
             )}
           </button>
         </div>

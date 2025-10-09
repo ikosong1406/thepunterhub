@@ -199,8 +199,8 @@ const CreateTipPage = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#fea92a]">Create New Tip</h1>
-        <p className="text-[#efefef]/70">
+        <h1 className="text-xl font-bold text-[#fea92a]">Create New Tip</h1>
+        <p className="text-[#efefef]/70 text-sm">
           Share your prediction with subscribers
         </p>
       </div>
@@ -211,7 +211,7 @@ const CreateTipPage = () => {
           <button
             key={category.key}
             onClick={() => setActiveCategory(category.key)}
-            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 text-sm ${
               activeCategory === category.key
                 ? "text-[#18ffc8] border-b-2 border-[#18ffc8]"
                 : "text-[#efefef]/50"
@@ -240,8 +240,8 @@ const CreateTipPage = () => {
                   onChange={(e) =>
                     setSportsForm({ ...sportsForm, site: e.target.value })
                   }
-                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none"
-                  placeholder="Bet9ja, 1xBet, etc."
+                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none text-sm"
+                  placeholder="Bet9ja, Sportybet, etc."
                   required
                 />
               </div>
@@ -255,7 +255,7 @@ const CreateTipPage = () => {
                   onChange={(e) =>
                     setSportsForm({ ...sportsForm, code: e.target.value })
                   }
-                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none"
+                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none text-sm"
                   placeholder="3HG7D"
                 />
               </div>
@@ -276,10 +276,10 @@ const CreateTipPage = () => {
                         startTime: e.target.value,
                       })
                     }
-                    className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 pl-10 focus:border-[#fea92a] focus:outline-none"
+                    className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 pl-10 focus:border-[#fea92a] focus:outline-none text-sm"
                     required
                   />
-                  <FiClock className="absolute left-3 top-3 text-[#efefef]/50" />
+                  <FiClock className="absolute left-3 top-3 text-[#efefef]/50 text-sm" />
                 </div>
               </div>
               <div>
@@ -294,11 +294,11 @@ const CreateTipPage = () => {
                     onChange={(e) =>
                       setSportsForm({ ...sportsForm, totalOdd: e.target.value })
                     }
-                    className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 pl-10 focus:border-[#fea92a] focus:outline-none"
+                    className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 pl-10 focus:border-[#fea92a] focus:outline-none text-sm"
                     placeholder="5.60"
                     required
                   />
-                  <FiTrendingUp className="absolute left-3 top-3 text-[#efefef]/50" />
+                  <FiTrendingUp className="absolute left-3 top-3 text-[#efefef]/50 text-sm" />
                 </div>
               </div>
             </div>
@@ -313,7 +313,7 @@ const CreateTipPage = () => {
                 onChange={(e) =>
                   setSportsForm({ ...sportsForm, sport: e.target.value })
                 }
-                className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none"
+                className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none text-sm"
               >
                 <option value="football">Football</option>
                 <option value="basketball">Basketball</option>
@@ -392,7 +392,7 @@ const CreateTipPage = () => {
                             onChange={(e) =>
                               handleMatchChange(index, "teams", e.target.value)
                             }
-                            className="w-full bg-[#162821] border border-[#376553] rounded-lg px-3 py-2 text-sm focus:border-[#fea92a] focus:outline-none"
+                            className="w-full bg-[#162821] border border-[#376553] rounded-lg px-3 py-2 text-sm focus:border-[#fea92a] focus:outline-none text-sm"
                             placeholder="Chelsea vs Arsenal"
                             required
                           />
@@ -411,7 +411,7 @@ const CreateTipPage = () => {
                                 e.target.value
                               )
                             }
-                            className="w-full bg-[#162821] border border-[#376553] rounded-lg px-3 py-2 text-sm focus:border-[#fea92a] focus:outline-none"
+                            className="w-full bg-[#162821] border border-[#376553] rounded-lg px-3 py-2 text-sm focus:border-[#fea92a] focus:outline-none text-sm"
                             placeholder="Over 2.5 Goals"
                             required
                           />
@@ -439,7 +439,7 @@ const CreateTipPage = () => {
               <select
                 value={tradingForm.type}
                 onChange={(e) => handleTradingChange("type", e.target.value)}
-                className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none"
+                className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none text-sm"
               >
                 <option value="forex">Forex</option>
                 <option value="crypto">Crypto</option>
@@ -467,7 +467,7 @@ const CreateTipPage = () => {
                   type="text"
                   value={tradingForm.pair}
                   onChange={(e) => handleTradingChange("pair", e.target.value)}
-                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none"
+                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none text-sm"
                   placeholder={
                     tradingForm.type === "forex"
                       ? "EUR/USD"
@@ -491,7 +491,7 @@ const CreateTipPage = () => {
                   onChange={(e) =>
                     handleTradingChange("direction", e.target.value)
                   }
-                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none"
+                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none text-sm"
                 >
                   <option value="buy">BUY</option>
                   <option value="sell">SELL</option>
@@ -516,7 +516,7 @@ const CreateTipPage = () => {
                     className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 pl-10 focus:border-[#fea92a] focus:outline-none"
                     required
                   />
-                  <FiDollarSign className="absolute left-3 top-3 text-[#efefef]/50" />
+                  <FiDollarSign className="absolute left-3 top-3 text-[#efefef]/50 text-sm" />
                 </div>
               </div>
               <div>
@@ -534,7 +534,7 @@ const CreateTipPage = () => {
                     className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 pl-10 focus:border-[#18ffc8] focus:outline-none"
                     required
                   />
-                  <FiTrendingUp className="absolute left-3 top-3 text-[#18ffc8]" />
+                  <FiTrendingUp className="absolute left-3 top-3 text-[#18ffc8] text-sm" />
                 </div>
               </div>
               <div>
@@ -552,7 +552,7 @@ const CreateTipPage = () => {
                     className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 pl-10 focus:border-[#f57cff] focus:outline-none"
                     required
                   />
-                  <FiTrendingDown className="absolute left-3 top-3 text-[#f57cff]" />
+                  <FiTrendingDown className="absolute left-3 top-3 text-[#f57cff] text-sm" />
                 </div>
               </div>
             </div>
@@ -568,7 +568,7 @@ const CreateTipPage = () => {
                   onChange={(e) =>
                     handleTradingChange("timeFrame", e.target.value)
                   }
-                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none"
+                  className="w-full bg-[#162821] border border-[#376553] rounded-lg px-4 py-2 focus:border-[#fea92a] focus:outline-none text-sm"
                 >
                   <option value="M1">M1</option>
                   <option value="M5">M5</option>
@@ -618,7 +618,7 @@ const CreateTipPage = () => {
                 key={type}
                 type="button"
                 onClick={() => setTipType(type)}
-                className={`flex-1 py-2 capitalize font-semibold rounded-lg transition-colors border-2 
+                className={`flex-1 py-2 capitalize font-semibold rounded-lg transition-colors border-2 text-sm
                   ${
                     tipType === type
                       ? type === "silver"
@@ -639,7 +639,7 @@ const CreateTipPage = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full mt-8 bg-gradient-to-r from-[#fea92a] to-[#855391] text-[#09100d] font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity"
+          className="w-full mt-8 bg-gradient-to-r from-[#fea92a] to-[#855391] text-[#09100d] font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity text-sm"
           disabled={isSubmitting} // Disable the button while submitting
         >
           {isSubmitting
