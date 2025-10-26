@@ -11,11 +11,7 @@ import {
   FaChessKnight,
 } from "react-icons/fa";
 import { IoMdFootball } from "react-icons/io";
-import {
-  GiTennisBall,
-  GiCricketBat,
-  GiMetalDisc,
-} from "react-icons/gi";
+import { GiTennisBall, GiCricketBat, GiMetalDisc } from "react-icons/gi";
 // import { TbStock } from "react-icons/tb";
 import Header from "./Header";
 
@@ -321,7 +317,7 @@ const LivePage = () => {
             ))}
       </div>
       {/* Live Content */}
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         {activePrimary === "sports" ? (
           <LiveSportsWidget key={activeSport} activeSport={activeSport} />
         ) : (
@@ -330,7 +326,7 @@ const LivePage = () => {
             activeCategory={activeTrading}
           />
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

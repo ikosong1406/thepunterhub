@@ -316,7 +316,7 @@ const LivePage = () => {
             ))}
       </div>
       {/* Live Content */}
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         {activePrimary === "sports" ? (
           <LiveSportsWidget key={activeSport} activeSport={activeSport} />
         ) : (
@@ -325,7 +325,7 @@ const LivePage = () => {
             activeCategory={activeTrading}
           />
         )}
-      </div>
+      </div> */}
     </div>
   );
 };
