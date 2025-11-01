@@ -64,7 +64,7 @@ const BuyCoinModal = ({ user, onClose, onDepositSuccess }) => {
   const [error, setError] = useState(null);
 
   // You can switch to the test key if needed: "pk_test_c42384ba4484dd9a4be899cbd29120e0811d9494";
-  const PAYSTACK_PUBLIC_KEY = "pk_live_8cae50cbecfc7b94bb6d0fa77b5fb5ce2c5b5ad2";
+  const PAYSTACK_PUBLIC_KEY = "pk_live_88049df40dfab386bf10d09a9956ec7ae346b91d";
 
   // Use useMemo to ensure pricing recalculates ONLY when state changes
   const pricing = useMemo(() => {
