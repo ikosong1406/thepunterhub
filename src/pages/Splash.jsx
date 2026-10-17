@@ -6,7 +6,7 @@ import axios from "axios";
 import tipsterImage from "../assets/field.jpg";
 import "../styles/Splash.css";
 import Api from "../components/Api"
-import logoImage from "../assets/logo2.png"
+import logoImage from "../assets/logo3.png"
 
 const SplashScreen = () => {
   const navigate = useNavigate();
@@ -35,8 +35,6 @@ const SplashScreen = () => {
           // User is authenticated and has a role
           if (role === "customer") {
             navigate("/customer/home");
-          } else if (role === "punter") {
-            navigate("/punter/home");
           } else {
             // Fallback for an unknown role
             navigate("/welcome");

@@ -4,7 +4,7 @@ import { FaArrowLeft, FaSearch, FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import Api from "../components/Api";
-import logoImage from "../assets/logo2.png";
+import logoImage from "../assets/logo3.png";
 
 const Colors = {
   gray: "#162821",
@@ -200,9 +200,6 @@ const RegisterScreen = () => {
           <h2 className="text-3xl font-bold mt-8 text-center">
             Create Your Account
           </h2>
-          <p className="text-gray-400 mt-4 text-center">
-            Join our platform and start your journey with us today.
-          </p>
           <div className="mt-8 text-center">
             <p className="text-gray-400">
               Already have an account?{" "}
@@ -297,80 +294,6 @@ const RegisterScreen = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
-                Phone Number
-              </label>
-              <div className="flex gap-3 relative">
-                <div className="relative w-1/3">
-                  <button
-                    type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="w-full p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8] text-left flex items-center justify-between"
-                  >
-                    <span>
-                      {PHONE_CODES.find(
-                        (code) => code.value === formData.phoneCode
-                      )?.label || "Select Code"}
-                    </span>
-                    <svg
-                      className={`h-5 w-5 transition-transform duration-200 ${
-                        isDropdownOpen ? "rotate-180" : ""
-                      }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.27a.75.75 0 01.02-1.06z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                  {isDropdownOpen && (
-                    <div
-                      className="absolute z-10 w-full mt-1 rounded-md shadow-lg"
-                      style={{ backgroundColor: Colors.gray }}
-                    >
-                      <div className="p-2 border-b border-gray-600">
-                        <div className="relative">
-                          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="text"
-                            placeholder="Search countries..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-[#09100d] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
-                          />
-                        </div>
-                      </div>
-                      <ul className="max-h-60 overflow-y-auto custom-scrollbar">
-                        {filteredPhoneCodes.map((code) => (
-                          <li
-                            key={code.value + code.label}
-                            className="p-2 hover:bg-[#162821] cursor-pointer"
-                            onClick={() => handlePhoneCodeChange(code.value)}
-                          >
-                            {code.label}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  placeholder="Enter your phone number"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  className="w-2/3 p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
-                  required
-                />
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label
                 htmlFor="password"
@@ -451,10 +374,10 @@ const RegisterScreen = () => {
                   className="mt-1"
                 />
                 <span>
-                  I confirm I am over 21 years old and accept the{" "}
+                  I confirm I am over 18 years old and accept the{" "}
                   <a
                     type="button"
-                    href="https://thepunterhub.com/terms"
+                    href="https://todayprediction365.com/terms"
                     className="text-[#855391] hover:text-[#fea92a] underline transition"
                   >
                     Terms & Conditions

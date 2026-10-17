@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "../styles/Splash.css";
-import logoImage from "../assets/logo2.png";
+import logoImage from "../assets/logo3.png";
 import Api from "../components/Api";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";

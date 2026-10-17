@@ -3,9 +3,9 @@ import React from "react";
 import { useNavigate } from "react-router-dom"; // for navigation
 import tipsterImage from "../assets/field.jpg";
 import "../styles/Splash.css";
-import logoImage from "../assets/logo2.png";
+import logoImage from "../assets/logo3.png";
 
-const WelcomeScreen = ({ platformName = "PunterHub" }) => {
+const WelcomeScreen = ({ platformName = "TodayPrediction365" }) => {
   const navigate = useNavigate();
 
   const handleLogin = () => {

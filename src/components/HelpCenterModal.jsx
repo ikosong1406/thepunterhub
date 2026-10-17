@@ -53,7 +53,7 @@ const HelpCenterModal = ({ onClose }) => {
     },
     {
       id: 'subscriptions',
-      title: 'Punter Subscriptions',
+      title: 'Subscriptions',
       icon: <FaQuestionCircle className="mr-2" />,
       questions: [
         {

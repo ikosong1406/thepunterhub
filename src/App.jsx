@@ -7,7 +7,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import localforage from "localforage";
-import logoImage from "./assets/logo2.png";
+import logoImage from "./assets/logo3.png";
 import "./styles/Splash.css";
 import SplashScreen from "./pages/Splash"; // Ensure this component handles the conditional navigation
 import WelcomeScreen from "./pages/Welcome";
@@ -140,10 +140,8 @@ const App = () => {
         {/* The SplashScreen component now handles all initial logic. */}
         <Route path="/" element={<SplashScreen />} />
         <Route path="/welcome" element={<WelcomeScreen />} />
-        <Route path="/register" element={<RegisterOptionScreen />} />
         <Route path="/login" element={<LoginScreen />} />
-        <Route path="/userRegister" element={<RegisterScreen />} />
-        <Route path="/punterRegister" element={<RegisterPunter />} />
+        <Route path="/register" element={<RegisterScreen />} />
         <Route path="/forgot" element={<ForgetScreen />} />
 
         <Route

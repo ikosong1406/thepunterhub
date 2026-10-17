@@ -15,8 +15,8 @@ const ContactUsModal = ({ onClose }) => {
     {
       type: "Email",
       icon: <FaEnvelope size={22} />,
-      details: "support@thepunterhub.com",
-      action: "mailto:support@thepunterhub.com",
+      details: "support@todayprediction365.com",
+      action: "mailto:support@todayprediction365.com",
       description: "Send us an email and we'll respond within 24 hours",
       color: "#f57cff",
       buttonText: "Compose Email"
