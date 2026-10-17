@@ -4,13 +4,11 @@ import Api from "../../components/Api";
 import localforage from "localforage";
 import {
   FaUser,
-  FaWallet,
   FaChevronRight,
   FaHistory,
   FaQuestionCircle,
   FaSignOutAlt,
 } from "react-icons/fa";
-import { MdLeaderboard } from "react-icons/md";
 import { IoMdAdd } from "react-icons/io";
 import { FaMoneyBillWave, FaUserPlus } from "react-icons/fa6";
 import logoImage from "../../assets/logo2.png";
@@ -19,7 +17,6 @@ import logoImage from "../../assets/logo2.png";
 import BuyCoinModal from "../../components/BuyCoinModal";
 import PersonalInfoModal from "../../components/PersonalInfoModal";
 import TransactionHistoryModal from "../../components/TransactionHistoryModal";
-import LeaderboardModal from "../../components/LeaderboardModal";
 import HelpCenterModal from "../../components/HelpCenterModal";
 import ContactUsModal from "../../components/ContactUsModal";
 import InviteModal from "../../components/InviteModal";
@@ -174,9 +171,6 @@ const ProfilePage = () => {
               <h1 className="font-bold text-base" style={{ color: "#efefef" }}>
                 {fullName || user.username || "User"}
               </h1>
-              <p className="text-xs" style={{ color: "#18ffc8" }}>
-                User Account
-              </p>
             </div>
           </div>
           {user.isVerified && (
@@ -200,15 +194,14 @@ const ProfilePage = () => {
                 className="text-xs font-semibold"
                 style={{ color: "#f57cff" }}
               >
-                Main Balance
+                Active Plan
               </span>
               <div className="flex items-center space-x-2">
-                <FaWallet style={{ color: "#efefef", fontSize: "1.1rem" }} />
                 <span
                   className="text-xl font-bold"
                   style={{ color: "#efefef" }}
                 >
-                  {user.balance?.toFixed(2) || "0.00"}
+                  PREMIUM
                 </span>
               </div>
             </div>
@@ -220,7 +213,7 @@ const ProfilePage = () => {
                 onClick={() => setActiveModal("deposit")}
               >
                 <IoMdAdd className="text-sm" />
-                <span>Deposit</span>
+                <span>Subscribe</span>
               </button>
             </div>
           </div>
@@ -229,10 +222,10 @@ const ProfilePage = () => {
           <div className="flex items-center space-x-2 mt-2 w-full">
             <FaMoneyBillWave style={{ color: "#f57cff", fontSize: "1rem" }} />
             <span className="text-xs font-medium" style={{ color: "#f57cff" }}>
-              Promo Balance:
+              Referral Balance:
             </span>
             <span className="text-sm font-bold" style={{ color: "#efefef" }}>
-              {user.promoBalance?.toFixed(2) || "0.00"}
+              {user.balance?.toFixed(2) || "0.00"}
             </span>
           </div>
         </div>
@@ -257,11 +250,6 @@ const ProfilePage = () => {
               icon={<FaHistory />}
               title="Transaction History"
               onClick={() => setActiveModal("transaction-history")}
-            />
-            <MenuItem
-              icon={<MdLeaderboard />}
-              title="Leaderboard"
-              onClick={() => setActiveModal("leaderboard")}
             />
             <MenuItem
               icon={<FaUserPlus />}
@@ -320,9 +308,6 @@ const ProfilePage = () => {
       )}
       {activeModal === "transaction-history" && (
         <TransactionHistoryModal user={user} onClose={closeModal} />
-      )}
-      {activeModal === "leaderboard" && (
-        <LeaderboardModal user={user} onClose={closeModal} />
       )}
       {activeModal === "help-center" && (
         <HelpCenterModal onClose={closeModal} />

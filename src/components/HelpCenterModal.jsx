@@ -128,31 +128,6 @@ const HelpCenterModal = ({ onClose }) => {
           </button>
         </div>
 
-        {/* Search Bar */}
-        {!activeQuestion && (
-          <div className="px-6 py-4">
-            <div 
-              className="relative rounded-lg overflow-hidden"
-              style={{ backgroundColor: "#162821" }}
-            >
-              <input
-                type="text"
-                placeholder="Search help articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full py-3 px-4 pr-10 focus:outline-none"
-                style={{ backgroundColor: "#162821", color: "#efefef" }}
-              />
-              <div 
-                className="absolute right-3 top-3"
-                style={{ color: "#f57cff" }}
-              >
-                <FaSearch size={16} />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Main Content */}
         <div className="flex-1 px-6 py-4 overflow-y-auto">
           {activeQuestion ? (

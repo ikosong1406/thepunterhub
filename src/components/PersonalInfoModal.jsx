@@ -10,9 +10,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
     firstname: user.firstname || '',
     lastname: user.lastname || '',
     email: user.email || '',
-    phone: user.phonenumber || '',
-    username: user.username || '',
-    isMessageable: user.isMessageable || false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -35,8 +32,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
       const dataToUpdate = {
         userId: user._id,
         username: formData.username,
-        phonenumber: formData.phone,
-        isMessageable: formData.isMessageable,
       };
 
       const response = await axios.post(`${Api}/client/editProfile`, dataToUpdate);
@@ -56,9 +51,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
     { name: 'firstname', label: 'First Name', icon: <FaUser />, editable: false, type: 'text' },
     { name: 'lastname', label: 'Last Name', icon: <FaUser />, editable: false, type: 'text' },
     { name: 'email', label: 'Email', icon: <FaEnvelope />, editable: false, type: 'text' },
-    { name: 'phone', label: 'Phone', icon: <FaPhone />, editable: true, type: 'text' },
-    { name: 'username', label: 'Username', icon: <FaUserTag />, editable: true, type: 'text' },
-    { name: 'isMessageable', label: 'Accept Messages', icon: <FaComments />, editable: true, type: 'toggle' },
   ];
 
   const initials = ((user.firstname && user.lastname) ? 
@@ -208,9 +200,6 @@ const PersonalInfoModal = ({ user, onClose }) => {
                       firstname: user.firstname || '',
                       lastname: user.lastname || '',
                       email: user.email || '',
-                      phone: user.phonenumber || '',
-                      username: user.username || '',
-                      isMessageable: user.isMessageable || false,
                     });
                   }}
                   className="py-3 px-6 rounded-lg flex items-center text-sm font-semibold"

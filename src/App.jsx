@@ -11,9 +11,7 @@ import logoImage from "./assets/logo3.png";
 import "./styles/Splash.css";
 import SplashScreen from "./pages/Splash"; // Ensure this component handles the conditional navigation
 import WelcomeScreen from "./pages/Welcome";
-import RegisterOptionScreen from "./pages/RegisterOption";
 import RegisterScreen from "./pages/Register";
-import RegisterPunter from "./pages/RegisterPunter"
 import LoginScreen from "./pages/Login";
 import ForgetScreen from "./pages/Forgot";
 import CustomerLayout from "./pages/customer/CustomerLayout";
@@ -28,17 +26,6 @@ import CustomerBecome from "./pages/customer/Become";
 import CustomerDaily from "./pages/customer/Daily";
 import CustomerTip from "./pages/customer/TipDetails"
 import CustomerAllDaily from "./pages/customer/AllDaily"
-import PunterLayout from "./pages/punter/PunterLayout";
-import PunterHome from "./pages/punter/Home";
-import PunterHistory from "./pages/punter/History";
-import PunterLive from "./pages/punter/Live";
-import PunterProfile from "./pages/punter/Profile";
-import PunterCreate from "./pages/punter/Create";
-import PunterChat from "./pages/punter/Chat"
-import PunterTip from "./pages/punter/TipDetails"
-import PunterDaily from "./pages/punter/Daily"
-import CreateDaily from "./pages/punter/CreateDaily";
-import PunterNotifications from "./pages/punter/Notifications";
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   // This component's logic is correct and handles subsequent route protection.
@@ -164,26 +151,6 @@ const App = () => {
           <Route path="daily" element={<CustomerDaily />} />
           <Route path="tip" element={<CustomerTip />} />
           <Route path="allDaily" element={<CustomerAllDaily />} />
-        </Route>
-        <Route
-          path="/punter/*"
-          element={
-            <ProtectedRoute requiredRole="punter">
-              <PunterLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<PunterHome />} />
-          <Route path="home" element={<PunterHome />} />
-          <Route path="history" element={<PunterHistory />} />
-          <Route path="profile" element={<PunterProfile />} />
-          <Route path="live" element={<PunterLive />} />
-          <Route path="create" element={<PunterCreate />} />
-          <Route path="chat" element={<PunterChat />} />
-          <Route path="tip" element={<PunterTip />} />
-          <Route path="daily" element={<PunterDaily />} />
-          <Route path="createDaily" element={<CreateDaily />} />
-          <Route path="notifications" element={<PunterNotifications />} />
         </Route>
       </Routes>
     </Router>

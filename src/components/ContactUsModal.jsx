@@ -113,43 +113,6 @@ const ContactUsModal = ({ onClose }) => {
               </div>
             ))}
           </div>
-
-          <div 
-            className="mt-8 p-4 rounded-lg"
-            style={{ backgroundColor: "#162821" }}
-          >
-            <h4 
-              className="font-semibold mb-2 text-sm"
-              style={{ color: "#efefef" }}
-            >
-              Support Hours
-            </h4>
-            <p 
-              className="text-sm mb-1"
-              style={{ color: "#376553" }}
-            >
-              Monday - Friday: 9:00 AM - 5:00 PM (WAT)
-            </p>
-            <p 
-              className="text-sm"
-              style={{ color: "#376553" }}
-            >
-              Saturday: 10:00 AM - 2:00 PM (WAT)
-            </p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div 
-          className="px-6 py-4 border-t text-center"
-          style={{ borderColor: "#376553" }}
-        >
-          <p 
-            className="text-sm"
-            style={{ color: "#376553" }}
-          >
-            For urgent issues outside business hours, please use WhatsApp.
-          </p>
         </div>
       </div>
     </div>

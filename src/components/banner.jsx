@@ -25,7 +25,7 @@ const slides = [
   },
 ];
 
-export const Banner = () => {
+const Banner = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const sliderRef = useRef(null);
 
@@ -97,3 +97,5 @@ export const Banner = () => {
     </div>
   );
 };
+
+export default Banner;
