@@ -92,10 +92,12 @@ const LivePage = () => {
   const [activeSport, setActiveSport] = useState("football");
 
   return (
-    <div className="bg-[#0a120e] text-white px-4 py-4 pb-20 min-h-screen">
+    <div className="bg-[#0a120e] text-white py-4 pb-20 min-h-screen">
+      <div className="px-4">
       <Header />
+      </div>
       {/* Live Content */}
-      <div className="space-y-4 mt-5">
+      <div className="space-y-4">
           <LiveSportsWidget key={activeSport} activeSport={activeSport} />
       </div>
     </div>

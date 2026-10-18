@@ -31,7 +31,9 @@ import Header from "./Header";
 const FOOTBALL_API_URL =
   "https://v3.football.api-sports.io";
 
-const FOOTBALL_API_KEY = "032a3c0e9a2048207e504142a1f28774";
+const BASKETBALL_API_URL = "https://v1.basketball.api-sports.io";
+
+const API_KEY = "032a3c0e9a2048207e504142a1f28774";
 const FIXTURES_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 const FIXTURES_CACHE_PREFIX = "footballFixtures";
 
@@ -44,17 +46,23 @@ const SPORTS_OPTIONS = [
   { id: "nba", label: "NBA", icon: FaBasketballBall },
 ];
 
-const formatDate = (date) =>
-  new Intl.DateTimeFormat("en-NG", {
+// Format a date in the visitor's device timezone.
+const formatDate = (date) => {
+  if (!date || Number.isNaN(new Date(date).getTime())) {
+    return "Date TBA";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
     weekday: "short",
     day: "numeric",
     month: "short",
-    timeZone: "Africa/Lagos",
-  }).format(date);
+  }).format(new Date(date));
+};
 
-// Get the visitor's local date as YYYY-MM-DD
+// Get today's date in the visitor's timezone.
 const getLocalDate = () => {
   const now = new Date();
+
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
@@ -62,16 +70,22 @@ const getLocalDate = () => {
   return `${year}-${month}-${day}`;
 };
 
-// Format a fixture kickoff time in the visitor's local timezone
-const formatKickoff = (fixture) => {
-  const timestamp = Number(fixture.timestamp);
+// Store timestamps independently of timezone, then format on display.
+const formatKickoff = (timestamp) => {
+  if (timestamp === null || timestamp === undefined || timestamp === "") {
+    return "Time TBA";
+  }
 
-  if (!timestamp) return "Time unavailable";
+  const date = new Date(Number(timestamp));
+
+  if (Number.isNaN(date.getTime())) {
+    return "Time TBA";
+  }
 
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(timestamp * 1000));
+  }).format(date);
 };
 
 const normalizeFixture = (item) => {
@@ -81,6 +95,12 @@ const normalizeFixture = (item) => {
   const goals = item.goals || {};
   const status = fixture.status || {};
 
+  const timestamp = fixture.timestamp
+    ? Number(fixture.timestamp) * 1000
+    : fixture.date
+      ? Date.parse(fixture.date)
+      : null;
+
   return {
     id: fixture.id,
     sport: "football",
@@ -89,13 +109,9 @@ const normalizeFixture = (item) => {
     away: teams.away?.name || "Away team",
     homeBadge: teams.home?.logo || "",
     awayBadge: teams.away?.logo || "",
-    date: fixture.date
-      ? formatDate(new Date(fixture.date))
-      : "Date TBA",
-    time: formatKickoff(fixture),
-    timestamp: fixture.timestamp
-      ? fixture.timestamp * 1000
-      : "",
+    timestamp: Number.isFinite(timestamp) ? timestamp : null,
+    date: "",
+    time: "",
     status: status.long || status.short || "",
     statusShort: status.short || "",
     elapsed: status.elapsed ?? null,
@@ -103,6 +119,43 @@ const normalizeFixture = (item) => {
     awayScore: goals.away,
     country: league.country || "",
     venue: fixture.venue?.name || "",
+  };
+};
+
+const normalizeBasketballFixture = (item) => {
+  const game = item.game || {};
+  const league = item.league || {};
+  const teams = item.teams || {};
+  const scores = item.scores || {};
+  const status = game.status || {};
+
+  const timestamp = game.timestamp
+    ? Number(game.timestamp) * 1000
+    : game.date
+      ? Date.parse(game.date)
+      : null;
+
+  return {
+    id: game.id,
+    sport: "nba",
+    league: league.name || "Basketball",
+    home: teams.home?.name || "Home team",
+    away: teams.away?.name || "Away team",
+    homeBadge: teams.home?.logo || "",
+    awayBadge: teams.away?.logo || "",
+    timestamp: Number.isFinite(timestamp) ? timestamp : null,
+    date: "",
+    time: "",
+    status:
+      status.long ||
+      status.short ||
+      "",
+    statusShort: status.short || "",
+    elapsed: status.timer ?? null,
+    homeScore: scores.home?.total ?? null,
+    awayScore: scores.away?.total ?? null,
+    country: item.country?.name || league.country?.name || "",
+    venue: game.venue?.name || "",
   };
 };
 
@@ -235,7 +288,7 @@ function FixtureCard({ fixture }) {
           ? isFinished
           ? "FT"
           : fixture.statusShort || "Score"
-          : fixture.time}
+          : formatKickoff(fixture.timestamp)}
         </span>
       </div>
 
@@ -269,13 +322,19 @@ function FixtureCard({ fixture }) {
         </div>
       </div>
 
-      <div className="mt-4 border-t border-[#2a3a34] pt-3 text-center text-xs text-gray-400">
-        <FaRegCalendarAlt className="mr-1 inline" />
-        {fixture.date || "Date TBA"}
-        {!hasScore && fixture.time !== "Time TBA" && (
-          <span> · {fixture.time}</span>
-        )}
-      </div>
+    <div className="mt-4 border-t border-[#2a3a34] pt-3 text-center text-xs text-gray-400">
+      <FaRegCalendarAlt className="mr-1 inline" />
+      {fixture.timestamp
+        ? formatDate(new Date(fixture.timestamp))
+        : "Date TBA"}
+
+      {!hasScore && (
+        <span>
+          {" · "}
+          {formatKickoff(fixture.timestamp)}
+        </span>
+      )}
+    </div>
     </article>
   );
 }
@@ -513,114 +572,147 @@ export default function Home() {
 
 
 
-const fetchFixtures = useCallback(async () => {
-  setLoadingFixtures(true);
+const fetchSportFixtures = async ({
+  sport,
+  url,
+  apiKey,
+  endpoint,
+  normalize,
+  date,
+  timezone,
+}) => {
+  const cacheKey =
+    `${FIXTURES_CACHE_PREFIX}:${sport}:${date}:${timezone}`;
 
-  const date = getLocalDate();
-  const cacheKey = `${FIXTURES_CACHE_PREFIX}:${date}`;
+  const cached = await localforage.getItem(cacheKey);
 
-  let cachedFixtures = null;
+  const cacheIsValid =
+    cached?.savedAt &&
+    Date.now() - cached.savedAt < FIXTURES_CACHE_DURATION &&
+    Array.isArray(cached.fixtures);
+
+  if (cacheIsValid) {
+    return cached.fixtures;
+  }
 
   try {
-    // 1. Check localforage before making an API request
-    cachedFixtures = await localforage.getItem(cacheKey);
-
-    const cacheIsValid =
-      cachedFixtures?.savedAt &&
-      Date.now() - cachedFixtures.savedAt <
-        FIXTURES_CACHE_DURATION &&
-      Array.isArray(cachedFixtures.fixtures);
-
-    if (cacheIsValid) {
-      console.log("Loading fixtures from local cache:", date);
-      setFixtures(cachedFixtures.fixtures);
-      return;
+    if (!apiKey) {
+      throw new Error(`Missing API key for ${sport}.`);
     }
 
-    // 2. If the cache is expired or missing, call API-Football
-    if (!FOOTBALL_API_KEY) {
-      throw new Error(
-        "Missing VITE_API_FOOTBALL_KEY in your .env file."
-      );
-    }
-
-    console.log("Fetching fixtures from API-Football:", date);
-
-    const response = await axios.get(
-      `${FOOTBALL_API_URL}/fixtures`,
-      {
-        params: {
-          date,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        },
-        headers: {
-          "x-apisports-key": FOOTBALL_API_KEY,
-        },
-        timeout: 15000,
-      }
-    );
+    const response = await axios.get(`${url}/${endpoint}`, {
+      params: {
+        date
+      },
+      headers: {
+        "x-apisports-key": apiKey,
+      },
+      timeout: 15000,
+    });
 
     const data = response.data;
 
-    // API-Football can return API errors in the response body
-    if (
-      data.errors &&
-      Object.keys(data.errors).length > 0
-    ) {
-      console.error("API-Football errors:", data.errors);
-      throw new Error(
-        "API-Football rejected the fixtures request."
-      );
+    if (data.errors && Object.keys(data.errors).length > 0) {
+      throw new Error(JSON.stringify(data.errors));
     }
 
     const events = Array.isArray(data.response)
       ? data.response
       : [];
 
-    // 3. Normalize and sort fixtures before saving them
     const normalized = events
-      .map(normalizeFixture)
-      .sort((a, b) => {
-        const timeA = Number(a.timestamp) || 0;
-        const timeB = Number(b.timestamp) || 0;
+      .map(normalize)
+      .filter((fixture) => fixture.id != null)
+      .sort(
+        (a, b) =>
+          (a.timestamp || 0) - (b.timestamp || 0)
+      );
 
-        return timeA - timeB;
-      });
-
-    // 4. Save fixtures locally with their cache timestamp
     await localforage.setItem(cacheKey, {
       savedAt: Date.now(),
       fixtures: normalized,
     });
 
-    setFixtures(normalized);
-
-    console.log(
-      `Saved ${normalized.length} fixtures to localforage.`
-    );
+    return normalized;
   } catch (error) {
-    console.error(
-      "Unable to load fixtures:",
-      error.response?.data || error.message || error
+    console.error(`Unable to load ${sport} fixtures:`, error);
+
+    if (Array.isArray(cached?.fixtures)) {
+      return cached.fixtures;
+    }
+
+    throw error;
+  }
+};
+
+const fetchFixtures = useCallback(async () => {
+  setLoadingFixtures(true);
+
+  const date = getLocalDate();
+  const timezone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone ||
+    "UTC";
+
+  try {
+    const results = await Promise.allSettled([
+      fetchSportFixtures({
+        sport: "football",
+        url: FOOTBALL_API_URL,
+        apiKey: API_KEY,
+        endpoint: "fixtures",
+        normalize: normalizeFixture,
+        date,
+        timezone,
+      }),
+      fetchSportFixtures({
+        sport: "basketball",
+        url: BASKETBALL_API_URL,
+        apiKey: API_KEY,
+        endpoint: "games",
+        normalize: normalizeBasketballFixture,
+        date,
+        timezone,
+      }),
+    ]);
+
+    const footballResult = results[0];
+    const basketballResult = results[1];
+
+    const footballFixtures =
+      footballResult.status === "fulfilled"
+        ? footballResult.value
+        : [];
+
+    const basketballFixtures =
+      basketballResult.status === "fulfilled"
+        ? basketballResult.value
+        : [];
+
+    const combined = [
+      ...footballFixtures,
+      ...basketballFixtures,
+    ].sort(
+      (a, b) =>
+        (a.timestamp || 0) - (b.timestamp || 0)
     );
 
-    // 5. If the request fails, use expired cached data if available
-    if (Array.isArray(cachedFixtures?.fixtures)) {
-      setFixtures(cachedFixtures.fixtures);
+    setFixtures(combined);
 
-      toast.error(
-        "Could not refresh fixtures. Showing saved fixtures instead."
-      );
-    } else {
-      setFixtures([]);
-
-      toast.error(
-        error.response?.status === 401 ||
-          error.response?.status === 403
-          ? "API key invalid or access denied. Check your API-Football account."
-          : "Could not load fixtures. Check your connection and API key."
-      );
+    if (
+      footballResult.status === "rejected" &&
+      basketballResult.status === "rejected"
+    ) {
+      toast.error("Could not load fixtures. Check your API keys and connection.");
+    } else if (
+      footballResult.status === "rejected" ||
+      basketballResult.status === "rejected"
+    ) {
+      toast.error("Some fixtures could not be loaded. Showing available results.");
     }
+  } catch (error) {
+    console.error("Unable to load fixtures:", error);
+    setFixtures([]);
+    toast.error("Could not load fixtures.");
   } finally {
     setLoadingFixtures(false);
   }
@@ -737,62 +829,83 @@ const fetchFixtures = useCallback(async () => {
       </div>
 
       <main className="mx-auto max-w-[1600px] space-y-8 px-4 py-6 sm:px-6 lg:px-8">
-        {/* Welcome and membership */}
-        <section className="relative overflow-hidden rounded-3xl border border-[#2a3a34] bg-gradient-to-br from-[#162821] via-[#0f1f1a] to-[#0a120e] p-5 sm:p-8">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[#18ffc8]/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 right-1/3 h-48 w-48 rounded-full bg-[#f57cff]/10 blur-3xl" />
 
-          <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
-            <div className="max-w-2xl">
-              <h1 className="text-2xl font-extrabold leading-tight sm:text-4xl">
+      {/* Welcome and membership */}
+      <section className="overflow-hidden rounded-2xl border border-[#263a32] bg-[#0f1b16]">
+        <div className="p-5 sm:p-7 lg:p-8">
+          <div className="flex flex-col gap-6">
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#18ffc8]" />
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
+                  Your sports dashboard
+                </p>
+              </div>
+
+              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
                 Welcome back,{" "}
                 <span className="text-[#18ffc8]">
                   {loadingUser ? "..." : firstName}
                 </span>
               </h1>
 
-              <p className="mt-3 max-w-xl text-sm leading-6 text-gray-400 sm:text-base">
-                Follow today's fixtures, discover the latest predictions,
-                and stay on top of your sports analysis.
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400 sm:text-base">
+                Your home for upcoming fixtures, expert predictions,
+                and sports analysis from around the world.
               </p>
-
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                {premiumMember && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-[#18ffc8]">
-                    <FaCheckCircle />
-                    Premium access active
-                  </span>
-                )}
-              </div>
             </div>
 
-            {!premiumMember && (
-              <div className="w-full rounded-2xl border border-[#f57cff]/25 bg-[#f57cff]/5 p-5 lg:max-w-sm">
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f57cff]/10 text-xl text-[#f57cff]">
-                    <FaCrown />
-                  </div>
-                  <div>
-                    <p className="font-bold text-white">
-                      Unlock Premium
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Get access to premium analysis
-                    </p>
-                  </div>
+            <div className="flex flex-col gap-4 rounded-xl border border-[#2a3a34] bg-[#14241c] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                    premiumMember
+                      ? "bg-[#18ffc8]/10 text-[#18ffc8]"
+                      : "bg-[#f57cff]/10 text-[#f57cff]"
+                  }`}
+                >
+                  {premiumMember ? (
+                    <FaCheckCircle className="text-xl" />
+                  ) : (
+                    <FaCrown className="text-xl" />
+                  )}
                 </div>
 
+                <div className="min-w-0">
+                  <p className="font-semibold text-white">
+                    {premiumMember
+                      ? "Premium membership"
+                      : "Free membership"}
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-gray-400 sm:text-sm">
+                    {premiumMember
+                      ? "Your premium analysis access is active."
+                      : "Unlock premium predictions and expert analysis."}
+                  </p>
+                </div>
+              </div>
+
+              {premiumMember ? (
+                <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border border-[#18ffc8]/20 bg-[#18ffc8]/5 px-3 py-2 text-xs font-semibold text-[#18ffc8]">
+                  <FaCheckCircle />
+                  Active
+                </span>
+              ) : (
                 <button
                   type="button"
                   onClick={handleUpgrade}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#f57cff] px-4 py-3 text-sm font-bold text-[#180d1b] transition hover:brightness-110"
+                  className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#18ffc8] px-4 py-3 text-sm font-bold text-[#07130e] transition hover:bg-[#7dffdf] sm:w-auto"
                 >
-                  Upgrade Membership <FaArrowRight />
+                  Explore Premium
+                  <FaArrowRight />
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
+
 
         {/* Fixtures */}
         <section>
