@@ -12,7 +12,6 @@ import toast from "react-hot-toast";
 import localforage from "localforage";
 import {
   FaFootballBall,
-  FaBasketballBall,
   FaChartLine,
   FaCrown,
   FaArrowRight,
@@ -31,7 +30,6 @@ import Header from "./Header";
 const FOOTBALL_API_URL =
   "https://v3.football.api-sports.io";
 
-const BASKETBALL_API_URL = "https://v1.basketball.api-sports.io";
 
 const API_KEY = "032a3c0e9a2048207e504142a1f28774";
 const FIXTURES_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -40,11 +38,6 @@ const FIXTURES_CACHE_PREFIX = "footballFixtures";
 const PANEL = "rounded-2xl border border-[#2a3a34] bg-[#0f1f1a]";
 const MUTED = "text-gray-400";
 
-const SPORTS_OPTIONS = [
-  { id: "all", label: "All Sports", icon: FaTrophy },
-  { id: "football", label: "Football", icon: FaFootballBall },
-  { id: "nba", label: "NBA", icon: FaBasketballBall },
-];
 
 // Format a date in the visitor's device timezone.
 const formatDate = (date) => {
@@ -122,42 +115,6 @@ const normalizeFixture = (item) => {
   };
 };
 
-const normalizeBasketballFixture = (item) => {
-  const game = item.game || {};
-  const league = item.league || {};
-  const teams = item.teams || {};
-  const scores = item.scores || {};
-  const status = game.status || {};
-
-  const timestamp = game.timestamp
-    ? Number(game.timestamp) * 1000
-    : game.date
-      ? Date.parse(game.date)
-      : null;
-
-  return {
-    id: game.id,
-    sport: "nba",
-    league: league.name || "Basketball",
-    home: teams.home?.name || "Home team",
-    away: teams.away?.name || "Away team",
-    homeBadge: teams.home?.logo || "",
-    awayBadge: teams.away?.logo || "",
-    timestamp: Number.isFinite(timestamp) ? timestamp : null,
-    date: "",
-    time: "",
-    status:
-      status.long ||
-      status.short ||
-      "",
-    statusShort: status.short || "",
-    elapsed: status.timer ?? null,
-    homeScore: scores.home?.total ?? null,
-    awayScore: scores.away?.total ?? null,
-    country: item.country?.name || league.country?.name || "",
-    venue: game.venue?.name || "",
-  };
-};
 
 
 const isPremiumMember = (user) => {
@@ -310,7 +267,7 @@ function FixtureCard({ fixture }) {
           )}
 
           <span className="text-[10px] uppercase tracking-wider text-gray-500">
-            {fixture.sport === "nba" ? "Basketball" : "Football"}
+            Football
           </span>
         </div>
 
@@ -407,10 +364,10 @@ function FixtureMarquee({ fixtures, loading, onRefresh }) {
       <div className={`${PANEL} p-8 text-center`}>
         <FaRegCalendarAlt className="mx-auto mb-3 text-2xl text-gray-500" />
         <p className="font-semibold text-white">
-          No fixtures found for today
+          No upcoming football fixtures
         </p>
         <p className={`mt-1 text-sm ${MUTED}`}>
-          The free sports feed may not list every league or match.
+          There are no football matches scheduled to start later today.
         </p>
         <button
           type="button"
@@ -532,7 +489,7 @@ export default function Home() {
   const [predictions, setPredictions] = useState([]);
   const [analysts, setAnalysts] = useState([]);
 
-  const [selectedSport, setSelectedSport] = useState("all");
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingFixtures, setLoadingFixtures] = useState(true);
   const [loadingPredictions, setLoadingPredictions] = useState(true);
@@ -602,7 +559,8 @@ const fetchSportFixtures = async ({
 
     const response = await axios.get(`${url}/${endpoint}`, {
       params: {
-        date
+        date,
+        timezone,
       },
       headers: {
         "x-apisports-key": apiKey,
@@ -650,69 +608,24 @@ const fetchFixtures = useCallback(async () => {
 
   const date = getLocalDate();
   const timezone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone ||
-    "UTC";
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
   try {
-    const results = await Promise.allSettled([
-      fetchSportFixtures({
-        sport: "football",
-        url: FOOTBALL_API_URL,
-        apiKey: API_KEY,
-        endpoint: "fixtures",
-        normalize: normalizeFixture,
-        date,
-        timezone,
-      }),
-      fetchSportFixtures({
-        sport: "basketball",
-        url: BASKETBALL_API_URL,
-        apiKey: API_KEY,
-        endpoint: "games",
-        normalize: normalizeBasketballFixture,
-        date,
-        timezone,
-      }),
-    ]);
+    const footballFixtures = await fetchSportFixtures({
+      sport: "football",
+      url: FOOTBALL_API_URL,
+      apiKey: API_KEY,
+      endpoint: "fixtures",
+      normalize: normalizeFixture,
+      date,
+      timezone,
+    });
 
-    const footballResult = results[0];
-    const basketballResult = results[1];
-
-    const footballFixtures =
-      footballResult.status === "fulfilled"
-        ? footballResult.value
-        : [];
-
-    const basketballFixtures =
-      basketballResult.status === "fulfilled"
-        ? basketballResult.value
-        : [];
-
-    const combined = [
-      ...footballFixtures,
-      ...basketballFixtures,
-    ].sort(
-      (a, b) =>
-        (a.timestamp || 0) - (b.timestamp || 0)
-    );
-
-    setFixtures(combined);
-
-    if (
-      footballResult.status === "rejected" &&
-      basketballResult.status === "rejected"
-    ) {
-      toast.error("Could not load fixtures. Check your API keys and connection.");
-    } else if (
-      footballResult.status === "rejected" ||
-      basketballResult.status === "rejected"
-    ) {
-      toast.error("Some fixtures could not be loaded. Showing available results.");
-    }
+    setFixtures(footballFixtures);
   } catch (error) {
-    console.error("Unable to load fixtures:", error);
+    console.error("Unable to load football fixtures:", error);
     setFixtures([]);
-    toast.error("Could not load fixtures.");
+    toast.error("Could not load football fixtures. Check your API key and connection.");
   } finally {
     setLoadingFixtures(false);
   }
@@ -774,13 +687,28 @@ const fetchFixtures = useCallback(async () => {
     fetchAnalysts,
   ]);
 
-  const filteredFixtures = useMemo(() => {
-    if (selectedSport === "all") return fixtures;
+  // Keep the list in sync with the visitor's current device time.
+  // Fixtures disappear from the upcoming list once their kickoff time passes.
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 30_000);
 
-    return fixtures.filter(
-      (fixture) => fixture.sport === selectedSport
-    );
-  }, [fixtures, selectedSport]);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  const filteredFixtures = useMemo(
+    () =>
+      fixtures.filter(
+        (fixture) =>
+          fixture.timestamp !== null &&
+          fixture.timestamp > currentTime &&
+          ["NS", "TBD"].includes(
+            String(fixture.statusShort || "").toUpperCase()
+          )
+      ),
+    [fixtures, currentTime]
+  );
 
   const recentPredictions = useMemo(() => {
     return [...predictions]
@@ -828,34 +756,28 @@ const fetchFixtures = useCallback(async () => {
       <Header />
       </div>
 
-      <main className="mx-auto max-w-[1600px] space-y-8 px-4 py-6 sm:px-6 lg:px-8">
-
-      {/* Welcome and membership */}
-      <section className="overflow-hidden rounded-2xl border border-[#263a32] bg-[#0f1b16]">
-        <div className="p-5 sm:p-7 lg:p-8">
-          <div className="flex flex-col gap-6">
+      <main className="mx-auto max-w-[1600px] space-y-8 px-4 py-4 sm:px-6 lg:px-8">
+        {/* Fixtures */}
+        <section>
+          <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <div className="mb-3 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#18ffc8]" />
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
-                  Your sports dashboard
-                </p>
-              </div>
-
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
-                Welcome back,{" "}
-                <span className="text-[#18ffc8]">
-                  {loadingUser ? "..." : firstName}
-                </span>
-              </h1>
-
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400 sm:text-base">
-                Your home for upcoming fixtures, expert predictions,
-                and sports analysis from around the world.
+              <h2 className="text-xl font-bold sm:text-2xl">
+                Upcoming Football Fixtures
+              </h2>
+              <p className={`mt-1 text-sm ${MUTED}`}>
+                {formatDate(new Date())} ·
               </p>
             </div>
+          </div>
 
-            <div className="flex flex-col gap-4 rounded-xl border border-[#2a3a34] bg-[#14241c] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <FixtureMarquee
+            fixtures={filteredFixtures}
+            loading={loadingFixtures}
+            onRefresh={handleRefresh}
+          />
+        </section>
+
+                    <div className="flex flex-col gap-4 rounded-xl border border-[#2a3a34] bg-[#14241c] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
               <div className="flex min-w-0 items-center gap-3">
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
@@ -902,48 +824,6 @@ const fetchFixtures = useCallback(async () => {
                 </button>
               )}
             </div>
-          </div>
-        </div>
-      </section>
-
-
-        {/* Fixtures */}
-        <section>
-          <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <h2 className="text-xl font-bold sm:text-2xl">
-                Today's Fixtures
-              </h2>
-              <p className={`mt-1 text-sm ${MUTED}`}>
-                {formatDate(new Date())} · Follow the games
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-4 flex flex-wrap gap-2">
-            {SPORTS_OPTIONS.map(({ id, label, icon: Icon }) => (
-              <button
-                type="button"
-                key={id}
-                onClick={() => setSelectedSport(id)}
-                className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${
-                  selectedSport === id
-                    ? "border-[#18ffc8] bg-[#18ffc8]/10 text-[#18ffc8]"
-                    : "border-[#2a3a34] bg-[#0f1f1a] text-gray-400 hover:text-white"
-                }`}
-              >
-                <Icon />
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <FixtureMarquee
-            fixtures={filteredFixtures}
-            loading={loadingFixtures}
-            onRefresh={handleRefresh}
-          />
-        </section>
 
         {/* Predictions */}
         <section>
