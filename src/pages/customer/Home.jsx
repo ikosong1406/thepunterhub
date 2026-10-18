@@ -278,20 +278,6 @@ function FixtureCard({ fixture }) {
           </span>
         </div>
       </div>
-
-    <div className="mt-4 border-t border-[#2a3a34] pt-3 text-center text-xs text-gray-400">
-      <FaRegCalendarAlt className="mr-1 inline" />
-      {fixture.timestamp
-        ? formatDate(new Date(fixture.timestamp))
-        : "Date TBA"}
-
-      {!hasScore && (
-        <span>
-          {" · "}
-          {formatKickoff(fixture.timestamp)}
-        </span>
-      )}
-    </div>
     </article>
   );
 }

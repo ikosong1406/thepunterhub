@@ -5,7 +5,6 @@ import localforage from "localforage";
 import {
   FaUser,
   FaChevronRight,
-  FaHistory,
   FaQuestionCircle,
   FaSignOutAlt,
 } from "react-icons/fa";
@@ -14,9 +13,8 @@ import { FaMoneyBillWave, FaUserPlus } from "react-icons/fa6";
 import logoImage from "../../assets/logo2.png";
 
 // Import modal components
-import BuyCoinModal from "../../components/BuyCoinModal";
+import SubscribeModal from "../../components/SubscribeModal";
 import PersonalInfoModal from "../../components/PersonalInfoModal";
-import TransactionHistoryModal from "../../components/TransactionHistoryModal";
 import HelpCenterModal from "../../components/HelpCenterModal";
 import ContactUsModal from "../../components/ContactUsModal";
 import InviteModal from "../../components/InviteModal";
@@ -210,7 +208,7 @@ const ProfilePage = () => {
               <button
                 className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium transition-transform transform hover:scale-105"
                 style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-                onClick={() => setActiveModal("deposit")}
+                onClick={() => setActiveModal("subscribe")}
               >
                 <IoMdAdd className="text-sm" />
                 <span>Subscribe</span>
@@ -245,11 +243,6 @@ const ProfilePage = () => {
               icon={<FaUser />}
               title="Personal Information"
               onClick={() => setActiveModal("personal-info")}
-            />
-            <MenuItem
-              icon={<FaHistory />}
-              title="Transaction History"
-              onClick={() => setActiveModal("transaction-history")}
             />
             <MenuItem
               icon={<FaUserPlus />}
@@ -293,8 +286,8 @@ const ProfilePage = () => {
       </div>
 
       {/* Modals */}
-      {activeModal === "deposit" && (
-        <BuyCoinModal
+      {activeModal === "subscribe" && (
+        <SubscribeModal
           user={user}
           onClose={closeModal}
           onDepositSuccess={(newBalance) => {
@@ -305,9 +298,6 @@ const ProfilePage = () => {
       )}
       {activeModal === "personal-info" && (
         <PersonalInfoModal user={user} onClose={closeModal} />
-      )}
-      {activeModal === "transaction-history" && (
-        <TransactionHistoryModal user={user} onClose={closeModal} />
       )}
       {activeModal === "help-center" && (
         <HelpCenterModal onClose={closeModal} />
