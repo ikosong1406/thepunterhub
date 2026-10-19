@@ -1,4 +1,3 @@
-// src/App.jsx
 import React from "react";
 import {
   BrowserRouter as Router,
@@ -7,27 +6,22 @@ import {
   Navigate,
 } from "react-router-dom";
 import localforage from "localforage";
+
 import logoImage from "./assets/logo3.png";
 import "./styles/Splash.css";
-import SplashScreen from "./pages/Splash"; 
+
+import SplashScreen from "./pages/Splash";
 import RegisterScreen from "./pages/Register";
 import LoginScreen from "./pages/Login";
 import ForgetScreen from "./pages/Forgot";
+
 import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerHome from "./pages/customer/Home";
 import CustomerFeed from "./pages/customer/Feed";
 import CustomerLive from "./pages/customer/Live";
-import CustomerChat from "./pages/customer/Chat";
 import CustomerProfile from "./pages/customer/Profile";
-import CustomerPunters from "./pages/customer/Punters";
-import CustomerSearch from "./pages/customer/Search";
-import CustomerBecome from "./pages/customer/Become";
-import CustomerDaily from "./pages/customer/Daily";
-import CustomerTip from "./pages/customer/TipDetails"
-import CustomerAllDaily from "./pages/customer/AllDaily"
 
-const ProtectedRoute = ({ children, requiredRole }) => {
-  // This component's logic is correct and handles subsequent route protection.
+const ProtectedRoute = ({ children, requiredRole = "user" }) => {
   const [authStatus, setAuthStatus] = React.useState({
     loading: true,
     isAuthenticated: false,
@@ -35,6 +29,8 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   });
 
   React.useEffect(() => {
+    let isMounted = true;
+
     const checkAuth = async () => {
       try {
         const [token, role] = await Promise.all([
@@ -42,31 +38,38 @@ const ProtectedRoute = ({ children, requiredRole }) => {
           localforage.getItem("role"),
         ]);
 
-        setAuthStatus({
-          loading: false,
-          isAuthenticated: !!token,
-          role: role || null,
-        });
+        if (isMounted) {
+          setAuthStatus({
+            loading: false,
+            isAuthenticated: !!token,
+            role: role || null,
+          });
+        }
       } catch (error) {
         console.error("Error checking auth status:", error);
-        setAuthStatus({
-          loading: false,
-          isAuthenticated: false,
-          role: null,
-        });
+
+        if (isMounted) {
+          setAuthStatus({
+            loading: false,
+            isAuthenticated: false,
+            role: null,
+          });
+        }
       }
     };
 
     checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (authStatus.loading) {
     return (
       <div className="bg-[#09100d] flex flex-col items-center justify-center w-screen h-screen bg-cover bg-center text-center">
-        {/* Arcs + Logo */}
         <div className="flex flex-col items-center space-y-6">
           <div className="relative w-[18rem] h-[18rem] flex items-center justify-center">
-            {/* ... (Your SVG and logo JSX here) */}
             <svg
               className="absolute w-full h-full spin-slow"
               viewBox="0 0 100 100"
@@ -80,6 +83,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
                 className="glow-stroke"
               />
             </svg>
+
             <svg
               className="absolute w-[16rem] h-[16rem] spin-medium"
               viewBox="0 0 100 100"
@@ -93,6 +97,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
                 className="glow-stroke"
               />
             </svg>
+
             <div className="relative flex items-center justify-center w-[13rem] h-[13rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
               <img
                 src={logoImage}
@@ -110,46 +115,39 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && authStatus.role !== requiredRole) {
+  if (authStatus.role !== requiredRole) {
     return <Navigate to="/login" replace />;
   }
 
   return children;
 };
 
+
 const App = () => {
-  // We've removed the `useState` and `useEffect` for `showSplash`.
-  // The splash screen is now handled as a regular route.
   return (
     <Router>
       <Routes>
-        {/* The SplashScreen component now handles all initial logic. */}
+        {/* Public routes */}
         <Route path="/" element={<SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/register" element={<RegisterScreen />} />
         <Route path="/forgot" element={<ForgetScreen />} />
 
         <Route
-          path="/customer/*"
           element={
             <ProtectedRoute requiredRole="user">
               <CustomerLayout />
             </ProtectedRoute>
           }
         >
-          <Route index element={<CustomerHome />} />
-          <Route path="home" element={<CustomerHome />} />
-          <Route path="feed" element={<CustomerFeed />} />
-          <Route path="live" element={<CustomerLive />} />
-          <Route path="profile" element={<CustomerProfile />} />
-          <Route path="punters" element={<CustomerPunters />} />
-          <Route path="search" element={<CustomerSearch />} />
-          <Route path="become" element={<CustomerBecome />} />
-          <Route path="chat" element={<CustomerChat />} />
-          <Route path="daily" element={<CustomerDaily />} />
-          <Route path="tip" element={<CustomerTip />} />
-          <Route path="allDaily" element={<CustomerAllDaily />} />
+          <Route path="/home" element={<CustomerHome />} />
+          <Route path="/feed" element={<CustomerFeed />} />
+          <Route path="/live" element={<CustomerLive />} />
+          <Route path="/profile" element={<CustomerProfile />} />
         </Route>
+
+        {/* Redirect unknown routes */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

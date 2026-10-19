@@ -97,7 +97,7 @@ const LoginScreen = ({ platformName = "PH" }) => {
 
         setTimeout(() => {
           if (role === "user") {
-            navigate("/customer/home");
+            navigate("/home");
           } else {
             // Fallback for unknown role
             navigate("/welcome");
@@ -230,24 +230,24 @@ const LoginScreen = ({ platformName = "PH" }) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-400 mb-1"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
-                  required
-                />
-              </div>
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-400 mb-1"
+              >
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full p-4 bg-[#162821] rounded-md focus:outline-none focus:ring-2 focus:ring-[#18ffc8]"
+                required
+              />
+            </div>
 
             <div>
               <label
