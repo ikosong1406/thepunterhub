@@ -9,8 +9,7 @@ import {
 import localforage from "localforage";
 import logoImage from "./assets/logo3.png";
 import "./styles/Splash.css";
-import SplashScreen from "./pages/Splash"; // Ensure this component handles the conditional navigation
-import WelcomeScreen from "./pages/Welcome";
+import SplashScreen from "./pages/Splash"; 
 import RegisterScreen from "./pages/Register";
 import LoginScreen from "./pages/Login";
 import ForgetScreen from "./pages/Forgot";
@@ -126,7 +125,6 @@ const App = () => {
       <Routes>
         {/* The SplashScreen component now handles all initial logic. */}
         <Route path="/" element={<SplashScreen />} />
-        <Route path="/welcome" element={<WelcomeScreen />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/register" element={<RegisterScreen />} />
         <Route path="/forgot" element={<ForgetScreen />} />

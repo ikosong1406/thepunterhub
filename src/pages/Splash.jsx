@@ -25,28 +25,21 @@ const SplashScreen = () => {
         console.log("Backend server is running. Checking user auth...");
 
         // Step 2: Check for user token and role from localforage
-        const [token, role] = await Promise.all([
+        const token = await Promise.all([
           localforage.getItem("token"),
-          localforage.getItem("role"),
         ]);
 
         // Step 3: Determine navigation path
-        if (token && role) {
-          // User is authenticated and has a role
-          if (role === "customer") {
-            navigate("/customer/home");
-          } else {
-            // Fallback for an unknown role
-            navigate("/welcome");
-          }
+        if (token) {
+          navigate("/customer/home");
         } else {
           // No token or role found, user is not authenticated
-          navigate("/welcome");
+          navigate("/login");
         }
       } catch (error) {
         console.error("Splash screen error:", error);
         // Navigate to welcome screen on any error
-        navigate("/welcome");
+        navigate("/login");
       }
     };
     
