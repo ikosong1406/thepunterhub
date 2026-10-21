@@ -49,7 +49,7 @@ const Header = () => {
 
       // Navigate after 3 seconds
       setTimeout(() => {
-        navigate("/customer/home");
+        navigate("/home");
       }, 3000);
     } catch (err) {
       toast.error("Failed to switch role. Please try again.");

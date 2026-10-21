@@ -288,11 +288,11 @@ const DailyBread = () => {
   );
 
   const handleGoToMyTips = () => {
-    navigate(`/customer/allDaily`);
+    navigate(`/allDaily`);
   };
 
   const handleGoToPunterDetails = (punterId) => {
-    navigate(`/customer/punters`, { state: { punterId } });
+    navigate(`/punters`, { state: { punterId } });
   };
 
   const formatPrice = (price) => {

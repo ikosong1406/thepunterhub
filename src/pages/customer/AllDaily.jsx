@@ -267,7 +267,7 @@ const handleGoBack = () => {
 };
 
   const handleGoToPunterDetails = (punterId) => {
-    navigate(`/customer/punters`, { state: { punterId } });
+    navigate(`/punters`, { state: { punterId } });
   };
 
   // --- Rendering ---

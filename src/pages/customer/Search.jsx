@@ -57,7 +57,7 @@ const PunterSearchPage = () => {
   }, [searchTerm, allPunters]);
 
   const handlePunterClick = (punterId) => {
-    navigate(`/customer/punters`, { state: { punterId: punterId } });
+    navigate(`/punters`, { state: { punterId: punterId } });
   };
 
   const getInitials = (username) => {

@@ -714,7 +714,7 @@ const fetchFixtures = useCallback(async () => {
 
   const handleOpenPrediction = (prediction, locked) => {
     if (locked) {
-      navigate("/customer/profile");
+      navigate("/profile");
       return;
     }
 
@@ -723,11 +723,11 @@ const fetchFixtures = useCallback(async () => {
   };
 
   const handleUpgrade = () => {
-    navigate("/customer/profile");
+    navigate("/profile");
   };
 
   const handleViewAllPredictions = () => {
-    navigate("/customer/feed");
+    navigate("/feed");
   };
 
   const handleRefresh = () => {

@@ -209,7 +209,7 @@ const PunterDetailsPage = () => {
   };
 
   const navigateToTipDetails = (tipId) => {
-    navigate("/customer/tip", {
+    navigate("/tip", {
       state: {
         tipId
       }

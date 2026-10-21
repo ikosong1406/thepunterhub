@@ -31,7 +31,7 @@ const SplashScreen = () => {
 
         // Step 3: Determine navigation path
         if (token) {
-          navigate("/customer/home");
+          navigate("/home");
         } else {
           // No token or role found, user is not authenticated
           navigate("/login");

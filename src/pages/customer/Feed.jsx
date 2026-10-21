@@ -341,7 +341,7 @@ const FeedPage = () => {
   const handlePunterClick = (punterId) => {
     if (!punterId) return;
 
-    navigate("/customer/punters", {
+    navigate("/punters", {
       state: { punterId },
     });
   };
@@ -349,7 +349,7 @@ const FeedPage = () => {
   const navigateToTipDetails = (tipId) => {
     if (!tipId) return;
 
-    navigate("/customer/tip", {
+    navigate("/tip", {
       state: { tipId },
     });
   };

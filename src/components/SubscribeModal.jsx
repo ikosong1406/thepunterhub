@@ -52,35 +52,6 @@ const benefits = [
   },
 ];
 
-// Detect a country from the browser's locale.
-// Examples: en-NG -> NG, en-GB -> GB, en-US -> US.
-// This does not determine the user's actual physical location.
-const getBrowserCountry = () => {
-  if (typeof navigator === "undefined") {
-    return "";
-  }
-
-  const languages = [
-    ...(navigator.languages || []),
-    navigator.language,
-  ].filter(Boolean);
-
-  for (const language of [...new Set(languages)]) {
-    try {
-      const locale = new Intl.Locale(language);
-      const region = locale.region;
-
-      if (region && /^[A-Z]{2}$/.test(region)) {
-        return region;
-      }
-    } catch {
-      // Ignore invalid locale values and try the next language.
-    }
-  }
-
-  return "";
-};
-
 const SubscriptionModal = ({ user, onClose }) => {
   const [countryCode, setCountryCode] = useState("");
   const [countryLoading, setCountryLoading] = useState(true);
@@ -88,19 +59,41 @@ const SubscriptionModal = ({ user, onClose }) => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const detectedCountry = getBrowserCountry();
-    // console.log(detectedCountry)
+    let active = true;
 
-    setCountryCode(detectedCountry);
+    const detectCountry = async () => {
+      try {
+        const response = await fetch("https://ipapi.co/json/");
 
-    if (!detectedCountry) {
-      setError(
-        "We could not determine your country from your browser settings. " +
-          "Please select a country-specific browser language and try again."
-      );
-    }
+        if (!response.ok) {
+          throw new Error("Country detection failed");
+        }
 
-    setCountryLoading(false);
+        const data = await response.json();
+
+        if (active && data.country_code) {
+          setCountryCode(data.country_code.toUpperCase());
+        } else if (active) {
+          throw new Error("Country code was not returned");
+        }
+      } catch (error) {
+        // Fall back to the browser's timezone if IP detection fails.
+        if (active) {
+          const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          setCountryCode(timezone === "Africa/Lagos" ? "NG" : "OTHER");
+        }
+      } finally {
+        if (active) {
+          setCountryLoading(false);
+        }
+      }
+    };
+
+    detectCountry();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const isRegional = REGIONAL_COUNTRIES.includes(countryCode);

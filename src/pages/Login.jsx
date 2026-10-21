@@ -100,7 +100,7 @@ const LoginScreen = ({ platformName = "PH" }) => {
             navigate("/home");
           } else {
             // Fallback for unknown role
-            navigate("/welcome");
+            navigate("/login");
           }
         }, 1000);
       }
