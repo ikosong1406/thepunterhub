@@ -20,6 +20,7 @@ import CustomerHome from "./pages/customer/Home";
 import CustomerFeed from "./pages/customer/Feed";
 import CustomerLive from "./pages/customer/Live";
 import CustomerProfile from "./pages/customer/Profile";
+import CustomerCreate from "./pages/customer/Create";
 
 const ProtectedRoute = ({ children, requiredRole = "user" }) => {
   const [authStatus, setAuthStatus] = React.useState({
@@ -142,6 +143,7 @@ const App = () => {
         >
           <Route path="/home" element={<CustomerHome />} />
           <Route path="/feed" element={<CustomerFeed />} />
+          <Route path="/create" element={<CustomerCreate />} />
           <Route path="/live" element={<CustomerLive />} />
           <Route path="/profile" element={<CustomerProfile />} />
         </Route>

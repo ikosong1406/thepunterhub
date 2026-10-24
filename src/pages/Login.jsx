@@ -18,7 +18,7 @@ const Colors = {
   purple: "#855391",
 };
 
-const LoginScreen = ({ platformName = "PH" }) => {
+const LoginScreen = () => {
   const navigate = useNavigate();
   const [loginType, setLoginType] = useState("email");
   const [formData, setFormData] = useState({
@@ -96,12 +96,7 @@ const LoginScreen = ({ platformName = "PH" }) => {
         await localforage.setItem("role", role);
 
         setTimeout(() => {
-          if (role === "user") {
-            navigate("/home");
-          } else {
-            // Fallback for unknown role
-            navigate("/login");
-          }
+          navigate("/home");
         }, 1000);
       }
     } catch (error) {

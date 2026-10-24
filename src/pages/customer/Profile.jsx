@@ -134,11 +134,19 @@ const ProfilePage = () => {
     user.firstname && user.lastname
       ? `${user.firstname.charAt(0)}${user.lastname.charAt(0)}`
       : user.firstname
-      ? user.firstname.charAt(0)
-      : user.lastname
-      ? user.lastname.charAt(0)
-      : "U"
+        ? user.firstname.charAt(0)
+        : user.lastname
+          ? user.lastname.charAt(0)
+          : "U"
   ).toUpperCase();
+
+  const currentPlan = user.subscription?.plan || "free";
+
+  const planLabel = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
+
+  const expiresAt = user.subscription?.expiresAt;
+
+  const isPremium = currentPlan.toLowerCase() === "premium";
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#09100d" }}>
@@ -171,7 +179,7 @@ const ProfilePage = () => {
               </h1>
             </div>
           </div>
-          {user.isVerified && (
+          {user.isEmailVerified && (
             <span
               className="px-2 py-1 rounded text-xs font-medium"
               style={{ backgroundColor: "#376553", color: "#18ffc8" }}
@@ -181,49 +189,65 @@ const ProfilePage = () => {
           )}
         </div>
 
-        {/* Redesigned Balance Card */}
+        {/* Subscription Plan Card */}
         <div
           className="mb-6 p-4 rounded-lg flex flex-col items-start"
           style={{ backgroundColor: "#09100d" }}
         >
-          <div className="flex justify-between items-center w-full mb-3">
+          <div className="flex justify-between items-center w-full mb-3 gap-3">
             <div className="flex flex-col">
               <span
                 className="text-xs font-semibold"
                 style={{ color: "#f57cff" }}
               >
-                Active Plan
+                Current Plan
               </span>
-              <div className="flex items-center space-x-2">
+
+              <div className="flex items-center gap-2 mt-1">
                 <span
                   className="text-xl font-bold"
-                  style={{ color: "#efefef" }}
+                  style={{ color: isPremium ? "#fea92a" : "#efefef" }}
                 >
-                  PREMIUM
+                  {isPremium ? "Premium Plan" : "Free Plan"}
                 </span>
               </div>
+
+              {isPremium && expiresAt && (
+                <span className="text-xs mt-2" style={{ color: "#efefef99" }}>
+                  Expires:{" "}
+                  {new Date(expiresAt).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+              )}
             </div>
-            {/* Action Buttons */}
-            <div className="flex space-x-2">
-              <button
-                className="flex items-center space-x-1 px-3 py-1 rounded text-sm font-medium transition-transform transform hover:scale-105"
-                style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-                onClick={() => setActiveModal("subscribe")}
-              >
-                <IoMdAdd className="text-sm" />
-                <span>Subscribe</span>
-              </button>
-            </div>
+
+            <button
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm
+      font-medium transition-transform hover:scale-105 shrink-0"
+              style={{
+                backgroundColor: "#fea92a",
+                color: "#09100d",
+              }}
+              onClick={() => setActiveModal("subscribe")}
+            >
+              <IoMdAdd className="text-sm" />
+              <span>{isPremium ? "Upgrade" : "Subscribe"}</span>
+            </button>
           </div>
 
-          {/* Promo Balance Row */}
-          <div className="flex items-center space-x-2 mt-2 w-full">
+          {/* Referral Balance */}
+          <div className="flex items-center gap-2 mt-2 w-full">
             <FaMoneyBillWave style={{ color: "#f57cff", fontSize: "1rem" }} />
+
             <span className="text-xs font-medium" style={{ color: "#f57cff" }}>
               Referral Balance:
             </span>
+
             <span className="text-sm font-bold" style={{ color: "#efefef" }}>
-              {user.balance?.toFixed(2) || "0.00"}
+              {Number(user.balance || 0).toFixed(2)}
             </span>
           </div>
         </div>
@@ -354,7 +378,9 @@ const MenuItem = ({ icon, title, onClick }) => (
   >
     <div className="flex items-center space-x-3">
       <div style={{ color: "#fea92a" }}>{icon}</div>
-      <span style={{ color: "#efefef" }} className="text-sm">{title}</span>
+      <span style={{ color: "#efefef" }} className="text-sm">
+        {title}
+      </span>
     </div>
     <FaChevronRight style={{ color: "#18ffc8" }} />
   </div>

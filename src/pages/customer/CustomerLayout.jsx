@@ -1,5 +1,7 @@
-
+import { useEffect, useState } from "react";
 import { Outlet, NavLink } from "react-router-dom";
+import localforage from "localforage";
+
 import { FaUser, FaFire } from "react-icons/fa";
 import { MdTipsAndUpdates } from "react-icons/md";
 import { PiBroadcastFill } from "react-icons/pi";
@@ -7,6 +9,7 @@ import { PiBroadcastFill } from "react-icons/pi";
 const tabs = [
   { path: "/home", name: "Top", icon: FaFire },
   { path: "/feed", name: "Tips", icon: MdTipsAndUpdates },
+  { path: "/create", name: "Create", icon: FaUser, punterOnly: true },
   { path: "/live", name: "Live", icon: PiBroadcastFill },
   { path: "/profile", name: "Profile", icon: FaUser },
 ];
@@ -47,9 +50,7 @@ function NavigationItem({ tab }) {
 
           <span className="flex-1">{tab.name}</span>
 
-          {isActive && (
-            <span className="text-[#fea92a]">✦</span>
-          )}
+          {isActive && <span className="text-[#fea92a]">✦</span>}
         </>
       )}
     </NavLink>
@@ -113,9 +114,45 @@ function MobileNavigationItem({ tab }) {
 }
 
 export default function CustomerLayout() {
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadRole = async () => {
+      try {
+        const storedRole = await localforage.getItem("role");
+
+        if (mounted) {
+          setRole(
+            typeof storedRole === "string"
+              ? storedRole.toLowerCase()
+              : ""
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load user role:", error);
+
+        if (mounted) {
+          setRole("");
+        }
+      }
+    };
+
+    loadRole();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Only punters can see the Create navigation item.
+  const visibleTabs = tabs.filter(
+    (tab) => !tab.punterOnly || role === "punter"
+  );
+
   return (
     <div className="min-h-dvh bg-black text-white md:flex">
-
       {/* Desktop Sidebar */}
       <aside
         className="relative hidden h-dvh w-[250px] shrink-0
@@ -155,7 +192,7 @@ export default function CustomerLayout() {
           </div>
 
           <nav aria-label="Main navigation" className="space-y-2">
-            {tabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <NavigationItem key={tab.path} tab={tab} />
             ))}
           </nav>
@@ -223,7 +260,7 @@ export default function CustomerLayout() {
         </div>
 
         <div className="mx-auto flex max-w-lg items-stretch justify-around gap-1">
-          {tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <MobileNavigationItem key={tab.path} tab={tab} />
           ))}
         </div>
