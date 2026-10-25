@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import localforage from "localforage";
 
-import { FaUser, FaFire } from "react-icons/fa";
+import { FaUser, FaFire, FaPlus } from "react-icons/fa";
 import { MdTipsAndUpdates } from "react-icons/md";
 import { PiBroadcastFill } from "react-icons/pi";
 
 const tabs = [
   { path: "/home", name: "Top", icon: FaFire },
   { path: "/feed", name: "Tips", icon: MdTipsAndUpdates },
-  { path: "/create", name: "Create", icon: FaUser, punterOnly: true },
+  { path: "/create", name: "Create", icon: FaPlus, punterOnly: true },
   { path: "/live", name: "Live", icon: PiBroadcastFill },
   { path: "/profile", name: "Profile", icon: FaUser },
 ];
