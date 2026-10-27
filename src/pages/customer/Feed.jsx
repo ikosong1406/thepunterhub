@@ -2,13 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import localforage from "localforage";
 import axios from "axios";
-import { FaFootballBall } from "react-icons/fa";
-import {
-  FiThumbsUp,
-  FiThumbsDown,
-  FiChevronRight,
-} from "react-icons/fi";
-import { AiOutlineMessage } from "react-icons/ai";
+import { FaFootballBall, FaCrown, FaArrowRight } from "react-icons/fa";
 import Header from "../customer/Header";
 import Api from "../../components/Api";
 
@@ -17,13 +11,33 @@ const FeedPage = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
-  const [likedSignals, setLikedSignals] = useState({});
-  const [dislikedSignals, setDislikedSignals] = useState({});
-  const [reactionLoading, setReactionLoading] = useState({});
 
   const navigate = useNavigate();
 
-  // Fetch logged-in user
+  // Check whether the user has an active premium subscription.
+  const isSubscriptionActive = (userData) => {
+    const subscription = userData?.subscription;
+
+    if (subscription?.plan !== "premium") {
+      return false;
+    }
+
+    if (!subscription.expiresAt) {
+      return false;
+    }
+
+    const expiryDate = new Date(subscription.expiresAt);
+
+    if (Number.isNaN(expiryDate.getTime())) {
+      return false;
+    }
+
+    return expiryDate.getTime() > Date.now();
+  };
+
+  const hasActiveSubscription = isSubscriptionActive(user);
+
+  // Fetch logged-in user and subscription details.
   useEffect(() => {
     let isMounted = true;
 
@@ -39,13 +53,13 @@ const FeedPage = () => {
           token,
         });
 
+        const userData = response.data?.data;
+
+        if (!userData?._id) {
+          throw new Error("Unable to retrieve your user information.");
+        }
+
         if (isMounted) {
-          const userData = response.data?.data;
-
-          if (!userData?._id) {
-            throw new Error("Unable to retrieve your user information.");
-          }
-
           setUser(userData);
           setError(null);
         }
@@ -54,7 +68,7 @@ const FeedPage = () => {
           setError(
             err.response?.data?.message ||
               err.message ||
-              "Failed to load user information."
+              "Failed to load user information.",
           );
         }
       } finally {
@@ -71,7 +85,7 @@ const FeedPage = () => {
     };
   }, []);
 
-  // Fetch sports feed and reactions
+  // Fetch the sports feed.
   const fetchAllFeed = useCallback(
     async (showLoader = true) => {
       if (!user?._id) return;
@@ -81,62 +95,18 @@ const FeedPage = () => {
       }
 
       try {
-        const feedResponse = await axios.post(`${Api}/client/getFeed`, {
-          userId: user._id,
-        });
+        const feedResponse = await axios.get(`${Api}/client/getTip`);
 
         const feedItems = Array.isArray(feedResponse.data?.data)
           ? feedResponse.data.data
           : [];
 
-        // Keep sports tips only
-        const sportsFeed = feedItems
-          .filter((item) => item.primaryCategory === "sports")
-          .map((item) => {
-            const comments = Array.isArray(item.comments)
-              ? item.comments
-              : [];
-
-            return {
-              ...item,
-              thumbsUp: Number(item.thumbsUp) || 0,
-              thumbsDown: Number(item.thumbsDown) || 0,
-              totalComments: comments.length,
-              topComment:
-                comments.length > 0
-                  ? comments[comments.length - 1]
-                  : null,
-            };
-          });
-
-        setAllFeedData(sportsFeed);
+        setAllFeedData(feedItems);
         setError(null);
-
-        // Fetch reactions for the sports tips only
-        const signalIds = sportsFeed.map((item) => item._id);
-
-        if (signalIds.length === 0) {
-          setLikedSignals({});
-          setDislikedSignals({});
-          return;
-        }
-
-        const reactionsResponse = await axios.post(
-          `${Api}/client/getReaction`,
-          {
-            userId: user._id,
-            signalIds,
-          }
-        );
-
-        setLikedSignals(reactionsResponse.data?.likedSignals || {});
-        setDislikedSignals(
-          reactionsResponse.data?.dislikedSignals || {}
-        );
       } catch (err) {
         console.error(
           "Error fetching sports feed:",
-          err.response?.data || err.message || err
+          err.response?.data || err.message || err,
         );
 
         setError("Unable to refresh the sports feed. Please try again.");
@@ -146,10 +116,11 @@ const FeedPage = () => {
         }
       }
     },
-    [user]
+    [user?._id],
   );
 
-  // Initial fetch and automatic refresh every 30 seconds
+  // Fetch the feed and refresh every 30 seconds.
+  // Both premium and free users can see the feed preview.
   useEffect(() => {
     if (!user?._id) return;
 
@@ -162,137 +133,7 @@ const FeedPage = () => {
     return () => clearInterval(interval);
   }, [user?._id, fetchAllFeed]);
 
-  // Handle likes and dislikes
-  const handleThumbsClick = async (tipId, type) => {
-    if (!user?._id) {
-      setError("Please log in to react to sports tips.");
-      return;
-    }
-
-    if (reactionLoading[tipId]) return;
-
-    const previousFeedData = allFeedData;
-    const previousLikedSignals = likedSignals;
-    const previousDislikedSignals = dislikedSignals;
-
-    const wasLiked = Boolean(likedSignals[tipId]);
-    const wasDisliked = Boolean(dislikedSignals[tipId]);
-
-    const isRemovingReaction =
-      (type === "up" && wasLiked) ||
-      (type === "down" && wasDisliked);
-
-    // Update the interface immediately
-    setAllFeedData((previous) =>
-      previous.map((tip) => {
-        if (tip._id !== tipId) return tip;
-
-        let thumbsUp = Number(tip.thumbsUp) || 0;
-        let thumbsDown = Number(tip.thumbsDown) || 0;
-
-        if (type === "up") {
-          if (wasLiked) {
-            thumbsUp = Math.max(0, thumbsUp - 1);
-          } else {
-            thumbsUp += 1;
-
-            if (wasDisliked) {
-              thumbsDown = Math.max(0, thumbsDown - 1);
-            }
-          }
-        }
-
-        if (type === "down") {
-          if (wasDisliked) {
-            thumbsDown = Math.max(0, thumbsDown - 1);
-          } else {
-            thumbsDown += 1;
-
-            if (wasLiked) {
-              thumbsUp = Math.max(0, thumbsUp - 1);
-            }
-          }
-        }
-
-        return { ...tip, thumbsUp, thumbsDown };
-      })
-    );
-
-    setLikedSignals((previous) => {
-      const next = { ...previous };
-
-      if (type === "up") {
-        if (wasLiked) {
-          delete next[tipId];
-        } else {
-          next[tipId] = true;
-        }
-      }
-
-      if (type === "down" && wasLiked) {
-        delete next[tipId];
-      }
-
-      return next;
-    });
-
-    setDislikedSignals((previous) => {
-      const next = { ...previous };
-
-      if (type === "down") {
-        if (wasDisliked) {
-          delete next[tipId];
-        } else {
-          next[tipId] = true;
-        }
-      }
-
-      if (type === "up" && wasDisliked) {
-        delete next[tipId];
-      }
-
-      return next;
-    });
-
-    setReactionLoading((previous) => ({
-      ...previous,
-      [tipId]: true,
-    }));
-
-    try {
-      await axios.post(`${Api}/client/updateReaction`, {
-        signalId: tipId,
-        userId: user._id,
-        type,
-      });
-
-      setError(null);
-    } catch (err) {
-      console.error(
-        "Failed to update sports tip reaction:",
-        err.response?.data || err.message || err
-      );
-
-      // Restore the previous state if the request fails
-      setAllFeedData(previousFeedData);
-      setLikedSignals(previousLikedSignals);
-      setDislikedSignals(previousDislikedSignals);
-      setError("Failed to update your reaction. Please try again.");
-    } finally {
-      setReactionLoading((previous) => {
-        const next = { ...previous };
-        delete next[tipId];
-        return next;
-      });
-    }
-  };
-
-  // Get the first letter of a username
-  const getInitials = (username) => {
-    return username ? username.charAt(0).toUpperCase() : "A";
-  };
-
-  // Format the post time
+  // Format the time a tip was posted.
   const formatPostedAt = (dateString) => {
     if (!dateString) return "Just now";
 
@@ -304,10 +145,11 @@ const FeedPage = () => {
 
     const diffInMinutes = Math.max(
       0,
-      Math.floor((Date.now() - postedDate.getTime()) / 60000)
+      Math.floor((Date.now() - postedDate.getTime()) / 60000),
     );
 
     if (diffInMinutes < 1) return "Just now";
+
     if (diffInMinutes < 60) {
       return `${diffInMinutes} min${diffInMinutes === 1 ? "" : "s"} ago`;
     }
@@ -323,29 +165,24 @@ const FeedPage = () => {
     return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
   };
 
-  // Status badge styling
+  // Status badge styling.
   const getStatusColor = (status) => {
     switch (String(status || "").toLowerCase()) {
       case "win":
         return "bg-[#18ffc8]/20 text-[#18ffc8]";
+
       case "loss":
         return "bg-[#f57cff]/20 text-[#f57cff]";
+
       case "active":
         return "bg-[#fea92a]/20 text-[#fea92a]";
+
       default:
         return "bg-[#376553]/20 text-[#efefef]";
     }
   };
 
-  // Navigation
-  const handlePunterClick = (punterId) => {
-    if (!punterId) return;
-
-    navigate("/punters", {
-      state: { punterId },
-    });
-  };
-
+  // Navigate to tip details.
   const navigateToTipDetails = (tipId) => {
     if (!tipId) return;
 
@@ -354,25 +191,28 @@ const FeedPage = () => {
     });
   };
 
-  // Render a sports tip
+  // Render a single tip.
   const renderSportTip = (tip) => {
     const confidence = Math.min(
       100,
-      Math.max(0, Number(tip.confidenceLevel) || 0)
+      Math.max(0, Number(tip.confidenceLevel) || 0),
     );
+
+    const isPremium = hasActiveSubscription;
+    const matches = Array.isArray(tip.matches) ? tip.matches : [];
 
     return (
       <div
         key={tip._id}
-        className="relative mb-4 rounded-xl border border-[#376553]/30 bg-[#162821] p-4"
+        className="relative mb-4 overflow-hidden rounded-xl border border-[#376553]/30 bg-[#162821] p-4"
       >
         {/* Tip heading */}
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <FaFootballBall className="text-[#18ffc8]" />
+              <FaFootballBall className="shrink-0 text-[#18ffc8]" />
 
-              <h3 className="text-lg font-medium text-white">
+              <h3 className="break-words text-lg font-medium text-white">
                 {tip.bettingSite || "Sports Tip"}
               </h3>
             </div>
@@ -383,56 +223,41 @@ const FeedPage = () => {
           </div>
 
           <span
-            className={`rounded-full px-2 py-1 text-xs font-bold capitalize ${getStatusColor(
-              tip.status
+            className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold capitalize ${getStatusColor(
+              tip.status,
             )}`}
           >
             {tip.status || "Pending"}
           </span>
         </div>
 
-        {/* Betting details */}
-        <div className="mt-3 grid grid-cols-2 gap-3 text-white">
-          <div className="text-sm">
-            <p className="text-[#efefef]/70">Code</p>
-            <p className="break-words">{tip.bettingCode || "N/A"}</p>
+        {/* Betting code and total odds */}
+        <div className="mt-4 grid grid-cols-2 gap-3 text-white">
+          <div className="min-w-0 text-sm">
+            <p className="text-[#efefef]/70">Betting Code</p>
+
+            <div className="relative mt-1 min-w-0">
+              <p
+                className={`break-all ${
+                  !isPremium ? "select-none blur-sm" : ""
+                }`}
+              >
+                {tip.bettingCode || "N/A"}
+              </p>
+            </div>
           </div>
 
           <div className="text-sm">
             <p className="text-[#efefef]/70">Total Odds</p>
-            <p>{tip.totalOdd ?? "N/A"}</p>
-          </div>
 
-          <div className="col-span-2 text-sm">
-            <p className="mb-2 text-[#efefef]/70">Matches</p>
-
-            {Array.isArray(tip.matches) && tip.matches.length > 0 ? (
-              <div className="space-y-2">
-                {tip.matches.map((match, index) => (
-                  <div
-                    key={match._id || index}
-                    className="flex items-center justify-between gap-3 rounded-lg bg-[#0f1f1a] p-3 text-xs"
-                  >
-                    <span className="min-w-0 break-words">
-                      {match.teams || "Match details unavailable"}
-                    </span>
-
-                    <span className="shrink-0 font-medium text-[#18ffc8]">
-                      {match.prediction || "N/A"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-gray-500">
-                No matches listed.
-              </p>
-            )}
+            <p className="mt-1 font-semibold text-[#18ffc8]">
+              {tip.totalOdd ?? "N/A"}
+            </p>
           </div>
         </div>
 
-        {/* Confidence level */}
-        <div className="mt-4">
+        {/* Confidence level: visible to all users */}
+        <div className="mt-5">
           <div className="mb-1 flex justify-between text-xs text-white">
             <span>Confidence Level</span>
             <span>{confidence}%</span>
@@ -444,123 +269,107 @@ const FeedPage = () => {
                 confidence >= 80
                   ? "bg-[#18ffc8]"
                   : confidence >= 60
-                  ? "bg-[#fea92a]"
-                  : "bg-[#f57cff]"
+                    ? "bg-[#fea92a]"
+                    : "bg-[#f57cff]"
               }`}
               style={{ width: `${confidence}%` }}
             />
           </div>
         </div>
 
-        {/* Punter and reactions */}
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#376553]/30 pt-4">
-          <button
-            type="button"
-            onClick={() => handlePunterClick(tip.punterId)}
-            className="flex min-w-0 items-center gap-2 text-left text-sm text-[#efefef]"
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-[#18ffc8] bg-[#18ffc8]/20 text-sm font-bold text-[#18ffc8]">
-              {getInitials(tip.punterUsername)}
+        {/* Matches */}
+        <div className="mt-5">
+          <p className="mb-2 text-sm text-[#efefef]/70">
+            Matches ({matches.length})
+          </p>
+
+          {matches.length > 0 ? (
+            <div className="space-y-2">
+              {matches.map((match, index) => {
+                // Free users can see only the first match.
+                const isLocked = !isPremium && index > 0;
+
+                return (
+                  <div
+                    key={match._id || index}
+                    className="relative overflow-hidden rounded-lg bg-[#0f1f1a] p-3"
+                  >
+                    <div
+                      className={`flex items-center justify-between gap-3 text-xs ${
+                        isLocked ? "select-none blur-sm" : ""
+                      }`}
+                    >
+                      <span className="min-w-0 break-words text-white">
+                        {match.teams || "Match details unavailable"}
+                      </span>
+
+                      <span className="shrink-0 font-medium text-[#18ffc8]">
+                        {match.prediction || "N/A"}
+                      </span>
+                    </div>
+
+                    {isLocked && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-[#0f1f1a]/70">
+                        <span className="rounded bg-[#162821]/90 px-2 py-1 text-xs font-semibold text-white">
+                          <FaCrown className="mr-1 inline text-[#18ffc8]" />
+                          Premium Match
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-
-            <span className="truncate">
-              {tip.punterUsername || "Anonymous"}
-            </span>
-          </button>
-
-          <div className="flex shrink-0 items-center gap-3">
-            <button
-              type="button"
-              disabled={Boolean(reactionLoading[tip._id])}
-              onClick={() => handleThumbsClick(tip._id, "up")}
-              aria-label="Like sports tip"
-              className={`flex items-center gap-1 transition disabled:opacity-50 ${
-                likedSignals[tip._id]
-                  ? "text-[#18ffc8]"
-                  : "text-gray-400 hover:text-[#18ffc8]"
-              }`}
-            >
-              <FiThumbsUp size={19} />
-              <span className="text-sm">{tip.thumbsUp || 0}</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={Boolean(reactionLoading[tip._id])}
-              onClick={() => handleThumbsClick(tip._id, "down")}
-              aria-label="Dislike sports tip"
-              className={`flex items-center gap-1 transition disabled:opacity-50 ${
-                dislikedSignals[tip._id]
-                  ? "text-red-400"
-                  : "text-gray-400 hover:text-red-400"
-              }`}
-            >
-              <FiThumbsDown size={19} />
-              <span className="text-sm">{tip.thumbsDown || 0}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigateToTipDetails(tip._id)}
-              aria-label="View comments"
-              className="flex items-center gap-1 text-[#fea92a] transition hover:text-[#18ffc8]"
-            >
-              <AiOutlineMessage size={18} />
-              <span className="text-sm">{tip.totalComments || 0}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Latest comment */}
-        <div className="mt-4 border-t border-[#376553]/30 pt-4">
-          {tip.topComment ? (
-            <>
-              <div className="mb-2 rounded-lg bg-[#376553]/20 p-3 text-sm">
-                <p className="mb-1 text-xs font-bold text-[#fea92a]">
-                  {tip.topComment.user || "User"}
-                </p>
-
-                <p className="line-clamp-2 text-[#efefef]/90">
-                  {tip.topComment.comment || ""}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => navigateToTipDetails(tip._id)}
-                className="flex items-center text-xs font-medium text-[#18ffc8] transition hover:text-[#18ffc8]/80"
-              >
-                {tip.totalComments > 1
-                  ? `See ${tip.totalComments - 1} more comment${
-                      tip.totalComments - 1 !== 1 ? "s" : ""
-                    }`
-                  : "View Tip Details"}
-
-                <FiChevronRight size={15} className="ml-1" />
-              </button>
-            </>
           ) : (
-            <div className="flex flex-col items-start gap-2">
-              <p className="text-sm text-[#efefef]/70">
-                Be the first to comment on this tip!
-              </p>
-
-              <button
-                type="button"
-                onClick={() => navigateToTipDetails(tip._id)}
-                className="flex w-full items-center justify-between rounded-md bg-[#376553]/50 p-3 text-sm font-medium text-[#efefef] transition hover:bg-[#376553]"
-              >
-                Drop a comment...
-                <FiChevronRight size={18} />
-              </button>
-            </div>
+            <p className="text-xs text-gray-500">No matches listed.</p>
           )}
         </div>
       </div>
     );
   };
 
-  // Render sports feed states
+  // Render subscription prompt for free or expired users.
+  const renderSubscriptionPrompt = () => {
+    const subscription = user?.subscription;
+
+    const isExpired =
+      subscription?.plan === "premium" &&
+      subscription?.expiresAt &&
+      !isSubscriptionActive(user);
+
+    return (
+      <div className="mb-5 rounded-xl border border-[#18ffc8]/20 bg-[#162821] p-4">
+        <div className="flex items-start gap-3">
+          <FaCrown className="mt-1 shrink-0 text-xl text-[#18ffc8]" />
+
+          <div className="min-w-0 flex-1">
+            <h2 className="font-bold text-white">
+              {isExpired
+                ? "Your Premium Subscription Has Expired"
+                : "Unlock All Premium Sports Tips"}
+            </h2>
+
+            <p className="mt-1 text-sm leading-5 text-[#efefef]/70">
+              {isExpired
+                ? "Renew your subscription to reveal the full betting codes and all match predictions."
+                : "You are viewing free previews. Subscribe to unlock full betting codes and all match predictions. Total odds and confidence levels remain visible."}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => navigate("/profile")}
+              className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-[#18ffc8] px-4 py-2.5 text-sm font-bold text-[#0a120e] transition hover:bg-[#18ffc8]/80"
+            >
+              {isExpired ? "Renew Subscription" : "Subscribe Now"}
+              <FaArrowRight />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render the appropriate feed state.
   const renderFeedContent = () => {
     if (loading) {
       return (
@@ -586,14 +395,22 @@ const FeedPage = () => {
       );
     }
 
-    return allFeedData.map((tip) => renderSportTip(tip));
+    return (
+      <>
+        {/* Free and expired users see the subscription prompt. */}
+        {!hasActiveSubscription && renderSubscriptionPrompt()}
+
+        {/* All users can see the feed preview. */}
+        {allFeedData.map((tip) => renderSportTip(tip))}
+      </>
+    );
   };
 
   return (
     <div className="min-h-screen bg-[#0a120e] px-4 py-6 pb-20 text-white">
       <Header />
 
-      {/* Error message */}
+      {/* Feed error */}
       {error && user && (
         <div
           role="alert"
@@ -611,7 +428,7 @@ const FeedPage = () => {
         </div>
       )}
 
-      {/* Sports tips */}
+      {/* Sports feed */}
       <div className="space-y-6">{renderFeedContent()}</div>
     </div>
   );

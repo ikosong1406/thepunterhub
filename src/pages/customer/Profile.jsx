@@ -141,12 +141,17 @@ const ProfilePage = () => {
   ).toUpperCase();
 
   const currentPlan = user.subscription?.plan || "free";
-
-  const planLabel = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
-
   const expiresAt = user.subscription?.expiresAt;
 
   const isPremium = currentPlan.toLowerCase() === "premium";
+
+  const isSubscriptionActive =
+    isPremium &&
+    !!expiresAt &&
+    !Number.isNaN(new Date(expiresAt).getTime()) &&
+    new Date(expiresAt).getTime() > Date.now();
+
+  const planLabel = isSubscriptionActive ? "Premium" : "Free";
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#09100d" }}>
@@ -224,18 +229,20 @@ const ProfilePage = () => {
               )}
             </div>
 
-            <button
-              className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm
+            {!isSubscriptionActive && (
+              <button
+                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm
       font-medium transition-transform hover:scale-105 shrink-0"
-              style={{
-                backgroundColor: "#fea92a",
-                color: "#09100d",
-              }}
-              onClick={() => setActiveModal("subscribe")}
-            >
-              <IoMdAdd className="text-sm" />
-              <span>{isPremium ? "Upgrade" : "Subscribe"}</span>
-            </button>
+                style={{
+                  backgroundColor: "#fea92a",
+                  color: "#09100d",
+                }}
+                onClick={() => setActiveModal("subscribe")}
+              >
+                <IoMdAdd className="text-sm" />
+                <span> Subscribe</span>
+              </button>
+            )}
           </div>
 
           {/* Referral Balance */}

@@ -10,7 +10,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import localforage from "localforage";
 import {
-  FaFootballBall,
   FaChartLine,
   FaCrown,
   FaArrowRight,
@@ -18,7 +17,6 @@ import {
   FaRegClock,
   FaRegCalendarAlt,
   FaSyncAlt,
-  FaTrophy,
   FaCheckCircle,
   FaChevronRight,
 } from "react-icons/fa";
@@ -113,8 +111,8 @@ const normalizeFixture = (item) => {
 
 const isPremiumMember = (user) => {
   const plan = String(
-    user?.membership?.plan ??
-      user?.subscription?.plan ??
+    user?.subscription?.plan ??
+      user?.membership?.plan ??
       user?.membershipPlan ??
       user?.plan ??
       "free",
@@ -122,48 +120,28 @@ const isPremiumMember = (user) => {
     .trim()
     .toLowerCase();
 
-  const active =
-    user?.membership?.isActive ??
+  const expiresAt =
+    user?.subscription?.expiresAt ?? user?.membership?.expiresAt;
+
+  const activeFlag =
     user?.subscription?.isActive ??
+    user?.membership?.isActive ??
     user?.membershipActive ??
     true;
 
-  return plan === "premium" && active === true;
-};
+  const hasValidExpiry =
+    !!expiresAt &&
+    !Number.isNaN(new Date(expiresAt).getTime()) &&
+    new Date(expiresAt).getTime() > Date.now();
 
-const getDisplayName = (user) =>
-  user?.firstName ||
-  user?.firstname ||
-  user?.name ||
-  user?.username ||
-  user?.fullName ||
-  "there";
+  return plan === "premium" && activeFlag === true && hasValidExpiry;
+};
 
 const getPredictionId = (prediction, index) =>
   prediction?._id ||
   prediction?.id ||
   prediction?.predictionId ||
   `prediction-${index}`;
-
-const getPredictionTitle = (prediction) =>
-  prediction?.title ||
-  prediction?.match ||
-  prediction?.fixture ||
-  prediction?.event ||
-  "Match analysis";
-
-const getPredictionDescription = (prediction) =>
-  prediction?.description ||
-  prediction?.analysis ||
-  prediction?.tip ||
-  prediction?.prediction ||
-  "Open this prediction to view the full analysis.";
-
-const getPredictionIsPremium = (prediction) =>
-  prediction?.isPremium === true ||
-  prediction?.premium === true ||
-  String(prediction?.accessLevel || prediction?.plan || "").toLowerCase() ===
-    "premium";
 
 const getPredictionDate = (prediction) => {
   const value =
@@ -399,50 +377,186 @@ function SectionHeading({ eyebrow, title, action, onAction }) {
   );
 }
 
-function PredictionCard({ prediction, index, premiumMember, onOpen }) {
-  const premium = getPredictionIsPremium(prediction);
-  const locked = premium && !premiumMember;
+function PredictionCard({ prediction, index, premiumMember }) {
+  const matches = Array.isArray(prediction?.matches) ? prediction.matches : [];
+
+  const isLocked = !premiumMember;
+
+  const formatTeams = (teams) => {
+    if (typeof teams === "string") return teams;
+
+    if (Array.isArray(teams)) {
+      return teams
+        .map((team) =>
+          typeof team === "string" ? team : team?.name || team?.teamName || "",
+        )
+        .filter(Boolean)
+        .join(" vs ");
+    }
+
+    if (teams && typeof teams === "object") {
+      if (teams.home || teams.away) {
+        return [teams.home?.name || teams.home, teams.away?.name || teams.away]
+          .filter(Boolean)
+          .join(" vs ");
+      }
+
+      return (
+        teams.name ||
+        teams.match ||
+        teams.fixture ||
+        "Match details unavailable"
+      );
+    }
+
+    return "Match details unavailable";
+  };
 
   return (
     <article
       className={`${PANEL} flex h-full flex-col p-4 transition hover:border-[#18ffc8]/40`}
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <span
-          className={`rounded-full px-3 py-1 text-[11px] font-bold ${
-            premium
-              ? "bg-fuchsia-500/10 text-[#f57cff]"
-              : "bg-[#18ffc8]/10 text-[#18ffc8]"
-          }`}
-        >
-          {premium ? "PREMIUM" : "FREE ANALYSIS"}
-        </span>
-
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between gap-2">
         <span className="text-xs text-gray-500">
           {getPredictionDate(prediction)}
         </span>
       </div>
 
-      <h3 className="mb-2 line-clamp-2 font-bold text-white">
-        {getPredictionTitle(prediction)}
-      </h3>
+      {/* Betting site and status */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-white">
+          {prediction?.bettingSite || "Sports Prediction"}
+        </span>
 
-      <p className="mb-4 line-clamp-3 flex-1 text-sm leading-6 text-gray-400">
-        {getPredictionDescription(prediction)}
-      </p>
+        {prediction?.status &&
+          (() => {
+            const status = String(prediction.status).trim().toLowerCase();
 
-      <button
-        type="button"
-        onClick={() => onOpen(prediction, locked)}
-        className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
-          locked
-            ? "border border-[#f57cff]/30 bg-[#f57cff]/10 text-[#f57cff] hover:bg-[#f57cff]/20"
-            : "bg-[#162821] text-[#18ffc8] hover:bg-[#20382e]"
-        }`}
-      >
-        {locked ? <FaLock /> : <FaArrowRight />}
-        {locked ? "Unlock Analysis" : "View Analysis"}
-      </button>
+            const statusStyles = {
+              win: "bg-[#18ffc8]/10 text-[#18ffc8] border-[#18ffc8]/20",
+              active: "bg-[#fea92a]/10 text-[#fea92a] border-[#fea92a]/20",
+              loss: "bg-[#f57cff]/10 text-[#f57cff] border-[#f57cff]/20",
+            };
+
+            const style =
+              statusStyles[status] ||
+              "bg-[#162821] text-gray-300 border-[#2a3a34]";
+
+            return (
+              <span
+                className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${style}`}
+              >
+                {status.replace(/_/g, " ").toUpperCase()}
+              </span>
+            );
+          })()}
+      </div>
+
+      {/* Betting code: blurred for non-premium users */}
+      <div className="mb-4 rounded-xl border border-[#2a3a34] bg-[#09140f] p-3">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+          Betting Code
+        </p>
+
+        <div className="relative">
+          <p
+            className={`break-all font-mono text-sm font-bold text-[#18ffc8] ${
+              isLocked ? "select-none blur-sm" : ""
+            }`}
+          >
+            {prediction?.bettingCode || "No betting code available"}
+          </p>
+        </div>
+      </div>
+
+      {/* Odds and confidence remain visible */}
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <div className="rounded-xl bg-[#162821] p-3">
+          <p className="mb-1 text-xs text-gray-400">Total Odds</p>
+          <p className="text-lg font-extrabold text-[#18ffc8]">
+            {prediction?.totalOdd ?? "N/A"}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-[#162821] p-3">
+          <p className="mb-1 text-xs text-gray-400">Confidence</p>
+          <p className="text-lg font-extrabold text-white">
+            {prediction?.confidenceLevel != null
+              ? `${prediction.confidenceLevel}${
+                  typeof prediction.confidenceLevel === "number" ||
+                  /^\d+(\.\d+)?$/.test(String(prediction.confidenceLevel))
+                    ? "%"
+                    : ""
+                }`
+              : "N/A"}
+          </p>
+        </div>
+      </div>
+
+      {/* Matches */}
+      <div className="flex-1">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="font-bold text-white">Matches</h3>
+        </div>
+
+        {matches.length > 0 ? (
+          <div className="space-y-3">
+            {matches.map((match, matchIndex) => {
+              const matchLocked = isLocked && matchIndex > 0;
+
+              return (
+                <div
+                  key={match?._id || match?.id || matchIndex}
+                  className="relative overflow-hidden rounded-xl border border-[#2a3a34] bg-[#09140f] p-3"
+                >
+                  <div className={matchLocked ? "select-none blur-sm" : ""}>
+                    <p className="mb-2 text-sm font-semibold leading-5 text-white">
+                      {formatTeams(match?.teams)}
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs text-gray-400">Prediction</span>
+
+                      <span className="rounded-lg bg-[#18ffc8]/10 px-2.5 py-1 text-xs font-bold text-[#18ffc8]">
+                        {match?.prediction || "N/A"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {matchLocked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#071411]/60 p-2 text-center">
+                      <span className="inline-flex items-center gap-2 rounded-lg border border-fuchsia-400/20 bg-[#0a120e]/95 px-3 py-2 text-xs font-bold text-[#f57cff]">
+                        <FaLock />
+                        Premium Match
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-[#2a3a34] bg-[#09140f] p-4 text-sm text-gray-400">
+            No match details available.
+          </p>
+        )}
+      </div>
+
+      {/* Subscription prompt */}
+      {isLocked && (
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = "/profile";
+          }}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#18ffc8] px-4 py-3 text-sm font-bold text-[#07130e] transition hover:bg-[#7dffdf]"
+        >
+          <FaLock />
+          Subscribe to Unlock
+          <FaArrowRight />
+        </button>
+      )}
     </article>
   );
 }
@@ -639,18 +753,8 @@ export default function Home() {
 
         return dateB - dateA;
       })
-      .slice(0, 6);
+      .slice(1, 3);
   }, [predictions]);
-
-  const handleOpenPrediction = (prediction, locked) => {
-    if (locked) {
-      navigate("/profile");
-      return;
-    }
-
-    const id = getPredictionId(prediction, 0);
-    navigate(`/predictions/${id}`);
-  };
 
   const handleUpgrade = () => {
     navigate("/profile");
@@ -663,8 +767,6 @@ export default function Home() {
   const handleRefresh = () => {
     fetchFixtures();
   };
-
-  const firstName = getDisplayName(user);
 
   return (
     <div className="min-h-screen bg-[#0a120e] text-white">
@@ -748,8 +850,8 @@ export default function Home() {
           />
 
           {loadingPredictions ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {[1, 2, 3].map((item) => (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+              {[1, 2].map((item) => (
                 <div
                   key={item}
                   className="h-52 animate-pulse rounded-2xl border border-[#2a3a34] bg-[#0f1f1a]"
@@ -757,14 +859,13 @@ export default function Home() {
               ))}
             </div>
           ) : recentPredictions.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
               {recentPredictions.map((prediction, index) => (
                 <PredictionCard
                   key={getPredictionId(prediction, index)}
                   prediction={prediction}
                   index={index}
                   premiumMember={premiumMember}
-                  onOpen={handleOpenPrediction}
                 />
               ))}
             </div>
