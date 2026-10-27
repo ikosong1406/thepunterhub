@@ -431,7 +431,7 @@ const RegisterScreen = () => {
                   onClick={() => navigate("/login")}
                   className="text-[#fea92a] hover:text-[#18ffc8] transition"
                 >
-                  Login here
+                  Login
                 </button>
               </p>
             </div>
