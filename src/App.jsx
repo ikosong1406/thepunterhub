@@ -21,8 +21,10 @@ import CustomerFeed from "./pages/customer/Feed";
 import CustomerLive from "./pages/customer/Live";
 import CustomerProfile from "./pages/customer/Profile";
 import CustomerCreate from "./pages/customer/Create";
+import Success from "./pages/customer/Success";
+import Cancel from "./pages/customer/Cancel";
 
-const ProtectedRoute = ({ children, requiredRole = "user" }) => {
+const ProtectedRoute = ({ children }) => {
   const [authStatus, setAuthStatus] = React.useState({
     loading: true,
     isAuthenticated: false,
@@ -116,13 +118,8 @@ const ProtectedRoute = ({ children, requiredRole = "user" }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (authStatus.role !== requiredRole) {
-    return <Navigate to="/login" replace />;
-  }
-
   return children;
 };
-
 
 const App = () => {
   return (
@@ -136,7 +133,7 @@ const App = () => {
 
         <Route
           element={
-            <ProtectedRoute requiredRole="user">
+            <ProtectedRoute>
               <CustomerLayout />
             </ProtectedRoute>
           }
@@ -146,6 +143,8 @@ const App = () => {
           <Route path="/create" element={<CustomerCreate />} />
           <Route path="/live" element={<CustomerLive />} />
           <Route path="/profile" element={<CustomerProfile />} />
+          <Route path="/success" element={<Success />} />
+          <Route path="/cancel" element={<Cancel />} />
         </Route>
 
         {/* Redirect unknown routes */}

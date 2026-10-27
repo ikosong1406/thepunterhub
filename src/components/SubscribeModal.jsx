@@ -37,8 +37,7 @@ const benefits = [
   },
   {
     title: "Regular Updates",
-    description:
-      "Stay up to date with the latest available predictions.",
+    description: "Stay up to date with the latest available predictions.",
   },
   {
     title: "Mobile-Friendly Access",
@@ -98,9 +97,7 @@ const SubscriptionModal = ({ user, onClose }) => {
 
   const isRegional = REGIONAL_COUNTRIES.includes(countryCode);
 
-  const monthlyPrice = isRegional
-    ? REGIONAL_PRICE
-    : STANDARD_PRICE;
+  const monthlyPrice = isRegional ? REGIONAL_PRICE : STANDARD_PRICE;
 
   const formattedPrice = new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -124,23 +121,16 @@ const SubscriptionModal = ({ user, onClose }) => {
     setError("");
 
     try {
-      const response = await axios.post(
-        `${Api}/client/subscription/checkout`,
-        {
-          plan: "premium",
-          countryCode,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await axios.post(`${Api}/client/checkout`, {
+        userId: user._id,
+        plan: "premium",
+        countryCode,
+      });
 
       const checkoutUrl = response.data?.url;
 
       if (!checkoutUrl) {
-        throw new Error(
-          "Stripe Checkout URL was not returned by the server."
-        );
+        throw new Error("Stripe Checkout URL was not returned by the server.");
       }
 
       const checkout = new URL(checkoutUrl);
@@ -179,10 +169,7 @@ const SubscriptionModal = ({ user, onClose }) => {
           style={{ borderColor: "#376553" }}
         >
           <div>
-            <h2
-              className="text-lg font-bold"
-              style={{ color: "#efefef" }}
-            >
+            <h2 className="text-lg font-bold" style={{ color: "#efefef" }}>
               Premium Subscription
             </h2>
           </div>
@@ -235,18 +222,12 @@ const SubscriptionModal = ({ user, onClose }) => {
                     {formattedPrice}
                   </span>
 
-                  <span
-                    className="text-sm"
-                    style={{ color: "#9ca3af" }}
-                  >
+                  <span className="text-sm" style={{ color: "#9ca3af" }}>
                     / month
                   </span>
                 </div>
               ) : (
-                <p
-                  className="text-sm"
-                  style={{ color: "#f57c7c" }}
-                >
+                <p className="text-sm" style={{ color: "#f57c7c" }}>
                   Your subscription price is unavailable.
                 </p>
               )}
@@ -256,13 +237,10 @@ const SubscriptionModal = ({ user, onClose }) => {
                 style={{ borderColor: "#376553" }}
               />
 
-              <p
-                className="text-sm leading-6"
-                style={{ color: "#d1d5db" }}
-              >
-                Unlock daily football predictions, multiple betting
-                markets, major league coverage, and detailed match
-                analysis with one simple monthly subscription.
+              <p className="text-sm leading-6" style={{ color: "#d1d5db" }}>
+                Unlock daily football predictions, multiple betting markets,
+                major league coverage, and detailed match analysis with one
+                simple monthly subscription.
               </p>
             </div>
 
@@ -270,19 +248,12 @@ const SubscriptionModal = ({ user, onClose }) => {
             <button
               type="button"
               onClick={handleSubscription}
-              disabled={
-                loading ||
-                countryLoading ||
-                !countryCode
-              }
+              disabled={loading || countryLoading || !countryCode}
               className="w-full py-4 rounded-xl font-bold flex items-center justify-center transition-opacity"
               style={{
                 backgroundColor: "#18ffc8",
                 color: "#09100d",
-                opacity:
-                  loading || countryLoading || !countryCode
-                    ? 0.65
-                    : 1,
+                opacity: loading || countryLoading || !countryCode ? 0.65 : 1,
                 cursor:
                   loading || countryLoading || !countryCode
                     ? "not-allowed"
@@ -292,7 +263,7 @@ const SubscriptionModal = ({ user, onClose }) => {
               {loading
                 ? "Redirecting to Stripe..."
                 : countryLoading
-                  ? "Determining your region..."
+                  ? "Loading the Price..."
                   : countryCode
                     ? `Subscribe for ${formattedPrice}/month`
                     : "Unable to load subscription price"}
@@ -309,10 +280,7 @@ const SubscriptionModal = ({ user, onClose }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 {benefits.map((benefit) => (
-                  <div
-                    key={benefit.title}
-                    className="flex items-start gap-3"
-                  >
+                  <div key={benefit.title} className="flex items-start gap-3">
                     <span
                       className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full text-sm font-bold"
                       style={{
@@ -346,10 +314,7 @@ const SubscriptionModal = ({ user, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div
-          className="px-6 py-5 border-t"
-          style={{ borderColor: "#376553" }}
-        >
+        <div className="px-6 py-5 border-t" style={{ borderColor: "#376553" }}>
           <div className="max-w-3xl mx-auto">
             {error && (
               <div

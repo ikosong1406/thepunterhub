@@ -8,16 +8,6 @@ import Api from "../components/Api";
 import "../styles/Splash.css";
 import logoImage from "../assets/logo3.png";
 
-// Define a Colors object to manage styling
-const Colors = {
-  gray: "#162821",
-  orange: "#fea92a",
-  white: "#ffffff",
-  black: "#09100d",
-  lightGray: "#333",
-  purple: "#855391",
-};
-
 const LoginScreen = () => {
   const navigate = useNavigate();
   const [loginType, setLoginType] = useState("email");
@@ -28,15 +18,7 @@ const LoginScreen = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const handlePhoneCodeChange = (code) => {
-    setFormData((prev) => ({ ...prev, phoneCode: code }));
-    setSearchTerm(""); // Clear search term after selection
-    setIsDropdownOpen(false); // Close dropdown
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -90,14 +72,12 @@ const LoginScreen = () => {
 
       if (response.status === 200) {
         const { token, role } = response.data;
+        console.log(response.data)
 
         // Store token and role in localforage
         await localforage.setItem("token", token);
         await localforage.setItem("role", role);
-
-        setTimeout(() => {
-          navigate("/home");
-        }, 1000);
+        navigate("/home");
       }
     } catch (error) {
       console.error("Login failed:", error);

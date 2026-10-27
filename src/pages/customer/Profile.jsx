@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import { IoMdAdd } from "react-icons/io";
 import { FaMoneyBillWave, FaUserPlus } from "react-icons/fa6";
-import logoImage from "../../assets/logo2.png";
+import logoImage from "../../assets/logo3.png";
 
 // Import modal components
 import SubscribeModal from "../../components/SubscribeModal";
