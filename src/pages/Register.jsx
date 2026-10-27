@@ -68,7 +68,6 @@ const RegisterScreen = () => {
       !firstname ||
       !lastname ||
       !email ||
-      !phoneNumber ||
       !password ||
       !confirmPassword
     ) {
@@ -101,7 +100,6 @@ const RegisterScreen = () => {
       firstname: formData.firstname,
       lastname: formData.lastname,
       email: formData.email,
-      phoneCode: formData.phoneCode,
       phoneNumber: formData.phoneNumber,
       password: formData.password,
       promoCode: formData.promoCode,
