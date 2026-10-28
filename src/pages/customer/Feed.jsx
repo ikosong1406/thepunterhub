@@ -406,30 +406,39 @@ const FeedPage = () => {
     );
   };
 
+
   return (
-    <div className="min-h-screen bg-[#0a120e] px-4 py-6 pb-20 text-white">
-      <Header />
+    <div className="h-screen overflow-hidden bg-[#0a120e] text-white">
+      {/* Static Header */}
+      <div className="relative z-50 shrink-0 bg-[#0a120e] px-4 pt-6">
+        <Header />
+      </div>
 
-      {/* Feed error */}
-      {error && user && (
-        <div
-          role="alert"
-          className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300"
-        >
-          {error}
-
-          <button
-            type="button"
-            onClick={() => fetchAllFeed(true)}
-            className="ml-2 font-semibold underline"
+      {/* Scrollable Sports Feed */}
+      <div className="h-[calc(100vh-100px)] overflow-y-auto overscroll-contain px-4 pb-24 pt-4">
+        {/* Feed error */}
+        {error && user && (
+          <div
+            role="alert"
+            className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300"
           >
-            Retry
-          </button>
-        </div>
-      )}
+            {error}
 
-      {/* Sports feed */}
-      <div className="space-y-6">{renderFeedContent()}</div>
+            <button
+              type="button"
+              onClick={() => fetchAllFeed(true)}
+              className="ml-2 font-semibold underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Sports feed */}
+        <div className="space-y-6">
+          {renderFeedContent()}
+        </div>
+      </div>
     </div>
   );
 };

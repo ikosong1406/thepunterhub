@@ -153,228 +153,261 @@ const ProfilePage = () => {
 
   const planLabel = isSubscriptionActive ? "Premium" : "Free";
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: "#09100d" }}>
-      {/* Header */}
-      <div className="pt-6 px-4" style={{ backgroundColor: "#162821" }}>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "#376553" }}
-            >
-              {user.profilePicture ? (
-                <img
-                  src={user.profilePicture}
-                  alt="Profile"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span
-                  className="text-sm font-bold"
-                  style={{ color: "#efefef" }}
-                >
-                  {initials}
-                </span>
-              )}
-            </div>
-            <div>
-              <h1 className="font-bold text-base" style={{ color: "#efefef" }}>
-                {fullName || user.username || "User"}
-              </h1>
-            </div>
-          </div>
-          {user.isEmailVerified && (
-            <span
-              className="px-2 py-1 rounded text-xs font-medium"
-              style={{ backgroundColor: "#376553", color: "#18ffc8" }}
-            >
-              VERIFIED
-            </span>
-          )}
-        </div>
 
-        {/* Subscription Plan Card */}
-        <div
-          className="mb-6 p-4 rounded-lg flex flex-col items-start"
-          style={{ backgroundColor: "#09100d" }}
-        >
-          <div className="flex justify-between items-center w-full mb-3 gap-3">
-            <div className="flex flex-col">
+return (
+  <div
+    className="h-screen overflow-hidden flex flex-col"
+    style={{ backgroundColor: "#09100d" }}
+  >
+    {/* Static Header and Subscription Card */}
+    <div
+      className="shrink-0 px-4 pt-6"
+      style={{ backgroundColor: "#162821" }}
+    >
+      {/* Profile Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
+            style={{ backgroundColor: "#376553" }}
+          >
+            {user.profilePicture ? (
+              <img
+                src={user.profilePicture}
+                alt="Profile"
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
               <span
-                className="text-xs font-semibold"
-                style={{ color: "#f57cff" }}
+                className="text-sm font-bold"
+                style={{ color: "#efefef" }}
               >
-                Current Plan
+                {initials}
               </span>
-
-              <div className="flex items-center gap-2 mt-1">
-                <span
-                  className="text-xl font-bold"
-                  style={{ color: isPremium ? "#fea92a" : "#efefef" }}
-                >
-                  {isPremium ? "Premium Plan" : "Free Plan"}
-                </span>
-              </div>
-
-              {isPremium && expiresAt && (
-                <span className="text-xs mt-2" style={{ color: "#efefef99" }}>
-                  Expires:{" "}
-                  {new Date(expiresAt).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
-              )}
-            </div>
-
-            {!isSubscriptionActive && (
-              <button
-                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm
-      font-medium transition-transform hover:scale-105 shrink-0"
-                style={{
-                  backgroundColor: "#fea92a",
-                  color: "#09100d",
-                }}
-                onClick={() => setActiveModal("subscribe")}
-              >
-                <IoMdAdd className="text-sm" />
-                <span> Subscribe</span>
-              </button>
             )}
           </div>
 
-          {/* Referral Balance */}
-          <div className="flex items-center gap-2 mt-2 w-full">
-            <FaMoneyBillWave style={{ color: "#f57cff", fontSize: "1rem" }} />
-
-            <span className="text-xs font-medium" style={{ color: "#f57cff" }}>
-              Referral Balance:
-            </span>
-
-            <span className="text-sm font-bold" style={{ color: "#efefef" }}>
-              {Number(user.balance || 0).toFixed(2)}
-            </span>
+          <div>
+            <h1
+              className="font-bold text-base"
+              style={{ color: "#efefef" }}
+            >
+              {fullName || user.username || "User"}
+            </h1>
           </div>
         </div>
+
+        {user.isEmailVerified && (
+          <span
+            className="px-2 py-1 rounded text-xs font-medium"
+            style={{ backgroundColor: "#376553", color: "#18ffc8" }}
+          >
+            VERIFIED
+          </span>
+        )}
       </div>
 
-      {/* Profile Menu */}
-      <div className="px-4 py-6">
-        <div className="mb-6">
-          <h3
-            className="text-sm font-semibold mb-3 uppercase"
-            style={{ color: "#f57cff" }}
-          >
-            Account
-          </h3>
-          <div className="space-y-2">
-            <MenuItem
-              icon={<FaUser />}
-              title="Personal Information"
-              onClick={() => setActiveModal("personal-info")}
-            />
-            <MenuItem
-              icon={<FaUserPlus />}
-              title="Invite Friends"
-              onClick={() => setActiveModal("invite")}
-            />
+      {/* Static Subscription Plan Card */}
+      <div
+        className="mb-4 p-4 rounded-lg flex flex-col items-start"
+        style={{ backgroundColor: "#09100d" }}
+      >
+        <div className="flex justify-between items-center w-full mb-3 gap-3">
+          <div className="flex flex-col">
+            <span
+              className="text-xl font-bold mt-1"
+              style={{ color: isPremium ? "#fea92a" : "#efefef" }}
+            >
+              {isPremium ? "Premium Plan" : "Free Plan"}
+            </span>
+
+            {isPremium && expiresAt && (
+              <span
+                className="text-xs mt-2"
+                style={{ color: "#efefef99" }}
+              >
+                Expires:{" "}
+                {new Date(expiresAt).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+            )}
           </div>
+
+          {!isSubscriptionActive && (
+            <button
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-transform hover:scale-105 shrink-0"
+              style={{
+                backgroundColor: "#fea92a",
+                color: "#09100d",
+              }}
+              onClick={() => setActiveModal("subscribe")}
+            >
+              <IoMdAdd className="text-sm" />
+              <span>Subscribe</span>
+            </button>
+          )}
         </div>
 
-        <div className="mb-6">
-          <h3
-            className="text-sm font-semibold mb-3 uppercase"
+        {/* Referral Balance */}
+        <div className="flex items-center gap-2 mt-2 w-full">
+          <FaMoneyBillWave
+            style={{ color: "#f57cff", fontSize: "1rem" }}
+          />
+
+          <span
+            className="text-xs font-medium"
             style={{ color: "#f57cff" }}
           >
-            Support
-          </h3>
-          <div className="space-y-2">
-            <MenuItem
-              icon={<FaQuestionCircle />}
-              title="Help Center"
-              onClick={() => setActiveModal("help-center")}
-            />
-            <MenuItem
-              icon={<FaQuestionCircle />}
-              title="Contact Us"
-              onClick={() => setActiveModal("contact-us")}
-            />
-          </div>
-        </div>
+            Referral Balance:
+          </span>
 
-        <div className="mt-8">
-          <button
-            onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center space-x-2 py-3 rounded-lg font-medium"
-            style={{ backgroundColor: "#376553", color: "#efefef" }}
+          <span
+            className="text-sm font-bold"
+            style={{ color: "#efefef" }}
           >
-            <FaSignOutAlt />
-            <span className="text-sm">Sign Out</span>
-          </button>
+            {Number(user.balance || 0).toFixed(2)}
+          </span>
         </div>
       </div>
-
-      {/* Modals */}
-      {activeModal === "subscribe" && (
-        <SubscribeModal
-          user={user}
-          onClose={closeModal}
-          onDepositSuccess={(newBalance) => {
-            setUser({ ...user, balance: newBalance });
-            closeModal();
-          }}
-        />
-      )}
-      {activeModal === "personal-info" && (
-        <PersonalInfoModal user={user} onClose={closeModal} />
-      )}
-      {activeModal === "help-center" && (
-        <HelpCenterModal onClose={closeModal} />
-      )}
-      {activeModal === "contact-us" && <ContactUsModal onClose={closeModal} />}
-      {activeModal === "invite" && (
-        <InviteModal user={user} onClose={closeModal} />
-      )}
-
-      {/* Logout Confirmation */}
-      {showLogoutConfirm && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
-          style={{ backgroundColor: "rgba(9, 16, 13, 0.8)" }}
-        >
-          <div
-            className="bg-gray rounded-lg p-6 max-w-sm w-full"
-            style={{ backgroundColor: "#162821" }}
-          >
-            <h3 className="text-lg font-bold mb-4" style={{ color: "#efefef" }}>
-              Confirm Logout
-            </h3>
-            <p style={{ color: "#efefef", marginBottom: "1.5rem" }}>
-              Are you sure you want to sign out?
-            </p>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-2 rounded-lg"
-                style={{ backgroundColor: "#376553", color: "#efefef" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="flex-1 py-2 rounded-lg font-medium"
-                style={{ backgroundColor: "#fea92a", color: "#09100d" }}
-              >
-                Yes, Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
-  );
+
+    {/* Scrollable Profile Menu */}
+    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-6 pb-28">
+      {/* Account */}
+      <div className="mb-6">
+        <h3
+          className="text-sm font-semibold mb-3 uppercase"
+          style={{ color: "#f57cff" }}
+        >
+          Account
+        </h3>
+
+        <div className="space-y-2">
+          <MenuItem
+            icon={<FaUser />}
+            title="Personal Information"
+            onClick={() => setActiveModal("personal-info")}
+          />
+
+          <MenuItem
+            icon={<FaUserPlus />}
+            title="Invite Friends"
+            onClick={() => setActiveModal("invite")}
+          />
+        </div>
+      </div>
+
+      {/* Support */}
+      <div className="mb-6">
+        <h3
+          className="text-sm font-semibold mb-3 uppercase"
+          style={{ color: "#f57cff" }}
+        >
+          Support
+        </h3>
+
+        <div className="space-y-2">
+          <MenuItem
+            icon={<FaQuestionCircle />}
+            title="Help Center"
+            onClick={() => setActiveModal("help-center")}
+          />
+
+          <MenuItem
+            icon={<FaQuestionCircle />}
+            title="Contact Us"
+            onClick={() => setActiveModal("contact-us")}
+          />
+        </div>
+      </div>
+
+      {/* Sign Out */}
+      <div className="mt-8">
+        <button
+          onClick={() => setShowLogoutConfirm(true)}
+          className="w-full flex items-center justify-center space-x-2 py-3 rounded-lg font-medium"
+          style={{ backgroundColor: "#376553", color: "#efefef" }}
+        >
+          <FaSignOutAlt />
+          <span className="text-sm">Sign Out</span>
+        </button>
+      </div>
+    </div>
+
+    {/* Modals */}
+    {activeModal === "subscribe" && (
+      <SubscribeModal
+        user={user}
+        onClose={closeModal}
+        onDepositSuccess={(newBalance) => {
+          setUser({ ...user, balance: newBalance });
+          closeModal();
+        }}
+      />
+    )}
+
+    {activeModal === "personal-info" && (
+      <PersonalInfoModal user={user} onClose={closeModal} />
+    )}
+
+    {activeModal === "help-center" && (
+      <HelpCenterModal onClose={closeModal} />
+    )}
+
+    {activeModal === "contact-us" && (
+      <ContactUsModal onClose={closeModal} />
+    )}
+
+    {activeModal === "invite" && (
+      <InviteModal user={user} onClose={closeModal} />
+    )}
+
+    {/* Logout Confirmation */}
+    {showLogoutConfirm && (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
+        style={{ backgroundColor: "rgba(9, 16, 13, 0.8)" }}
+      >
+        <div
+          className="rounded-lg p-6 max-w-sm w-full"
+          style={{ backgroundColor: "#162821" }}
+        >
+          <h3
+            className="text-lg font-bold mb-4"
+            style={{ color: "#efefef" }}
+          >
+            Confirm Logout
+          </h3>
+
+          <p style={{ color: "#efefef", marginBottom: "1.5rem" }}>
+            Are you sure you want to sign out?
+          </p>
+
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setShowLogoutConfirm(false)}
+              className="flex-1 py-2 rounded-lg"
+              style={{ backgroundColor: "#376553", color: "#efefef" }}
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={handleSignOut}
+              className="flex-1 py-2 rounded-lg font-medium"
+              style={{ backgroundColor: "#fea92a", color: "#09100d" }}
+            >
+              Yes, Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+);
 };
 
 const MenuItem = ({ icon, title, onClick }) => (

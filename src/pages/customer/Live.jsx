@@ -92,13 +92,14 @@ const LivePage = () => {
   const [activeSport, setActiveSport] = useState("football");
 
   return (
-    <div className="bg-[#0a120e] text-white py-4 pb-20 min-h-screen">
-      <div className="px-4">
-      <Header />
+    <div className="h-screen overflow-hidden bg-[#0a120e] text-white">
+      {/* Static Header */}
+      <div className="relative z-50 shrink-0 bg-[#0a120e] px-4 pt-6">
+        <Header />
       </div>
       {/* Live Content */}
-      <div className="space-y-4">
-          <LiveSportsWidget key={activeSport} activeSport={activeSport} />
+      <div className="h-[calc(100vh-100px)] overflow-y-auto overscroll-contain pb-24 pt-4">
+        <LiveSportsWidget key={activeSport} activeSport={activeSport} />
       </div>
     </div>
   );

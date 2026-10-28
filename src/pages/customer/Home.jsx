@@ -753,12 +753,9 @@ export default function Home() {
 
         return dateB - dateA;
       })
-      .slice(1, 3);
+      .slice(0, 2);
   }, [predictions]);
 
-  const handleUpgrade = () => {
-    navigate("/profile");
-  };
 
   const handleViewAllPredictions = () => {
     navigate("/feed");
@@ -769,13 +766,14 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a120e] text-white">
-      <div className="px-4 pt-4 sm:px-6 lg:px-8">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#0a120e] text-white">
+      {/* Static Header */}
+      <div className="shrink-0 px-4 pt-4 sm:px-6 lg:px-8">
         <Header />
       </div>
 
-      <main className="mx-auto max-w-[1600px] space-y-8 px-4 py-4 sm:px-6 lg:px-8">
-        {/* Fixtures */}
+      {/* Static Fixtures Section */}
+      <div className="mx-auto w-full max-w-[1600px] shrink-0 px-4 pt-4 sm:px-6 lg:px-8">
         <section>
           <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
@@ -794,94 +792,51 @@ export default function Home() {
             onRefresh={handleRefresh}
           />
         </section>
+      </div>
 
-        <div className="flex flex-col gap-4 rounded-xl border border-[#2a3a34] bg-[#14241c] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                premiumMember
-                  ? "bg-[#18ffc8]/10 text-[#18ffc8]"
-                  : "bg-[#f57cff]/10 text-[#f57cff]"
-              }`}
-            >
-              {premiumMember ? (
-                <FaCheckCircle className="text-xl" />
-              ) : (
-                <FaCrown className="text-xl" />
-              )}
-            </div>
+      {/* Static Predictions Heading */}
+      <div className="mx-auto w-full max-w-[1600px] shrink-0 px-4 pt-6 sm:px-6 lg:px-8">
+        <SectionHeading
+          title="Recent Predictions"
+          action="View all"
+          onAction={handleViewAllPredictions}
+        />
+      </div>
 
-            <div className="min-w-0">
-              <p className="font-semibold text-white">
-                {premiumMember ? "Premium membership" : "Free membership"}
-              </p>
-
-              <p className="mt-1 text-xs leading-5 text-gray-400 sm:text-sm">
-                {premiumMember
-                  ? "Your premium analysis access is active."
-                  : "Unlock premium predictions and expert analysis."}
-              </p>
-            </div>
+      {/* Scrollable Prediction Cards Only */}
+      <div className="mx-auto w-full max-w-[1600px] min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-28 sm:px-6 lg:px-8">
+        {loadingPredictions ? (
+          <div className="grid gap-4 pb-4 sm:grid-cols-2">
+            {[1, 2].map((item) => (
+              <div
+                key={item}
+                className="h-52 animate-pulse rounded-2xl border border-[#2a3a34] bg-[#0f1f1a]"
+              />
+            ))}
           </div>
-
-          {premiumMember ? (
-            <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border border-[#18ffc8]/20 bg-[#18ffc8]/5 px-3 py-2 text-xs font-semibold text-[#18ffc8]">
-              <FaCheckCircle />
-              Active
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={handleUpgrade}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#18ffc8] px-4 py-3 text-sm font-bold text-[#07130e] transition hover:bg-[#7dffdf] sm:w-auto"
-            >
-              Explore Premium
-              <FaArrowRight />
-            </button>
-          )}
-        </div>
-
-        {/* Predictions */}
-        <section>
-          <SectionHeading
-            title="Recently Published Predictions"
-            action="View all"
-            onAction={handleViewAllPredictions}
-          />
-
-          {loadingPredictions ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
-              {[1, 2].map((item) => (
-                <div
-                  key={item}
-                  className="h-52 animate-pulse rounded-2xl border border-[#2a3a34] bg-[#0f1f1a]"
-                />
-              ))}
-            </div>
-          ) : recentPredictions.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
-              {recentPredictions.map((prediction, index) => (
-                <PredictionCard
-                  key={getPredictionId(prediction, index)}
-                  prediction={prediction}
-                  index={index}
-                  premiumMember={premiumMember}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className={`${PANEL} p-8 text-center`}>
-              <FaChartLine className="mx-auto mb-3 text-2xl text-gray-500" />
-              <p className="font-semibold text-white">
-                No recent predictions available
-              </p>
-              <p className={`mt-1 text-sm ${MUTED}`}>
-                Published predictions will appear here when available.
-              </p>
-            </div>
-          )}
-        </section>
-      </main>
+        ) : recentPredictions.length ? (
+          <div className="grid gap-4 pb-4 sm:grid-cols-2">
+            {recentPredictions.map((prediction, index) => (
+              <PredictionCard
+                key={getPredictionId(prediction, index)}
+                prediction={prediction}
+                index={index}
+                premiumMember={premiumMember}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className={`${PANEL} p-8 text-center`}>
+            <FaChartLine className="mx-auto mb-3 text-2xl text-gray-500" />
+            <p className="font-semibold text-white">
+              No recent predictions available
+            </p>
+            <p className={`mt-1 text-sm ${MUTED}`}>
+              Published predictions will appear here when available.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
